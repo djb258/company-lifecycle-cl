@@ -1,0 +1,103 @@
+meta:
+  app_name: "company-lifecycle-cl"
+  repo_slug: "djb258/company-lifecycle-cl"
+  stack:
+    - "react"
+    - "vite"
+    - "typescript"
+    - "supabase"
+    - "tailwindcss"
+    - "shadcn-ui"
+  llm:
+    providers:
+      - anthropic
+      - openai
+    default: "anthropic"
+
+doctrine:
+  unique_id: "HUB-CL-001-${TIMESTAMP}-${RANDOM_HEX}"
+  process_id: "PROC-CL-${SESSION_ID}"
+  schema_version: "HEIR/1.0"
+  hub_name: "Company Lifecycle Hub"
+  hub_id: "HUB-CL-001"
+  altitude: "20k"
+  ctb_path: "sys/company-lifecycle"
+
+deliverables:
+  repos:
+    - name: "company-lifecycle-cl"
+      visibility: private
+      hub_type: "application"
+  services:
+    - name: "web"
+      port: 5173
+      description: "Vite development server"
+    - name: "preview"
+      port: 4173
+      description: "Vite preview server"
+  env:
+    VITE_SUPABASE_URL: "${DOPPLER:SUPABASE_URL}"
+    VITE_SUPABASE_ANON_KEY: "${DOPPLER:SUPABASE_ANON_KEY}"
+    LLM_DEFAULT_PROVIDER: "anthropic"
+
+contracts:
+  acceptance:
+    - "All HEIR checks pass in CI"
+    - "Build succeeds without errors"
+    - "Lint passes without errors"
+    - "All tests pass"
+    - "Hub compliance checklist verified"
+
+build:
+  actions:
+    lint: ["npm run lint"]
+    build: ["npm run build"]
+    test: ["npm run test"]
+    heir_check: ["npm run heir:check"]
+  ci_checks:
+    - "npm run lint"
+    - "npm run build"
+  telemetry_events:
+    - "app.start"
+    - "lifecycle.stage.transition"
+    - "company.create"
+    - "company.update"
+    - "company.archive"
+
+imo:
+  ingress:
+    - name: "UI Forms"
+      type: "react-components"
+      description: "User input forms for company data"
+    - name: "API Gateway"
+      type: "rest-api"
+      description: "REST API endpoints for external integrations"
+    - name: "Webhook Receiver"
+      type: "webhook"
+      description: "Incoming webhooks from external systems"
+  middle:
+    - name: "Lifecycle State Machine"
+      type: "fsm"
+      doctrine_id: "TOOL-CL-001"
+    - name: "Company Validator"
+      type: "validation"
+      doctrine_id: "TOOL-CL-002"
+    - name: "Stage Transition Engine"
+      type: "state-machine"
+      doctrine_id: "TOOL-CL-003"
+    - name: "Event Orchestrator"
+      type: "event-driven"
+      doctrine_id: "TOOL-CL-004"
+  egress:
+    - name: "Database Spoke"
+      type: "supabase"
+      description: "Persistence to Supabase"
+    - name: "Notification Spoke"
+      type: "notifications"
+      description: "Email/SMS notifications"
+    - name: "Event Bus Spoke"
+      type: "events"
+      description: "Events to other hubs"
+    - name: "Dashboard Spoke"
+      type: "analytics"
+      description: "Analytics and reporting"

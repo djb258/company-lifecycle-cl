@@ -1,0 +1,26 @@
+setup:
+  project: company-lifecycle-cl
+  config: dev
+
+# Company Lifecycle Hub - Doppler Configuration
+# Hub ID: HUB-CL-001
+#
+# This file configures Doppler secrets management for the Company Lifecycle Hub.
+# All secrets MUST be stored in Doppler - no .env files in production.
+#
+# Environment Configs:
+#   - dev: Local development
+#   - stg: Staging environment
+#   - prd: Production environment
+#
+# Required Secrets:
+#   - HUB_ID: Unique hub identifier (HUB-CL-001)
+#   - PROCESS_ID: Execution trace ID
+#   - VITE_SUPABASE_URL: Supabase project URL
+#   - VITE_SUPABASE_ANON_KEY: Supabase anonymous key
+#   - SUPABASE_SERVICE_ROLE_KEY: Supabase service role key (backend only)
+#
+# Usage:
+#   doppler run -- npm run dev
+#   doppler run -- npm run build
+#   doppler run -- npm run test

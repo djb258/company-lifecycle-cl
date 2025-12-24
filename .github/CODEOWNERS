@@ -1,0 +1,28 @@
+# Company Lifecycle Hub - Code Owners
+# These owners will be requested for review when someone opens a pull request.
+
+# Default owners for everything
+* @djb258
+
+# Doctrine and core architecture (requires hub owner review)
+/templates/doctrine/ @djb258
+/global-config/ @djb258
+/docs/prd/ @djb258
+/docs/adr/ @djb258
+
+# System layer (40k altitude)
+/supabase/ @djb258
+/src/lib/supabase/ @djb258
+/src/integrations/supabase/ @djb258
+
+# IMO layer (20k altitude)
+/src/lib/lifecycle/ @djb258
+/src/lib/validation/ @djb258
+
+# UI layer (10k altitude)
+/src/components/ @djb258
+/src/pages/ @djb258
+
+# Operations layer (5k altitude)
+/scripts/ @djb258
+/.github/workflows/ @djb258

@@ -1,0 +1,209 @@
+# CTB Metadata
+# Generated: 2024-12-24
+# CTB Version: 1.0.0
+# Division: Company Lifecycle
+# Category: global-config
+# Hub ID: HUB-CL-001
+
+meta:
+  version: 1.0
+  last_updated: 2024-12-24
+  description: |
+    Canonical CTB (Christmas Tree Backbone) branch structure for Company Lifecycle Hub.
+    Enforced automatically by Claude-Code and GitHub Actions.
+
+    CTB Philosophy:
+    - Main branch is the trunk (40k altitude - immutable doctrine)
+    - System branches are major limbs (doctrine/*, sys/*)
+    - Business logic branches are mid-branches (imo/*)
+    - UI/UX branches are upper branches (ui/*)
+    - Operations branches are the ornaments (ops/*)
+
+altitudes:
+  "40k":
+    name: Doctrine Core
+    description: Immutable truths, global manifests, and system infrastructure
+    branches:
+      - main
+      - doctrine/hub-spoke
+      - sys/supabase
+      - sys/auth
+      - sys/api
+    merge_to: none
+    protection: strict
+    auto_create: true
+
+  "20k":
+    name: IMO Factory Layer
+    description: Business process engine - data intake, logic, and output generation
+    branches:
+      - imo/input
+      - imo/middle
+      - imo/output
+    merge_to: "sys/api"
+    protection: moderate
+    auto_create: true
+
+  "10k":
+    name: UI Layer
+    description: User interface components and visual design systems
+    branches:
+      - ui/components
+      - ui/pages
+      - ui/forms
+    merge_to: "imo/output"
+    protection: light
+    auto_create: true
+
+  "5k":
+    name: Operations Layer
+    description: Automation scripts, reporting, and operational tooling
+    branches:
+      - ops/automation
+      - ops/scripts
+    merge_to: "ui/components"
+    protection: light
+    auto_create: true
+
+merge_flow:
+  description: |
+    Upward merge flow - changes flow from operations up to doctrine core
+    Like a Christmas tree: ornaments (ops) → upper branches (ui) → mid branches (imo) → limbs (sys) → trunk (main)
+  rules:
+    - from: ops/*
+      to: ui/*
+      requires_review: false
+    - from: ui/*
+      to: imo/*
+      requires_review: false
+    - from: imo/*
+      to: sys/*
+      requires_review: true
+    - from: sys/*
+      to: main
+      requires_review: true
+      requires_status_checks: true
+
+automation_hooks:
+  doctrine_sync:
+    trigger: nightly
+    schedule: "0 2 * * *"
+    runs: .github/workflows/doctrine_sync.yml
+    description: Syncs doctrine changes across all branches
+
+  compliance_audit:
+    trigger: on_merge_to_main
+    runs: .github/workflows/audit.yml
+    description: Validates HEIR compliance and Hub Doctrine adherence
+
+  ctb_health_check:
+    trigger: weekly
+    schedule: "0 0 * * 0"
+    runs: .github/workflows/ctb_health.yml
+    description: Verifies all CTB branches exist and are properly configured
+
+branch_protection:
+  main:
+    required_reviews: 2
+    status_checks: [build, lint, test, heir_validation]
+    dismiss_stale_reviews: true
+    require_code_owner_reviews: true
+
+  doctrine/*:
+    required_reviews: 1
+    status_checks: [doctrine_sync]
+
+  sys/*:
+    required_reviews: 1
+    status_checks: [compliance_audit]
+
+  imo/*:
+    required_reviews: 0
+    status_checks: [build]
+
+  ui/*:
+    required_reviews: 0
+    status_checks: [build, lint]
+
+  ops/*:
+    required_reviews: 0
+    status_checks: []
+
+file_organization:
+  description: |
+    Guide for organizing files into appropriate CTB branches
+
+  doctrine/hub-spoke:
+    - "templates/doctrine/**"
+    - "CLAUDE.md"
+    - "global-config/**"
+    - "*.doctrine.yaml"
+
+  sys/supabase:
+    - "supabase/**"
+    - "src/lib/supabase/**"
+    - "src/integrations/supabase/**"
+
+  sys/auth:
+    - "src/lib/auth/**"
+    - "src/hooks/useAuth*"
+    - "src/contexts/Auth*"
+
+  sys/api:
+    - "src/api/**"
+    - "src/services/**"
+
+  imo/input:
+    - "src/components/forms/**"
+    - "src/hooks/useForm*"
+    - "src/lib/validation/**"
+
+  imo/middle:
+    - "src/lib/lifecycle/**"
+    - "src/hooks/useLifecycle*"
+    - "src/contexts/Lifecycle*"
+    - "src/lib/stateMachine/**"
+
+  imo/output:
+    - "src/components/display/**"
+    - "src/components/charts/**"
+    - "src/lib/export/**"
+
+  ui/components:
+    - "src/components/ui/**"
+    - "src/components/common/**"
+
+  ui/pages:
+    - "src/pages/**"
+    - "src/App.tsx"
+
+  ui/forms:
+    - "src/components/forms/**"
+
+  ops/automation:
+    - "scripts/**"
+    - ".github/workflows/**"
+
+  ops/scripts:
+    - "tools/**"
+    - "bin/**"
+
+repo_types:
+  SOURCE:
+    description: Doctrine-level repositories that define standards
+    examples: [imo-creator]
+    inherits_from: none
+    provides_to: all
+
+  IMPORT:
+    description: Child repositories that inherit CTB structure
+    examples: [company-lifecycle-cl]
+    inherits_from: imo-creator
+    provides_to: none
+
+scaffold_config:
+  enabled: true
+  auto_apply_to_new_repos: true
+  template_source: "imo-creator/global-config/ctb.branchmap.yaml"
+  initialization_script: "global-config/scripts/ctb_init.sh"
+  verification_script: "global-config/scripts/ctb_verify.sh"

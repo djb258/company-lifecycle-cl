@@ -1,0 +1,10 @@
+repos:
+- name: company-lifecycle-cl
+  manifest: global-config/ctb.branchmap.yaml
+  doctrine: Barton / CTB
+  last_updated: '2024-12-24'
+  ctb_version: 1.0.0
+  hub_id: HUB-CL-001
+  hub_name: Company Lifecycle Hub
+  altitude: 20k
+  status: active
