@@ -1,0 +1,114 @@
+meta:
+  app_name: "company-lifecycle-cl"
+  repo_slug: "djb258/company-lifecycle-cl"
+  stack:
+    - "react"
+    - "vite"
+    - "typescript"
+    - "neon"
+    - "tailwindcss"
+    - "shadcn-ui"
+  llm:
+    providers:
+      - anthropic
+      - openai
+    default: "anthropic"
+
+doctrine:
+  unique_id: "HUB-CL-001-${TIMESTAMP}-${RANDOM_HEX}"
+  process_id: "CL-CORE"
+  schema_version: "HEIR/1.0"
+  hub_name: "Company Lifecycle Hub"
+  hub_id: "HUB-CL-001"
+  altitude: "30k"
+  ctb_path: "sys/company-lifecycle"
+  owner: "Barton / Supreme Headquarters (SHQ)"
+
+deliverables:
+  repos:
+    - name: "company-lifecycle-cl"
+      visibility: private
+      hub_type: "sovereign-authority"
+  services:
+    - name: "web"
+      port: 5173
+      description: "Vite development server"
+    - name: "preview"
+      port: 4173
+      description: "Vite preview server"
+  env:
+    VITE_NEON_URL: "${DOPPLER:NEON_URL}"
+    VITE_NEON_API_KEY: "${DOPPLER:NEON_API_KEY}"
+    LLM_DEFAULT_PROVIDER: "anthropic"
+
+contracts:
+  acceptance:
+    - "All HEIR checks pass in CI"
+    - "Build succeeds without errors"
+    - "Lint passes without errors"
+    - "All tests pass"
+    - "Hub compliance checklist verified"
+
+build:
+  actions:
+    lint: ["npm run lint"]
+    build: ["npm run build"]
+    test: ["npm run test"]
+    heir_check: ["npm run heir:check"]
+  ci_checks:
+    - "npm run lint"
+    - "npm run build"
+  telemetry_events:
+    - "app.start"
+    - "lifecycle.stage.promotion"
+    - "company.identity.mint"
+    - "subhub.activate"
+    - "subhub.deactivate"
+
+imo:
+  ingress:
+    - name: "Outreach App"
+      type: "spoke"
+      description: "Outreach events (activation, meeting set)"
+    - name: "Sales App"
+      type: "spoke"
+      description: "Sales outcome events"
+    - name: "Client App"
+      type: "spoke"
+      description: "Client activation confirmation"
+  middle:
+    - name: "Neon (Primary DB)"
+      type: "database"
+      doctrine_id: "DB-NEON-01"
+    - name: "Event Validator"
+      type: "validation"
+      doctrine_id: "EVT-VALID-01"
+  egress:
+    - name: "Reporting"
+      type: "spoke"
+      description: "Read-only lifecycle state"
+    - name: "UI Shell"
+      type: "spoke"
+      description: "Read-only lifecycle view"
+    - name: "Audit Log"
+      type: "event"
+      description: "Immutable lifecycle history"
+
+guard_rails:
+  - type: "validation"
+    name: "Duplicate Company Creation"
+    action: "reject"
+  - type: "validation"
+    name: "Multiple Active Sub-Hubs"
+    action: "reject"
+  - type: "validation"
+    name: "Invalid Promotion Order"
+    action: "reject"
+  - type: "validation"
+    name: "Unauthorized Promotion"
+    action: "reject"
+
+kill_switch:
+  endpoint: "/cl/kill-switch"
+  activation_criteria: "Invalid lifecycle mutation detected"
+  emergency_contact: "SHQ / Barton Ops"
