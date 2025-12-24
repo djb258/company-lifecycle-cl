@@ -14,7 +14,92 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          cl_stage: string
+          client_uid: string | null
+          company_name: string
+          company_uid: string
+          created_at: string
+          entry_source: string | null
+          id: string
+          outreach_uid: string | null
+          promoted_to_client_at: string | null
+          promoted_to_sales_at: string | null
+          sales_uid: string | null
+        }
+        Insert: {
+          cl_stage?: string
+          client_uid?: string | null
+          company_name: string
+          company_uid: string
+          created_at?: string
+          entry_source?: string | null
+          id?: string
+          outreach_uid?: string | null
+          promoted_to_client_at?: string | null
+          promoted_to_sales_at?: string | null
+          sales_uid?: string | null
+        }
+        Update: {
+          cl_stage?: string
+          client_uid?: string | null
+          company_name?: string
+          company_uid?: string
+          created_at?: string
+          entry_source?: string | null
+          id?: string
+          outreach_uid?: string | null
+          promoted_to_client_at?: string | null
+          promoted_to_sales_at?: string | null
+          sales_uid?: string | null
+        }
+        Relationships: []
+      }
+      lifecycle_events: {
+        Row: {
+          company_id: string
+          created_at: string
+          event_payload: Json | null
+          event_source: string | null
+          event_timestamp: string
+          event_type: string
+          from_stage: string | null
+          id: string
+          to_stage: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          event_payload?: Json | null
+          event_source?: string | null
+          event_timestamp?: string
+          event_type: string
+          from_stage?: string | null
+          id?: string
+          to_stage?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          event_payload?: Json | null
+          event_source?: string | null
+          event_timestamp?: string
+          event_type?: string
+          from_stage?: string | null
+          id?: string
+          to_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lifecycle_events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
