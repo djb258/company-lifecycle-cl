@@ -1,26 +1,38 @@
-# PRD — Company Lifecycle Hub
+# PRD — Hub
 
 ## 1. Overview
 
-- **System Name:** Company Lifecycle CL
-- **Hub Name:** Company Lifecycle Hub
-- **Owner:** Barton Enterprises
-- **Version:** 1.0.0
+* **System Name:** Company Lifecycle (CL)
+* **Hub Name:** Company Lifecycle Hub
+* **Owner:** Barton / Supreme Headquarters (SHQ)
+* **Version:** v1.0
 
 ---
 
 ## 2. Hub Identity
 
-| Field | Value |
-|-------|-------|
-| **Hub ID** | HUB-CL-001 |
-| **Process ID** | PROC-CL-${SESSION_ID} |
+| Field          | Value      |
+| -------------- | ---------- |
+| **Hub ID**     | HUB-CL-001 |
+| **Process ID** | CL-CORE    |
 
 ---
 
 ## 3. Purpose
 
-The Company Lifecycle Hub manages the complete lifecycle of companies from creation to retirement. It owns all logic related to company state transitions, lifecycle stage management, company data validation, and lifecycle event orchestration. This is the central hub for company lifecycle operations across the Barton Enterprise ecosystem.
+The Company Lifecycle (CL) hub is the **sovereign authority** for company identity and lifecycle state.
+
+CL owns:
+
+* Company identity (`company_uid`)
+* Lifecycle truth (`cl_stage`)
+* Authority to mint and activate sub-hub applications
+* Authority to promote lifecycle state based on verified events
+
+CL does **not** execute operational work.
+CL determines *reality*, not activity.
+
+All lifecycle decisions are centralized in CL to prevent identity drift, state ambiguity, and cross-hub conflicts.
 
 ---
 
@@ -34,133 +46,131 @@ The Company Lifecycle Hub manages the complete lifecycle of companies from creat
 
 ## 5. Altitude Scope
 
-| Level | Description | Selected |
-|-------|-------------|----------|
-| 30,000 ft | Strategic vision, system-wide boundaries | [ ] |
-| 20,000 ft | Domain architecture, hub relationships | [x] |
-| 10,000 ft | Component design, interface contracts | [ ] |
-| 5,000 ft | Implementation detail, execution logic | [ ] |
+| Level     | Description                              | Selected |
+| --------- | ---------------------------------------- | -------- |
+| 30,000 ft | Strategic vision, system-wide boundaries | [x]      |
+| 20,000 ft | Domain architecture, hub relationships   | [x]      |
+| 10,000 ft | Component design, interface contracts    | [ ]      |
+| 5,000 ft  | Implementation detail, execution logic   | [ ]      |
 
 ---
 
 ## 6. IMO Structure
 
-_This hub owns all three IMO layers internally. Spokes are external interfaces only._
+This hub owns all three IMO layers internally.
+Spokes and sub-hubs are **external execution surfaces only**.
 
-| Layer | Role | Description |
-|-------|------|-------------|
-| **I — Ingress** | Dumb input only | Receives company data via UI forms, API calls, webhooks; validates shape only |
-| **M — Middle** | Logic, decisions, state | All lifecycle state machine logic, stage transitions, validation rules, event orchestration |
-| **O — Egress** | Output only | Emits lifecycle events, notifications, API responses, UI state updates |
+| Layer           | Role            | Description                                                   |
+| --------------- | --------------- | ------------------------------------------------------------- |
+| **I — Ingress** | Event intake    | Receives verified lifecycle events (no logic)                 |
+| **M — Middle**  | Authority logic | Lifecycle state evaluation, promotion rules, sub-hub issuance |
+| **O — Egress**  | State emission  | Emits lifecycle state changes and active sub-hub pointers     |
 
 ---
 
 ## 7. Spokes
 
-_Spokes are interfaces ONLY. They carry no logic, tools, or state. Each spoke is typed as Ingress (I) or Egress (O)._
+Spokes are **interfaces only**. They carry no logic or state.
 
-| Spoke Name | Type | Direction | Contract |
-|------------|------|-----------|----------|
-| UI Form Spoke | I | Inbound | React form components → Hub |
-| API Gateway Spoke | I | Inbound | REST/GraphQL requests → Hub |
-| Webhook Receiver Spoke | I | Inbound | External webhooks → Hub |
-| Database Spoke | O | Outbound | Hub → Supabase persistence |
-| Notification Spoke | O | Outbound | Hub → Email/SMS notifications |
-| Event Bus Spoke | O | Outbound | Hub → Other hubs via events |
-| Dashboard Spoke | O | Outbound | Hub → Analytics/reporting UI |
+| Spoke Name   | Type | Direction | Contract                                  |
+| ------------ | ---- | --------- | ----------------------------------------- |
+| Outreach App | I    | Inbound   | Outreach events (activation, meeting set) |
+| Sales App    | I    | Inbound   | Sales outcome events                      |
+| Client App   | I    | Inbound   | Client activation confirmation            |
+| Reporting    | O    | Outbound  | Read-only lifecycle state                 |
+| UI Shell     | O    | Outbound  | Read-only lifecycle view                  |
 
 ---
 
 ## 8. Connectors
 
-| Connector | Type | Direction | Contract |
-|-----------|------|-----------|----------|
-| Supabase | API | Bidirectional | Company CRUD, stage tracking |
-| External CRM | API | Outbound | Company sync, lifecycle updates |
-| Email Service | Event | Outbound | Lifecycle stage notifications |
-| Analytics Platform | Event | Outbound | Lifecycle metrics and events |
+| Connector        | Type  | Direction | Contract                    |
+| ---------------- | ----- | --------- | --------------------------- |
+| Lifecycle Events | Event | Inbound   | Verified event payload      |
+| Lifecycle State  | API   | Outbound  | Read-only CL state          |
+| Audit Log        | Event | Outbound  | Immutable lifecycle history |
 
 ---
 
 ## 9. Tools
 
-_All tools are scoped strictly INSIDE this hub. Spokes do not own tools._
+All tools are scoped **only to this hub's M layer**.
 
-| Tool | Doctrine ID | Scoped To | ADR |
-|------|-------------|-----------|-----|
-| Lifecycle State Machine | TOOL-CL-001 | This Hub (M layer) | ADR-001 |
-| Company Validator | TOOL-CL-002 | This Hub (M layer) | ADR-002 |
-| Stage Transition Engine | TOOL-CL-003 | This Hub (M layer) | ADR-003 |
-| Event Orchestrator | TOOL-CL-004 | This Hub (M layer) | ADR-004 |
+| Tool              | Doctrine ID  | Scoped To    | ADR     |
+| ----------------- | ------------ | ------------ | ------- |
+| Neon (Primary DB) | DB-NEON-01   | CL (M layer) | ADR-001 |
+| Event Validator   | EVT-VALID-01 | CL (M layer) | ADR-001 |
 
 ---
 
 ## 10. Guard Rails
 
-| Guard Rail | Type | Threshold |
-|------------|------|-----------|
-| API Rate Limit | Rate Limit | 100 req/min per user |
-| Stage Transition Timeout | Timeout | 30 seconds |
-| Company Data Validation | Validation | All required fields must pass schema |
-| Concurrent Updates | Rate Limit | 1 update per company per second |
+| Guard Rail                 | Type       | Threshold |
+| -------------------------- | ---------- | --------- |
+| Duplicate Company Creation | Validation | Reject    |
+| Multiple Active Sub-Hubs   | Validation | Reject    |
+| Invalid Promotion Order    | Validation | Reject    |
+| Unauthorized Promotion     | Validation | Reject    |
 
 ---
 
 ## 11. Kill Switch
 
-- **Endpoint:** `/api/v1/lifecycle/kill`
-- **Activation Criteria:**
-  - Error rate exceeds 10% over 5 minutes
-  - Database connection failures > 3 consecutive
-  - Memory usage > 90%
-- **Emergency Contact:** ops@bartonenterprises.com
+* **Endpoint:** `/cl/kill-switch`
+* **Activation Criteria:** Invalid lifecycle mutation detected
+* **Emergency Contact:** SHQ / Barton Ops
 
 ---
 
 ## 12. Promotion Gates
 
-| Gate | Artifact | Requirement |
-|------|----------|-------------|
-| G1 | PRD | This document approved |
-| G2 | ADR | Lifecycle state machine decision recorded |
-| G3 | Linear Issue | Implementation tasks created |
-| G4 | PR | All lifecycle logic reviewed and merged |
-| G5 | Checklist | Full hub compliance verified |
+| Gate | Artifact     | Requirement                           |
+| ---- | ------------ | ------------------------------------- |
+| G1   | PRD          | Hub definition approved               |
+| G2   | ADR          | Lifecycle authority decision recorded |
+| G3   | Linear Issue | Work item created and assigned        |
+| G4   | PR           | Code reviewed and merged              |
+| G5   | Checklist    | Deployment verification complete      |
 
 ---
 
 ## 13. Failure Modes
 
-| Failure | Severity | Remediation |
-|---------|----------|-------------|
-| Database unavailable | Critical | Retry with exponential backoff, queue operations |
-| Invalid stage transition | High | Reject with clear error, log attempt |
-| Concurrent modification | Medium | Optimistic locking, retry or conflict resolution |
-| External service timeout | Low | Queue for retry, continue processing |
+| Failure                      | Severity | Remediation               |
+| ---------------------------- | -------- | ------------------------- |
+| Duplicate company identities | High     | Manual merge + audit      |
+| Incorrect promotion          | High     | Rollback + investigation  |
+| Missing event                | Medium   | Re-ingest verified source |
+| Stale lifecycle state        | Medium   | Reconcile from audit log  |
 
 ---
 
 ## 14. Human Override Rules
 
-_When can a human bypass automation? Who approves?_
+Human override is permitted **only** to:
 
-- **Force Stage Transition:** Requires Hub Owner approval, logged with audit trail
-- **Data Correction:** Requires two approvers, immutable audit record created
-- **Kill Switch Activation:** Single approved operator can activate, auto-notifies all stakeholders
+* Correct identity conflicts
+* Resolve audit discrepancies
+
+All overrides require:
+
+* Named approver
+* Timestamp
+* Audit trail entry
 
 ---
 
 ## 15. Observability
 
-- **Logs:** Structured JSON logs → Supabase logs table, lifecycle stage transitions logged
-- **Metrics:** Stage transition counts, latency percentiles, error rates
-- **Alerts:** PagerDuty integration for critical failures, Slack for warnings
+* **Logs:** Immutable audit log of all lifecycle state changes
+* **Metrics:** Promotion counts, sub-hub activation rates, rejection rates
+* **Alerts:** Invalid mutation attempts, duplicate identity detection
 
 ---
 
 ## Approval
 
-| Role | Name | Date |
-|------|------|------|
-| Owner | | |
-| Reviewer | | |
+| Role     | Name | Date |
+| -------- | ---- | ---- |
+| Owner    |      |      |
+| Reviewer |      |      |

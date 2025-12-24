@@ -1,66 +1,65 @@
-# ADR: Lifecycle State Machine Design
+# ADR: CL as Sovereign Lifecycle Authority
 
 ## ADR Identity
 
-| Field | Value |
-|-------|-------|
-| **ADR ID** | ADR-001 |
-| **Status** | [x] Proposed / [ ] Accepted / [ ] Superseded / [ ] Deprecated |
-| **Date** | 2024-12-24 |
+| Field      | Value      |
+| ---------- | ---------- |
+| **ADR ID** | ADR-001    |
+| **Status** | [x] Accepted |
+| **Date**   | 2025-12-24 |
 
 ---
 
 ## Owning Hub
 
-| Field | Value |
-|-------|-------|
+| Field        | Value                 |
+| ------------ | --------------------- |
 | **Hub Name** | Company Lifecycle Hub |
-| **Hub ID** | HUB-CL-001 |
+| **Hub ID**   | HUB-CL-001            |
 
 ---
 
 ## Scope
 
-| Layer | Affected |
-|-------|----------|
-| I — Ingress | [ ] |
-| M — Middle | [x] |
-| O — Egress | [ ] |
+| Layer       | Affected |
+| ----------- | -------- |
+| I — Ingress | [x]      |
+| M — Middle  | [x]      |
+| O — Egress  | [x]      |
 
 ---
 
 ## Context
 
-The Company Lifecycle Hub needs a reliable, deterministic way to manage company lifecycle stages. Companies move through defined stages (e.g., Prospect → Active → Churned → Archived), and each transition must be validated, logged, and trigger appropriate downstream actions.
-
-We need to decide on the architecture for managing these state transitions.
+The system manages companies across multiple lifecycle phases (Outreach, Sales, Client) implemented as independent applications.
+Without a single authority, identity drift, ambiguous state, and conflicting promotions emerge.
+A decision is required to establish **where lifecycle truth lives** and **who is allowed to declare reality** before execution begins.
 
 ---
 
 ## Decision
 
-We will implement a **Finite State Machine (FSM)** pattern for lifecycle management.
+**Company Lifecycle (CL) is designated as the sole sovereign authority for company identity and lifecycle state.**
 
-**Why this choice:**
-1. **Deterministic** — State transitions are explicit and predictable
-2. **Auditable** — Every transition is logged with timestamp and actor
-3. **Validatable** — Invalid transitions are rejected before execution
-4. **Testable** — FSM logic can be unit tested in isolation
-5. **No LLM dependency** — Pure deterministic code, aligns with tool doctrine
+CL is the only hub permitted to:
 
-The FSM will be implemented in TypeScript using XState or a custom lightweight implementation, residing entirely in the M (Middle) layer.
+* Mint `company_uid`
+* Mint and activate sub-hub IDs
+* Promote lifecycle state based on verified events
+
+Sub-hubs emit **facts**, not **truth**.
+Lifecycle reality is centralized to ensure determinism, auditability, and non-ambiguous state.
 
 ---
 
 ## Alternatives Considered
 
-| Option | Why Not Chosen |
-|--------|----------------|
-| Event Sourcing | Over-engineered for current scale; adds complexity |
-| Simple boolean flags | Not scalable; hard to validate transitions |
-| Database triggers | Logic in wrong layer; hard to test |
-| LLM-based classification | Violates determinism doctrine |
-| Do Nothing | Status quo is insufficient for compliance |
+| Option                | Why Not Chosen                                  |
+| --------------------- | ----------------------------------------------- |
+| Sub-hubs self-promote | Leads to conflicting states and authority drift |
+| CRM-centric lifecycle | Tool-coupled identity; poor auditability        |
+| Status-only flags     | No authority, no event provenance               |
+| Do Nothing            | Guarantees inconsistency at scale               |
 
 ---
 
@@ -68,57 +67,56 @@ The FSM will be implemented in TypeScript using XState or a custom lightweight i
 
 ### Enables
 
-- Clear lifecycle stage visualization
-- Reliable audit trail for compliance
-- Easy addition of new stages without breaking existing logic
-- Parallel state support for complex company scenarios
-- Integration with notification system for stage transitions
+* Single source of truth for lifecycle
+* Clean audit trail of promotions
+* Independent sub-hub execution
+* Deterministic UI and reporting
 
 ### Prevents
 
-- Invalid state transitions
-- Race conditions in concurrent updates
-- Logic bleeding into I/O layers
-- Untraceable state changes
+* Duplicate or competing lifecycle states
+* Sideways promotion logic
+* Tool-driven identity drift
+* Implicit or inferred lifecycle changes
 
 ---
 
 ## Guard Rails
 
-_Constraints that bound this decision. Do not define logic or implementation._
-
-| Type | Value |
-|------|-------|
-| Rate Limit | 1 transition per company per second |
-| Timeout | 30 seconds for transition completion |
-| Kill Switch | `/api/v1/lifecycle/kill` to halt all transitions |
+| Type        | Value                            |
+| ----------- | -------------------------------- |
+| Rate Limit  | One active lifecycle per company |
+| Timeout     | N/A (event-driven)               |
+| Kill Switch | CL promotion suspension endpoint |
 
 ---
 
 ## Rollback
 
-_How is this decision reversed if it fails? Do not define remediation logic._
+If this decision proves invalid, rollback requires:
 
-1. FSM can be disabled via feature flag
-2. Fallback to simple stage field updates
-3. All transitions logged, enabling replay/recovery
+* Freezing promotions in CL
+* Reverting lifecycle authority to a previous ADR-defined model
+* Manual reconciliation of lifecycle state
+
+Rollback **does not** preserve partial authority or hybrid models.
 
 ---
 
 ## Traceability
 
-| Artifact | Reference |
-|----------|-----------|
-| PRD | PRD-COMPANY-LIFECYCLE |
-| Sub-PRD | |
-| Linear Issue | |
-| PR(s) | |
+| Artifact     | Reference                |
+| ------------ | ------------------------ |
+| PRD          | PRD-COMPANY-LIFECYCLE.md |
+| Sub-PRD      | PRD-HUB.md               |
+| Linear Issue | N/A (not legal until 5k) |
+| PR(s)        | N/A                      |
 
 ---
 
 ## Approval
 
-| Role | Name | Date |
-|------|------|------|
-| Hub Owner | | |
-| Reviewer | | |
+| Role      | Name | Date |
+| --------- | ---- | ---- |
+| Hub Owner |      |      |
+| Reviewer  |      |      |

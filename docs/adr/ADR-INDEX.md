@@ -13,7 +13,7 @@
 
 | ADR ID | Title | Status | Date |
 |--------|-------|--------|------|
-| ADR-001 | Lifecycle State Machine Design | Proposed | 2024-12-24 |
+| ADR-001 | CL as Sovereign Lifecycle Authority | Accepted | 2025-12-24 |
 
 ---
 
@@ -38,8 +38,8 @@
 
 ## ADR Categories
 
-### State Management
-- ADR-001: Lifecycle State Machine Design
+### Authority & Governance
+- ADR-001: CL as Sovereign Lifecycle Authority
 
 ### Data Layer
 _(No ADRs yet)_

@@ -5,7 +5,7 @@ meta:
     - "react"
     - "vite"
     - "typescript"
-    - "supabase"
+    - "neon"
     - "tailwindcss"
     - "shadcn-ui"
   llm:
@@ -16,18 +16,19 @@ meta:
 
 doctrine:
   unique_id: "HUB-CL-001-${TIMESTAMP}-${RANDOM_HEX}"
-  process_id: "PROC-CL-${SESSION_ID}"
+  process_id: "CL-CORE"
   schema_version: "HEIR/1.0"
   hub_name: "Company Lifecycle Hub"
   hub_id: "HUB-CL-001"
-  altitude: "20k"
+  altitude: "30k"
   ctb_path: "sys/company-lifecycle"
+  owner: "Barton / Supreme Headquarters (SHQ)"
 
 deliverables:
   repos:
     - name: "company-lifecycle-cl"
       visibility: private
-      hub_type: "application"
+      hub_type: "sovereign-authority"
   services:
     - name: "web"
       port: 5173
@@ -36,8 +37,8 @@ deliverables:
       port: 4173
       description: "Vite preview server"
   env:
-    VITE_SUPABASE_URL: "${DOPPLER:SUPABASE_URL}"
-    VITE_SUPABASE_ANON_KEY: "${DOPPLER:SUPABASE_ANON_KEY}"
+    VITE_NEON_URL: "${DOPPLER:NEON_URL}"
+    VITE_NEON_API_KEY: "${DOPPLER:NEON_API_KEY}"
     LLM_DEFAULT_PROVIDER: "anthropic"
 
 contracts:
@@ -59,45 +60,55 @@ build:
     - "npm run build"
   telemetry_events:
     - "app.start"
-    - "lifecycle.stage.transition"
-    - "company.create"
-    - "company.update"
-    - "company.archive"
+    - "lifecycle.stage.promotion"
+    - "company.identity.mint"
+    - "subhub.activate"
+    - "subhub.deactivate"
 
 imo:
   ingress:
-    - name: "UI Forms"
-      type: "react-components"
-      description: "User input forms for company data"
-    - name: "API Gateway"
-      type: "rest-api"
-      description: "REST API endpoints for external integrations"
-    - name: "Webhook Receiver"
-      type: "webhook"
-      description: "Incoming webhooks from external systems"
+    - name: "Outreach App"
+      type: "spoke"
+      description: "Outreach events (activation, meeting set)"
+    - name: "Sales App"
+      type: "spoke"
+      description: "Sales outcome events"
+    - name: "Client App"
+      type: "spoke"
+      description: "Client activation confirmation"
   middle:
-    - name: "Lifecycle State Machine"
-      type: "fsm"
-      doctrine_id: "TOOL-CL-001"
-    - name: "Company Validator"
+    - name: "Neon (Primary DB)"
+      type: "database"
+      doctrine_id: "DB-NEON-01"
+    - name: "Event Validator"
       type: "validation"
-      doctrine_id: "TOOL-CL-002"
-    - name: "Stage Transition Engine"
-      type: "state-machine"
-      doctrine_id: "TOOL-CL-003"
-    - name: "Event Orchestrator"
-      type: "event-driven"
-      doctrine_id: "TOOL-CL-004"
+      doctrine_id: "EVT-VALID-01"
   egress:
-    - name: "Database Spoke"
-      type: "supabase"
-      description: "Persistence to Supabase"
-    - name: "Notification Spoke"
-      type: "notifications"
-      description: "Email/SMS notifications"
-    - name: "Event Bus Spoke"
-      type: "events"
-      description: "Events to other hubs"
-    - name: "Dashboard Spoke"
-      type: "analytics"
-      description: "Analytics and reporting"
+    - name: "Reporting"
+      type: "spoke"
+      description: "Read-only lifecycle state"
+    - name: "UI Shell"
+      type: "spoke"
+      description: "Read-only lifecycle view"
+    - name: "Audit Log"
+      type: "event"
+      description: "Immutable lifecycle history"
+
+guard_rails:
+  - type: "validation"
+    name: "Duplicate Company Creation"
+    action: "reject"
+  - type: "validation"
+    name: "Multiple Active Sub-Hubs"
+    action: "reject"
+  - type: "validation"
+    name: "Invalid Promotion Order"
+    action: "reject"
+  - type: "validation"
+    name: "Unauthorized Promotion"
+    action: "reject"
+
+kill_switch:
+  endpoint: "/cl/kill-switch"
+  activation_criteria: "Invalid lifecycle mutation detected"
+  emergency_contact: "SHQ / Barton Ops"
