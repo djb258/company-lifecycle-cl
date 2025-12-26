@@ -13,12 +13,17 @@ setup:
 #   - stg: Staging environment
 #   - prd: Production environment
 #
-# Required Secrets:
+# Required Secrets (Neon PostgreSQL):
 #   - HUB_ID: Unique hub identifier (HUB-CL-001)
-#   - PROCESS_ID: Execution trace ID
-#   - VITE_SUPABASE_URL: Supabase project URL
-#   - VITE_SUPABASE_ANON_KEY: Supabase anonymous key
-#   - SUPABASE_SERVICE_ROLE_KEY: Supabase service role key (backend only)
+#   - VITE_NEON_HOST: Neon database host
+#   - VITE_NEON_DATABASE: Database name (Marketing DB)
+#   - VITE_NEON_USER: Database user
+#   - VITE_NEON_PASSWORD: Database password
+#   - VITE_DATABASE_URL: Full connection string
+#
+# Database: Neon PostgreSQL (shared with Barton Outreach Core)
+#   Host: ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech
+#   Database: Marketing DB
 #
 # Usage:
 #   doppler run -- npm run dev
