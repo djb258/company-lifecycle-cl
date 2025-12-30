@@ -6,8 +6,8 @@
 
 | Field | Value |
 |-------|-------|
-| **Hub Name** | Company Lifecycle Hub |
-| **Hub ID** | HUB-CL-001 |
+| **Hub Name** | |
+| **Hub ID** | |
 | **Schema Version** | HEIR/1.0 |
 
 ---
@@ -25,9 +25,9 @@ Every hub MUST have a `heir.doctrine.yaml` file at the root for compliance valid
 
 ```yaml
 meta:
-  app_name: "company-lifecycle-cl"
-  repo_slug: "djb258/company-lifecycle-cl"
-  stack: ["react", "vite", "typescript", "supabase", "tailwindcss"]
+  app_name: "<hub-name>"
+  repo_slug: "<org>/<repo>"
+  stack: ["<framework>", "<backend>", "<database>"]
   llm:
     providers:
       - anthropic
@@ -35,37 +35,38 @@ meta:
     default: "anthropic"
 
 doctrine:
-  unique_id: "HUB-CL-001-${TIMESTAMP}-${RANDOM_HEX}"
-  process_id: "PROC-CL-${SESSION_ID}"
+  unique_id: "<hub-id>-${TIMESTAMP}-${RANDOM_HEX}"
+  process_id: "<hub-id>-process-${SESSION_ID}"
   schema_version: "HEIR/1.0"
   blueprint_version_hash: "${AUTO_SHA256_OF_CANON}"
   agent_execution_signature: "${AUTO_HASH(llm+tools)}"
 
 deliverables:
   repos:
-    - name: "company-lifecycle-cl"
+    - name: "<hub-name>"
       visibility: private
   services:
-    - name: "web"
-      port: 5173
-    - name: "api"
-      port: 3000
+    - name: "mcp"
+      port: 7001
+    - name: "sidecar"
+      port: 8000
   env:
-    VITE_SUPABASE_URL: "${DOPPLER:SUPABASE_URL}"
-    VITE_SUPABASE_ANON_KEY: "${DOPPLER:SUPABASE_ANON_KEY}"
+    MCP_URL: "http://localhost:7001"
+    SIDECAR_URL: "http://localhost:8000"
+    BEARER_TOKEN: "${DOPPLER:BEARER_TOKEN}"
     LLM_DEFAULT_PROVIDER: "anthropic"
 
 contracts:
   acceptance:
     - "All HEIR checks pass in CI"
-    - "Build succeeds without errors"
-    - "All tests pass"
+    - "Sidecar event emitted on app start"
+    - "MCP bay exposes required tools"
 
 build:
   actions:
-    heir_check: ["heir.check"]
-    ci_checks: ["npm run build", "npm run lint"]
-    telemetry_events: ["app.start", "lifecycle.transition"]
+    mcp_tools: ["heir.check", "sidecar.event"]
+    ci_checks: ["python -m packages.heir.checks"]
+    telemetry_events: ["app.start", "action.invoked"]
 ```
 
 ---
@@ -76,9 +77,9 @@ build:
 |-------|-------------------|
 | **Meta** | app_name, repo_slug, stack, LLM providers |
 | **Doctrine** | unique_id, process_id, schema_version |
-| **Deliverables** | repos, services, env vars |
+| **Deliverables** | repos, services (mcp, sidecar), env vars |
 | **Contracts** | acceptance criteria defined |
-| **Build** | CI checks, telemetry events |
+| **Build** | MCP tools, CI checks, telemetry events |
 | **Manifest** | IMO manifest integration |
 
 ---
@@ -87,7 +88,7 @@ build:
 
 ```bash
 # Run validation
-npm run heir:check
+python -m packages.heir.checks
 
 # Expected output
 [INFO] Running HEIR validation checks...
@@ -96,6 +97,7 @@ npm run heir:check
   Checking Deliverables... PASSED
   Checking Contracts... PASSED
   Checking Build configuration... PASSED
+  Checking Manifest integration... PASSED
 
 ==================================================
 HEIR Validation Summary
@@ -112,7 +114,7 @@ HEIR Validation Summary
 
 ```yaml
 - name: Run HEIR Compliance Checks
-  run: npm run heir:check
+  run: python -m packages.heir.checks
 
 - name: Fail if not compliant
   if: failure()
@@ -144,7 +146,7 @@ HEIR Validation Summary
 ### Deliverables Section
 | Field | Required | Description |
 |-------|----------|-------------|
-| `services` | Yes | Must include web service |
+| `services` | Yes | Must include mcp and sidecar |
 | `env` | Yes | Required environment variables |
 
 ---
@@ -155,8 +157,8 @@ All secrets in `heir.doctrine.yaml` should reference Doppler:
 
 ```yaml
 env:
-  VITE_SUPABASE_URL: "${DOPPLER:SUPABASE_URL}"
-  VITE_SUPABASE_ANON_KEY: "${DOPPLER:SUPABASE_ANON_KEY}"
+  BEARER_TOKEN: "${DOPPLER:BEARER_TOKEN}"
+  COMPOSIO_API_KEY: "${DOPPLER:COMPOSIO_API_KEY}"
   ANTHROPIC_API_KEY: "${DOPPLER:ANTHROPIC_API_KEY}"
 ```
 
@@ -167,7 +169,7 @@ env:
 - [ ] `heir.doctrine.yaml` exists at hub root
 - [ ] Meta section complete
 - [ ] Doctrine IDs defined
-- [ ] Services defined
+- [ ] Services include mcp and sidecar
 - [ ] Environment variables reference Doppler
 - [ ] CI runs HEIR checks
 - [ ] All checks pass
@@ -178,6 +180,6 @@ env:
 
 | Artifact | Reference |
 |----------|-----------|
-| PRD | PRD-COMPANY-LIFECYCLE |
+| PRD | |
 | ADR | |
 | Linear Issue | |

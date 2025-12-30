@@ -4,9 +4,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Hub Name** | Company Lifecycle Hub |
-| **Hub ID** | HUB-CL-001 |
-| **Doppler Project** | company-lifecycle-cl |
+| **Hub Name** | |
+| **Hub ID** | |
+| **Doppler Project** | |
 
 ---
 
@@ -26,7 +26,7 @@ Every hub MUST have a `doppler.yaml` at the root:
 
 ```yaml
 setup:
-  project: company-lifecycle-cl
+  project: <hub-name>
   config: dev
 ```
 
@@ -46,9 +46,6 @@ setup:
 |--------|-------------|----------|
 | `HUB_ID` | Unique hub identifier | Yes |
 | `PROCESS_ID` | Execution trace ID | Yes |
-| `SUPABASE_URL` | Supabase project URL | Yes |
-| `SUPABASE_ANON_KEY` | Supabase anonymous key | Yes |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key | Yes |
 | `COMPOSIO_API_KEY` | Composio integration | If using Composio |
 | `ANTHROPIC_API_KEY` | Claude integration | If using AI |
 | `OPENAI_API_KEY` | OpenAI integration | If using AI |
@@ -72,11 +69,11 @@ doppler setup
 # Run with secrets
 doppler run -- <your-command>
 
-# Example: Run Vite dev server
-doppler run -- npm run dev
+# Example: Run Node.js app
+doppler run -- node src/server/main.js
 
-# Example: Run production build
-doppler run -- npm run build
+# Example: Run Python app
+doppler run -- python main.py
 ```
 
 ---
@@ -146,6 +143,6 @@ doppler secrets download --no-file --format env | vercel env add
 
 | Artifact | Reference |
 |----------|-----------|
-| PRD | PRD-COMPANY-LIFECYCLE |
+| PRD | |
 | ADR | |
 | Linear Issue | |

@@ -4,9 +4,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Hub Name** | Company Lifecycle Hub |
-| **Hub ID** | HUB-CL-001 |
-| **Vault Name** | company-lifecycle-vault |
+| **Hub Name** | |
+| **Hub ID** | |
+| **Vault Name** | |
 
 ---
 
@@ -54,7 +54,7 @@ Copy from `templates/adr/ADR.md`
 
 **Date:** {{date}}
 **Attendees:**
-**Hub:** Company Lifecycle Hub
+**Hub:** {{hub_name}}
 
 ---
 
@@ -84,7 +84,7 @@ Copy from `templates/adr/ADR.md`
 # {{date}}
 
 ## Hub Focus
-- **Hub:** Company Lifecycle Hub
+- **Hub:**
 - **Altitude:**
 
 ## Today's Tasks
@@ -116,20 +116,20 @@ Copy from `templates/adr/ADR.md`
 
 ### Internal Links
 ```markdown
-[[10-PRD/PRD-COMPANY-LIFECYCLE]]
-[[20-ADR/ADR-001-lifecycle-state-machine]]
+[[10-PRD/PRD-hub-name]]
+[[20-ADR/ADR-001-decision]]
 ```
 
 ### Hub References
 ```markdown
-Hub ID: `HUB-CL-001`
-Process ID: `PROC-CL-XXX`
+Hub ID: `HUB-XXX`
+Process ID: `PROC-XXX`
 ```
 
 ### Tags
 ```markdown
-#hub/company-lifecycle
-#altitude/20k
+#hub/hub-name
+#altitude/30k
 #status/active
 #type/prd
 #type/adr
@@ -174,7 +174,9 @@ Process ID: `PROC-CL-XXX`
 
 Example:
 ```
-company-lifecycle-vault/
+imo-creator-vault/
+barton-outreach-vault/
+garage-mcp-vault/
 ```
 
 ---
@@ -186,7 +188,7 @@ Every vault MUST have:
 | File | Purpose |
 |------|---------|
 | `README.md` | Vault overview, quick links |
-| `10-PRD/PRD-COMPANY-LIFECYCLE.md` | Hub PRD |
+| `10-PRD/PRD-{hub-name}.md` | Hub PRD |
 | `20-ADR/ADR-INDEX.md` | ADR index |
 | `70-TEMPLATES/*.md` | All required templates |
 
@@ -236,6 +238,6 @@ WHERE !completed
 
 | Artifact | Reference |
 |----------|-----------|
-| PRD | PRD-COMPANY-LIFECYCLE |
+| PRD | |
 | ADR | |
 | Linear Issue | |

@@ -4,9 +4,9 @@
 
 | Field | Value |
 |-------|-------|
-| **Hub Name** | Company Lifecycle Hub |
-| **Hub ID** | HUB-CL-001 |
-| **Composio Account** | barton-enterprises |
+| **Hub Name** | |
+| **Hub ID** | |
+| **Composio Account** | |
 
 ---
 
@@ -33,11 +33,10 @@ This hub uses Composio as the Model Context Protocol (MCP) server for external s
 
 | Service | Purpose | Status | Doctrine ID |
 |---------|---------|--------|-------------|
-| GitHub | Repository management | [ ] Connected | TOOL-GH-001 |
-| Supabase | Database operations | [ ] Connected | TOOL-SB-001 |
-| Vercel | Deployment | [ ] Connected | TOOL-VC-001 |
-| OpenAI | LLM integration | [ ] Connected | TOOL-OAI-001 |
-| Anthropic | Claude integration | [ ] Connected | TOOL-ANT-001 |
+| GitHub | Repository management | [ ] Connected | |
+| Vercel | Deployment | [ ] Connected | |
+| OpenAI | LLM integration | [ ] Connected | |
+| Anthropic | Claude integration | [ ] Connected | |
 
 ---
 
@@ -73,12 +72,12 @@ DOCTRINE_VER=
 
 All Composio operations MUST generate doctrine-compliant IDs:
 
-```typescript
-function generateDoctrineId(): string {
-  const db = process.env.DOCTRINE_DB || 'CL';
-  const subhive = process.env.DOCTRINE_SUBHIVE || 'LIFECYCLE';
-  const app = process.env.DOCTRINE_APP || 'company-lifecycle';
-  const ver = process.env.DOCTRINE_VER || '1.0';
+```javascript
+function generateDoctrineId() {
+  const db = process.env.DOCTRINE_DB;
+  const subhive = process.env.DOCTRINE_SUBHIVE;
+  const app = process.env.DOCTRINE_APP;
+  const ver = process.env.DOCTRINE_VER;
 
   const timestamp = Date.now().toString(36).toUpperCase();
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -132,6 +131,6 @@ curl -X POST http://localhost:7001/mcp/test \
 
 | Artifact | Reference |
 |----------|-----------|
-| PRD | PRD-COMPANY-LIFECYCLE |
+| PRD | |
 | ADR | |
 | Linear Issue | |
