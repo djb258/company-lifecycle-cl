@@ -105,18 +105,18 @@ Rollback **does not** preserve partial authority or hybrid models.
 
 ## Traceability
 
-| Artifact     | Reference                |
-| ------------ | ------------------------ |
-| PRD          | PRD-COMPANY-LIFECYCLE.md |
-| Sub-PRD      | PRD-HUB.md               |
-| Linear Issue | N/A (not legal until 5k) |
-| PR(s)        | N/A                      |
+| Artifact     | Reference                              |
+| ------------ | -------------------------------------- |
+| PRD          | docs/prd/PRD_COMPANY_LIFECYCLE.md      |
+| Sub-PRD      | N/A (Root Hub)                         |
+| Linear Issue | CL-001                                 |
+| PR(s)        | Initial schema migration               |
 
 ---
 
 ## Approval
 
-| Role      | Name | Date |
-| --------- | ---- | ---- |
-| Hub Owner |      |      |
-| Reviewer  |      |      |
+| Role      | Name | Date       |
+| --------- | ---- | ---------- |
+| Hub Owner | SHQ  | 2025-12-30 |
+| Reviewer  |      |            |

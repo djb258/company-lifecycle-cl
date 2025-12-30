@@ -74,9 +74,9 @@
 
 | Artifact | Reference |
 |----------|-----------|
-| PRD | PRD-COMPANY-LIFECYCLE |
-| ADR | |
-| Linear Issue | |
+| PRD | docs/prd/PRD_COMPANY_LIFECYCLE.md |
+| ADR | docs/adr/ADR-001-lifecycle-state-machine.md |
+| Linear Issue | CL-XXX |
 
 ## Additional Context
 <!-- Any other relevant information -->
