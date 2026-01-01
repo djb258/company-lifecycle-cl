@@ -301,5 +301,63 @@ Downstream systems MUST NOT:
 
 ---
 
-**ERD Version:** 1.0
+## 9. Identity Anchor Doctrine (ADR-003)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    IDENTITY ANCHOR DOCTRINE                      │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Identity Anchor Rule:                                          │
+│    domain IS NOT NULL  OR  linkedin_url IS NOT NULL             │
+│                                                                 │
+│  Field Nullability:                                             │
+│    ┌──────────────────┬──────────┬──────────┐                  │
+│    │ Field            │ Required │ Nullable │                  │
+│    ├──────────────────┼──────────┼──────────┤                  │
+│    │ website_url      │ NO       │ YES      │                  │
+│    │ linkedin_url     │ NO       │ YES      │                  │
+│    └──────────────────┴──────────┴──────────┘                  │
+│                                                                 │
+│  Constraint: chk_identity_anchor                                │
+│    CHECK (website_url IS NOT NULL OR linkedin_url IS NOT NULL)  │
+│                                                                 │
+│  Rationale:                                                     │
+│    - Many companies have only LinkedIn (early-stage B2B)        │
+│    - Some companies have only website (no LinkedIn page)        │
+│    - Requiring BOTH would reject valid companies                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 10. State Expansion (ADR-003)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                       STATE EXPANSION                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Constraint: chk_state_valid                                    │
+│                                                                 │
+│  Current Allowed States (v1.1):                                 │
+│    PA, VA, MD, OH, WV, KY, DE, OK, NC                          │
+│                                                                 │
+│  Expansion Rules:                                               │
+│    1. New states require ADR authorization                      │
+│    2. Must be documented before or immediately after run        │
+│    3. No silent expansions                                      │
+│                                                                 │
+│  State Code Reference:                                          │
+│    NC = 37 (FIPS)                                               │
+│    ID Format: 04.04.01.{STATE_CODE}.{SEQ}.{SUB}                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+**ERD Version:** 1.1
 **Doctrine Status:** Locked
+**ADR Reference:** ADR-003

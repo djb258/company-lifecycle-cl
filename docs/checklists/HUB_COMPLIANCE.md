@@ -219,11 +219,38 @@ No exceptions. No partial compliance.
 
 ---
 
+## Identity Anchor & State Expansion (ADR-003)
+
+### Identity Anchor Doctrine
+
+- [x] Identity anchor rule documented: domain OR LinkedIn (not AND)
+- [x] `website_url` nullable (not required)
+- [x] `linkedin_url` nullable (not required)
+- [x] `chk_identity_anchor` constraint enforces at least one anchor
+- [x] ADR-003 authorizes identity anchor doctrine
+
+### State Expansion Governance
+
+- [x] `chk_state_valid` expanded via ADR authorization
+- [x] Current states documented: PA, VA, MD, OH, WV, KY, DE, OK, NC
+- [x] State expansion requires ADR (no silent changes)
+- [x] NC added via ADR-003 (2026-01-01)
+
+### Constraint Modification Rules
+
+- [x] No constraints modified without ADR authorization
+- [x] Post-run formalization permitted within 24h
+- [x] All constraint changes documented in CL_ERD.md
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT
 
 **Blockers:** None
+
+**Doctrine Version:** 1.1
 
 ---
 

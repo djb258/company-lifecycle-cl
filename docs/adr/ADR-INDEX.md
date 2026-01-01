@@ -15,6 +15,7 @@
 |--------|-------|--------|------|
 | ADR-001 | CL as Sovereign Lifecycle Authority | Accepted | 2025-12-24 |
 | ADR-002 | Gate Zero as Pre-Sovereign Verification Stage | Accepted | 2025-12-31 |
+| ADR-003 | Identity Anchor Doctrine & State Expansion | Accepted | 2026-01-01 |
 
 ---
 
@@ -46,7 +47,7 @@
 - ADR-002: Gate Zero as Pre-Sovereign Verification Stage
 
 ### Data Layer
-_(No ADRs yet)_
+- ADR-003: Identity Anchor Doctrine & State Expansion
 
 ### UI/UX
 _(No ADRs yet)_
