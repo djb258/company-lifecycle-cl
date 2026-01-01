@@ -14,6 +14,7 @@
 | ADR ID | Title | Status | Date |
 |--------|-------|--------|------|
 | ADR-001 | CL as Sovereign Lifecycle Authority | Accepted | 2025-12-24 |
+| ADR-002 | Gate Zero as Pre-Sovereign Verification Stage | Accepted | 2025-12-31 |
 
 ---
 
@@ -40,6 +41,9 @@
 
 ### Authority & Governance
 - ADR-001: CL as Sovereign Lifecycle Authority
+
+### Lifecycle Stages
+- ADR-002: Gate Zero as Pre-Sovereign Verification Stage
 
 ### Data Layer
 _(No ADRs yet)_

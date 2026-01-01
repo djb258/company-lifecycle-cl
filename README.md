@@ -47,7 +47,42 @@ No child hub, downstream system, external integration, or automation may fabrica
 
 ---
 
-## Promotion Authority
+## Lifecycle Stages
+
+### Gate Zero (Pre-Sovereign Verification)
+
+Before a company receives a sovereign identity, it must pass **Gate Zero** — the binary existence verification stage.
+
+```
+[ Source Lists ]
+      │
+      ▼
+┌─────────────────────┐
+│   Gate Zero         │  ← Uses intake_id only (pre-sovereign)
+│   Existence Check   │
+│   domain + LinkedIn │
+│   + state           │
+└──────────┬──────────┘
+           │
+     ┌─────┴─────┐
+   FAIL        PASS
+     │           │
+     ▼           ▼
+┌──────────┐  ┌──────────────────┐
+│ Recovery │  │ AUTH → AIR       │
+│ (3 tries)│  │ Mint Worker      │
+└──────────┘  │ mints sovereign  │
+              └──────────────────┘
+```
+
+**Gate Zero constraints:**
+- Uses `intake_id` only — never `sovereign_company_id`
+- Binary pass/fail — no enrichment
+- Failures route to recovery (3 attempts: 24h → 72h → 168h)
+- Success emits `AUTH` via AIR — Mint Worker subscribes
+- Minting reserved for downstream worker
+
+### Promotion Authority
 
 All lifecycle movement is governed exclusively by CL.
 
@@ -138,7 +173,25 @@ External identifiers are **never** primary identity. They are mappings to the so
 | [CL_DOCTRINE.md](docs/doctrine/CL_DOCTRINE.md) | Complete conceptual model |
 | [CONCEPTUAL_SCHEMA.md](docs/doctrine/CONCEPTUAL_SCHEMA.md) | Schema invariants (no SQL) |
 | [INVARIANTS_AND_KILL_SWITCHES.md](docs/doctrine/INVARIANTS_AND_KILL_SWITCHES.md) | Hard constraints and emergency controls |
+| [AIR_DOCTRINE.md](docs/doctrine/AIR_DOCTRINE.md) | Action/Incident/Result event contract |
 | [ADR-001](docs/adr/ADR-001-lifecycle-state-machine.md) | Lifecycle state machine decision |
+| [ADR-002](docs/adr/ADR-002-gate-zero-pre-sovereign-verification.md) | Gate Zero pre-sovereign verification |
+
+## Schema Documents
+
+| Document | Purpose |
+|----------|---------|
+| [CL_COMPANY_IDENTITY.md](docs/schema/CL_COMPANY_IDENTITY.md) | Sovereign identity table |
+| [GATE_ZERO_INTAKE.md](docs/schema/GATE_ZERO_INTAKE.md) | Pre-sovereign intake table |
+| [GATE_ZERO_RECOVERY.md](docs/schema/GATE_ZERO_RECOVERY.md) | Failed intake recovery with throttles |
+| [GATE_ZERO_AIR.md](docs/schema/GATE_ZERO_AIR.md) | Gate Zero AIR event log |
+
+## PRD Documents
+
+| Document | Purpose |
+|----------|---------|
+| [PRD-COMPANY-LIFECYCLE.md](docs/prd/PRD-COMPANY-LIFECYCLE.md) | CL Hub requirements |
+| [PRD-GATE-ZERO.md](docs/prd/PRD-GATE-ZERO.md) | Gate Zero stage requirements |
 
 ---
 
@@ -151,5 +204,5 @@ External identifiers are **never** primary identity. They are mappings to the so
 ---
 
 **Repository:** `company-lifecycle-cl`
-**Doctrine Version:** 1.0
-**Last Updated:** 2025-12-26
+**Doctrine Version:** 1.1
+**Last Updated:** 2025-12-31

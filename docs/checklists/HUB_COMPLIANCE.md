@@ -122,6 +122,39 @@ No exceptions. No partial compliance.
 
 ---
 
+## Gate Zero Stage
+
+### Pre-Sovereign Verification
+
+- [x] Gate Zero uses `intake_id` only (never `sovereign_company_id`)
+- [x] Binary existence verification (pass/fail only)
+- [x] Gate Zero never enriches authoritative tables
+- [x] Failures route to recovery table with throttles
+
+### Recovery Throttles
+
+- [x] Max attempts defined: 3
+- [x] Backoff schedule defined: 24h → 72h → 168h
+- [x] Recovery window defined: 14 days post-batch
+- [x] Recovery success creates new intake (never mutates failed row)
+
+### AIR Integration
+
+- [x] AIR doctrine defined: docs/doctrine/AIR_DOCTRINE.md
+- [x] Gate Zero AIR table defined: docs/schema/GATE_ZERO_AIR.md
+- [x] Event types documented: ATTEMPT, PASS, FAIL, AUTH, EXHAUSTED, REENTER
+- [x] Reason codes documented per event type
+- [x] Gate Zero emits AUTH on success (not MINT)
+- [x] Mint Worker subscribes to Gate Zero AIR for AUTH events
+
+### Gate Zero Kill Switch
+
+- [x] Kill switch endpoint defined: `/cl/gate-zero/kill-switch`
+- [x] Batch-level pause supported
+- [x] Emergency contact assigned: SHQ Admin
+
+---
+
 ## Failure Modes
 
 - [x] Failure modes documented (see PRD Section 13)
@@ -140,9 +173,11 @@ No exceptions. No partial compliance.
 ## Traceability
 
 - [x] PRD exists and is current: **docs/prd/PRD_COMPANY_LIFECYCLE.md**
+- [x] PRD for Gate Zero: **docs/prd/PRD-GATE-ZERO.md**
 - [x] ADR exists (if decisions required): **docs/adr/ADR-001-lifecycle-state-machine.md**
-- [x] Linear issue linked: **CL-001**
-- [x] PR linked: Initial schema migration
+- [x] ADR for Gate Zero: **docs/adr/ADR-002-gate-zero-pre-sovereign-verification.md**
+- [x] Linear issue linked: **CL-001**, **CL-002**
+- [x] PR linked: Initial schema migration, Gate Zero documentation
 
 ---
 
