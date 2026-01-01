@@ -374,7 +374,77 @@ This ensures auditability and compliance.
 
 ---
 
-## 8. Schema Relationship Summary
+## 8. Bootstrap Tables
+
+### 8.1 Identity Staging
+
+**Identity Staging** is the pre-sovereign intake table where company candidates are staged before minting.
+
+| Attribute | Purpose |
+|-----------|---------|
+| `staging_id` | Primary key for staging record |
+| `source_company_id` | Reference to source table record (TEXT, not FK) |
+| `source_system` | Origin system |
+| `company_name` | Candidate company name |
+| `company_domain` | Domain identity anchor |
+| `linkedin_company_url` | LinkedIn identity anchor |
+| `company_fingerprint` | Idempotency key |
+| `eligibility_status` | ELIGIBLE, PARTIAL, or INELIGIBLE |
+| `lifecycle_run_id` | Run versioning tag |
+| `staged_at` | Staging timestamp |
+| `processed_at` | Processing timestamp |
+
+### 8.2 Identity Bridge
+
+**Identity Bridge** maps source company IDs to sovereign IDs. This is the ONLY join surface for downstream consumers.
+
+| Attribute | Purpose |
+|-----------|---------|
+| `bridge_id` | Primary key |
+| `source_company_id` | From source table (UNIQUE) |
+| `company_sov_id` | Sovereign ID (UNIQUE, FK to company_identity) |
+| `source_system` | Origin system |
+| `lifecycle_run_id` | Run versioning tag |
+| `minted_at` | Mapping timestamp |
+| `minted_by` | Actor who created mapping |
+
+**Invariants:**
+
+| Invariant | Description |
+|-----------|-------------|
+| **UNIQUE SOURCE** | One source ID maps to exactly one sovereign ID |
+| **UNIQUE SOVEREIGN** | One sovereign ID maps to exactly one source ID |
+| **NO FK TO SOURCE** | Bridge does not enforce FK to source tables |
+| **ONLY JOIN SURFACE** | Downstream consumers MUST join through bridge |
+
+### 8.3 Lifecycle Error
+
+**Lifecycle Error** captures failed intake records for repair and re-entry.
+
+| Attribute | Purpose |
+|-----------|---------|
+| `error_id` | Primary key |
+| `source_company_id` | Source reference |
+| `staging_id` | Reference to staging record |
+| `failure_stage` | Stage where failure occurred |
+| `failure_reason` | Reason code |
+| `failure_details` | JSON details |
+| `repair_hint` | Guidance for repair |
+| `status` | ACTIVE or RESOLVED |
+| `attempt_count` | Retry counter |
+| `lifecycle_run_id` | Run versioning tag |
+
+**Invariants:**
+
+| Invariant | Description |
+|-----------|-------------|
+| **REPAIR-REENTRY** | Repaired records re-enter at same stage |
+| **NO SOURCE MUTATION** | Errors never modify source tables |
+| **TRACEABLE** | Every error has reason and repair hint |
+
+---
+
+## 9. Schema Relationship Summary
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -451,6 +521,6 @@ The following patterns violate CL schema doctrine:
 
 ---
 
-**Doctrine Version:** 1.0
+**Doctrine Version:** 1.1
 **Status:** Locked
-**Last Updated:** 2025-12-26
+**Last Updated:** 2026-01-01

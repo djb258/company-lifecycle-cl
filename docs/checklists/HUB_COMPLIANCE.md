@@ -200,6 +200,25 @@ No exceptions. No partial compliance.
 
 ---
 
+## ERD & Data Flow
+
+- [x] ERD document exists: `docs/schema/CL_ERD.md`
+- [x] Canonical data flow documented in CL_DOCTRINE.md
+- [x] Flow rules enforced: COPY-NEVER-MOVE, READ-ONLY-SOURCE, ONE-WAY-FLOW
+- [x] No backward writes to source tables
+- [x] ERROR → repair → re-entry loop documented
+- [x] Idempotent identity minting (fingerprint)
+- [x] Bridge table as only join surface for consumers
+
+### Flow Tables
+
+- [x] `cl.company_lifecycle_identity_staging` documented
+- [x] `cl.company_identity` documented
+- [x] `cl.company_identity_bridge` documented
+- [x] `cl.company_lifecycle_error` documented
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT

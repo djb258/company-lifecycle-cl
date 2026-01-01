@@ -16,9 +16,56 @@ This doctrine is **frozen**. Modifications require formal governance review.
 
 ---
 
-## 1. Constitutional Authority
+## 1. Canonical Data Flow
 
-### 1.1 Sovereign Declaration
+### 1.1 Flow Diagram
+
+```
+Source Company Tables (READ-ONLY)
+        │
+        │ COPY (never move)
+        ▼
+CL Identity Staging
+        │
+        ├── ELIGIBLE ──────► CL Sovereign Identity (company_sov_id)
+        │                            │
+        │                            ▼
+        │                    CL Bridge Mapping (source ↔ sovereign)
+        │                            │
+        │                            ▼
+        │                    Downstream Consumers
+        │
+        └── INELIGIBLE ────► CL Error Table
+                                     │
+                                     └── REPAIR → RE-ENTRY (same stage)
+```
+
+### 1.2 Flow Rules (Invariants)
+
+| Rule | Description |
+|------|-------------|
+| **COPY-NEVER-MOVE** | Data is copied from source to staging, never moved |
+| **READ-ONLY-SOURCE** | Source tables are never mutated by CL |
+| **ONE-WAY-FLOW** | Data flows: source → staging → identity → bridge → consumers |
+| **NO-BACKWARD-WRITES** | CL never writes back to source tables |
+| **ERROR-REPAIR-REENTRY** | Errors route to error table; repair re-enters same stage |
+| **IDEMPOTENT-MINTING** | Fingerprint ensures one sovereign ID per unique company |
+| **BRIDGE-ONLY-JOIN** | Consumers join only through bridge table |
+
+### 1.3 Tables in Flow
+
+| Table | Purpose |
+|-------|---------|
+| `cl.company_lifecycle_identity_staging` | Pre-sovereign intake staging |
+| `cl.company_identity` | Sovereign identity (company_sov_id) |
+| `cl.company_identity_bridge` | Source ↔ Sovereign mapping |
+| `cl.company_lifecycle_error` | Error routing and repair |
+
+---
+
+## 2. Constitutional Authority
+
+### 2.1 Sovereign Declaration
 
 CL is the **only system** authorized to:
 
@@ -30,7 +77,7 @@ CL is the **only system** authorized to:
 
 No other system, hub, application, integration, or automation holds this authority.
 
-### 1.2 Identity Immutability
+### 2.2 Identity Immutability
 
 Once a `company_unique_id` is minted:
 
@@ -39,7 +86,7 @@ Once a `company_unique_id` is minted:
 - It **cannot** be reused after retirement
 - It **remains** the permanent anchor for all related data
 
-### 1.3 Single Source of Truth
+### 2.3 Single Source of Truth
 
 There is **exactly one** CL hub per organizational universe.
 
@@ -47,7 +94,7 @@ All systems must resolve company identity through CL. There are no alternatives,
 
 ---
 
-## 2. Parent / Child Hub Topology
+## 3. Parent / Child Hub Topology
 
 ### 2.1 Hierarchy Declaration
 
@@ -112,7 +159,7 @@ Systems like Shenandoah Valley Group, Weewee.me, and others are **consumers**. T
 
 ---
 
-## 3. Lifecycle State Model
+## 4. Lifecycle State Model
 
 ### 3.1 Valid States
 
@@ -161,7 +208,7 @@ Systems like Shenandoah Valley Group, Weewee.me, and others are **consumers**. T
 
 ---
 
-## 4. Promotion Semantics
+## 5. Promotion Semantics
 
 ### 4.1 Event-Driven Only
 
@@ -188,7 +235,7 @@ Lifecycle promotion is **event-driven**, not status-driven.
 
 ---
 
-## 5. Merge Philosophy
+## 6. Merge Philosophy
 
 ### 5.1 When Merge Occurs
 
@@ -243,7 +290,7 @@ Every merge records:
 
 ---
 
-## 6. Retirement Philosophy
+## 7. Retirement Philosophy
 
 ### 6.1 When Retirement Occurs
 
@@ -297,7 +344,7 @@ Every retirement records:
 
 ---
 
-## 7. External Identity Mapping
+## 8. External Identity Mapping
 
 ### 7.1 External Systems
 
@@ -359,7 +406,7 @@ Sources include:
 
 ---
 
-## 8. What CL Owns (Exhaustive)
+## 9. What CL Owns (Exhaustive)
 
 CL owns **and only owns**:
 
@@ -384,7 +431,7 @@ CL owns **and only owns**:
 
 ---
 
-## 9. What CL Does NOT Own
+## 10. What CL Does NOT Own
 
 CL **must not** contain:
 
@@ -409,7 +456,7 @@ CL never "progresses" state without an event.
 
 ---
 
-## 10. IMO Application to CL
+## 11. IMO Application to CL
 
 CL implements full **Input-Middle-Output (IMO)** internally.
 
@@ -440,7 +487,7 @@ CL implements full **Input-Middle-Output (IMO)** internally.
 
 ---
 
-## 11. Ecosystem Integration Points
+## 12. Ecosystem Integration Points
 
 ### 11.1 Shenandoah Valley Group
 
@@ -479,7 +526,7 @@ CL implements full **Input-Middle-Output (IMO)** internally.
 
 ---
 
-## 12. Altitude Lock
+## 13. Altitude Lock
 
 CL operates only at:
 
@@ -497,7 +544,7 @@ CL **must not** descend to:
 
 ---
 
-## 13. Final Declaration
+## 14. Final Declaration
 
 > **CL is the sovereign authority for company identity and lifecycle truth.**
 >
@@ -512,6 +559,6 @@ CL **must not** descend to:
 ---
 
 **Hub ID:** HUB-CL-001
-**Doctrine Version:** 1.0
+**Doctrine Version:** 1.1
 **Status:** Locked
-**Last Updated:** 2025-12-26
+**Last Updated:** 2026-01-01

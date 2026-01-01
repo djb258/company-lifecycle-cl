@@ -55,7 +55,45 @@ All lifecycle decisions are centralized in CL to prevent identity drift, state a
 
 ---
 
-## 6. IMO Structure
+## 6. Canonical Data Flow
+
+### Flow Diagram
+
+```
+Source Company Tables (READ-ONLY)
+        │
+        │ COPY (never move)
+        ▼
+CL Identity Staging (cl.company_lifecycle_identity_staging)
+        │
+        ├── ELIGIBLE ──► CL Sovereign Identity (cl.company_identity)
+        │                         │
+        │                         ▼
+        │                 CL Bridge (cl.company_identity_bridge)
+        │                         │
+        │                         ▼
+        │                 Downstream Consumers
+        │
+        └── INELIGIBLE ──► CL Error (cl.company_lifecycle_error)
+                                  │
+                                  └── REPAIR → RE-ENTRY
+```
+
+### Flow Rules
+
+| Rule | Description |
+|------|-------------|
+| COPY-NEVER-MOVE | Data copied from source, never moved |
+| READ-ONLY-SOURCE | Source tables never mutated |
+| ONE-WAY-FLOW | source → staging → identity → bridge → consumers |
+| NO-BACKWARD-WRITES | CL never writes to source |
+| ERROR-REPAIR-REENTRY | Errors re-enter at same stage |
+| IDEMPOTENT-MINTING | Fingerprint prevents duplicates |
+| BRIDGE-ONLY-JOIN | Consumers join only through bridge |
+
+---
+
+## 7. IMO Structure
 
 This hub owns all three IMO layers internally.
 Spokes and sub-hubs are **external execution surfaces only**.
@@ -68,7 +106,7 @@ Spokes and sub-hubs are **external execution surfaces only**.
 
 ---
 
-## 7. Spokes
+## 8. Spokes
 
 Spokes are **interfaces only**. They carry no logic or state.
 
@@ -82,7 +120,7 @@ Spokes are **interfaces only**. They carry no logic or state.
 
 ---
 
-## 8. Connectors
+## 9. Connectors
 
 | Connector        | Type  | Direction | Contract                    |
 | ---------------- | ----- | --------- | --------------------------- |
@@ -92,7 +130,7 @@ Spokes are **interfaces only**. They carry no logic or state.
 
 ---
 
-## 9. Tools
+## 10. Tools
 
 All tools are scoped **only to this hub's M layer**.
 
@@ -103,7 +141,7 @@ All tools are scoped **only to this hub's M layer**.
 
 ---
 
-## 10. Guard Rails
+## 11. Guard Rails
 
 | Guard Rail                 | Type       | Threshold |
 | -------------------------- | ---------- | --------- |
@@ -114,7 +152,7 @@ All tools are scoped **only to this hub's M layer**.
 
 ---
 
-## 11. Kill Switch
+## 12. Kill Switch
 
 * **Endpoint:** `/cl/kill-switch`
 * **Activation Criteria:** Invalid lifecycle mutation detected
@@ -122,7 +160,7 @@ All tools are scoped **only to this hub's M layer**.
 
 ---
 
-## 12. Promotion Gates
+## 13. Promotion Gates
 
 | Gate | Artifact     | Requirement                           |
 | ---- | ------------ | ------------------------------------- |
@@ -134,7 +172,7 @@ All tools are scoped **only to this hub's M layer**.
 
 ---
 
-## 13. Failure Modes
+## 14. Failure Modes
 
 | Failure                      | Severity | Remediation               |
 | ---------------------------- | -------- | ------------------------- |
@@ -145,7 +183,7 @@ All tools are scoped **only to this hub's M layer**.
 
 ---
 
-## 14. Human Override Rules
+## 15. Human Override Rules
 
 Human override is permitted **only** to:
 
@@ -160,7 +198,7 @@ All overrides require:
 
 ---
 
-## 15. Observability
+## 16. Observability
 
 * **Logs:** Immutable audit log of all lifecycle state changes
 * **Metrics:** Promotion counts, sub-hub activation rates, rejection rates
