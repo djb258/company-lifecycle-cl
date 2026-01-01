@@ -5,7 +5,7 @@
 * **System Name:** Company Lifecycle (CL)
 * **Stage Name:** Gate Zero
 * **Owner:** Barton / Supreme Headquarters (SHQ)
-* **Version:** v1.0
+* **Version:** v1.1
 
 ---
 
@@ -440,6 +440,109 @@ Human override is **never permitted** for:
 | Mint sovereign ID from Gate Zero | Only Mint Worker has mint authority |
 | Modify AIR records | AIR is append-only |
 | Skip AIR emission | Every outcome must emit AIR |
+
+---
+
+## 19. Promotion Contract
+
+### 19.1 Contract Definition
+
+The Promotion Contract explicitly defines which fields are required for a company candidate to be promoted from intake to sovereign identity.
+
+| Field | Type | Required | Reason |
+|-------|------|----------|--------|
+| `company_name` | TEXT | YES | Core identity anchor |
+| `company_domain` | TEXT | Conditional | Primary web identity (required if LinkedIn missing) |
+| `linkedin_company_url` | TEXT | Conditional | Secondary identity anchor (required if domain missing) |
+
+### 19.2 Promotion Rule
+
+```
+MUST have company_name AND (company_domain OR linkedin_company_url)
+```
+
+### 19.3 Non-Blocking Fields
+
+These fields **cannot** block promotion if missing:
+
+- `company_state`
+- `source_system`
+- `industry`
+- `employee_count`
+
+### 19.4 Contract Invariant
+
+> If a field is not in the Promotion Contract, it cannot block promotion.
+
+---
+
+## 20. Idempotency Guard
+
+### 20.1 Company Fingerprint
+
+Every company candidate is assigned a deterministic fingerprint to prevent duplicate sovereign IDs across re-runs.
+
+**Formula:**
+
+```sql
+company_fingerprint = LOWER(COALESCE(TRIM(company_domain), ''))
+                    || '|'
+                    || LOWER(COALESCE(TRIM(linkedin_company_url), ''))
+```
+
+### 20.2 Uniqueness Constraint
+
+| Rule | Enforcement |
+|------|-------------|
+| One `company_sov_id` per fingerprint | Unique index on `company_fingerprint` |
+| No duplicate sovereign IDs | Constraint violation on re-run collision |
+
+### 20.3 Fingerprint Invariant
+
+> Every sovereign identity maps to exactly one fingerprint. Re-runs cannot create duplicate sovereigns.
+
+---
+
+## 21. Lifecycle Run Versioning
+
+### 21.1 Run Identifier
+
+Every bootstrap or batch execution generates a unique `lifecycle_run_id`:
+
+```
+Format: RUN-YYYY-MM-DDTHH-MM-SS
+Example: RUN-2026-01-01T16-43-54
+```
+
+### 21.2 Run Stamping
+
+All rows created or modified during a run are stamped:
+
+| Table | Column | Stamped |
+|-------|--------|---------|
+| `cl.company_lifecycle_identity_staging` | `lifecycle_run_id` | YES |
+| `cl.company_identity` | `lifecycle_run_id` | YES |
+| `cl.company_identity_bridge` | `lifecycle_run_id` | YES |
+| `cl.company_lifecycle_error` | `lifecycle_run_id` | YES |
+
+### 21.3 Run Invariants
+
+| ID | Invariant |
+|----|-----------|
+| INV-RUN-001 | Every lifecycle action is tagged with a run ID |
+| INV-RUN-002 | Prior runs are never overwritten |
+| INV-RUN-003 | Run IDs enable full audit trail and rollback |
+
+---
+
+## 22. Bootstrap Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `neon/verify-companies.js` | Phase 1 read-only diagnostics |
+| `neon/phase-d-error-routing.js` | Route failures to error table |
+| `neon/phase-e-audit.js` | Produce audit and rollback plan |
+| `neon/hardening-bootstrap.js` | Apply idempotency + run versioning |
 
 ---
 

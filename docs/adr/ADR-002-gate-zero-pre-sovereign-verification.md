@@ -113,6 +113,44 @@ Gate Zero:
 
 ---
 
+## Hardening Decisions
+
+### H1. Promotion Contract
+
+A formal Promotion Contract defines which fields are required for promotion from intake to sovereign identity:
+
+| Field | Required | Blocking |
+|-------|----------|----------|
+| `company_name` | YES | YES |
+| `company_domain` | Conditional | YES (if LinkedIn missing) |
+| `linkedin_company_url` | Conditional | YES (if domain missing) |
+| `company_state` | NO | NO |
+
+**Rule:** Non-contract fields cannot block promotion.
+
+### H2. Idempotency Guard
+
+A deterministic `company_fingerprint` prevents duplicate sovereign IDs:
+
+```sql
+fingerprint = LOWER(domain) || '|' || LOWER(linkedin_url)
+```
+
+- Unique index enforced on `company_fingerprint`
+- Re-runs cannot create duplicate sovereigns
+- One `company_sov_id` per fingerprint
+
+### H3. Lifecycle Run Versioning
+
+Every batch execution is tagged with a `lifecycle_run_id`:
+
+- Format: `RUN-YYYY-MM-DDTHH-MM-SS`
+- Stamped on all lifecycle and error tables
+- Prior runs never overwritten
+- Enables full audit trail and rollback
+
+---
+
 ## Rollback
 
 If Gate Zero proves invalid, rollback requires:

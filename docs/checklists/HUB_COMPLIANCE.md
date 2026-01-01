@@ -153,6 +153,25 @@ No exceptions. No partial compliance.
 - [x] Batch-level pause supported
 - [x] Emergency contact assigned: SHQ Admin
 
+### Hardening Requirements
+
+- [x] Promotion Contract defined (PRD Section 19)
+- [x] Promotion rule documented: `company_name AND (domain OR linkedin)`
+- [x] Non-blocking fields documented: `company_state`, `source_system`, `industry`, `employee_count`
+- [x] Idempotency Guard implemented (PRD Section 20)
+- [x] Company fingerprint formula defined: `LOWER(domain) || '|' || LOWER(linkedin)`
+- [x] Unique index on `company_fingerprint` enforced
+- [x] Lifecycle Run Versioning implemented (PRD Section 21)
+- [x] `lifecycle_run_id` stamped on all lifecycle tables
+- [x] Prior runs never overwritten
+
+### Bootstrap Scripts
+
+- [x] `neon/verify-companies.js` - Phase 1 diagnostics
+- [x] `neon/phase-d-error-routing.js` - Error routing
+- [x] `neon/phase-e-audit.js` - Audit and rollback
+- [x] `neon/hardening-bootstrap.js` - Apply hardening
+
 ---
 
 ## Failure Modes
