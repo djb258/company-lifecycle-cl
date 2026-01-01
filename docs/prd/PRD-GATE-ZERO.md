@@ -347,6 +347,102 @@ On recovery success:
 
 ---
 
+## 16. Constants & Variables
+
+### Constants (Frozen — Require Governance Review)
+
+These values are locked by doctrine. Changing them requires formal governance approval.
+
+| Constant | Value | Rationale |
+|----------|-------|-----------|
+| `stage_id` | `GATE_ZERO` | Immutable identifier for this stage |
+| `process_id` | `VERIFY_COMPANY_EXISTENCE` | Immutable process identifier |
+| `entity_type` | `intake` | Gate Zero operates only on intake entities |
+| `auth_event_type` | `AUTH` | Gate Zero emits AUTH, never MINT |
+| `mint_authority` | Downstream Mint Worker | Gate Zero never mints sovereign IDs |
+| Identity key | `intake_id` | Never `sovereign_company_id` |
+| Verification logic | Binary pass/fail | No partial states, no enrichment |
+| Recovery mutation | Prohibited | Failed rows never mutated to pass |
+| AIR immutability | Append-only | No UPDATE or DELETE on AIR |
+
+### Variables (Configurable — Operational Tuning)
+
+These values can be adjusted per deployment or batch without doctrine review.
+
+| Variable | Default | Range | Description |
+|----------|---------|-------|-------------|
+| `max_attempts` | 3 | 1–5 | Maximum retry attempts per intake |
+| `backoff_1` | 24h | 1h–72h | Wait after 1st failure |
+| `backoff_2` | 72h | 24h–168h | Wait after 2nd failure |
+| `backoff_3` | 168h | 72h–336h | Wait after 3rd failure |
+| `recovery_window_days` | 14 | 7–30 | Days after batch before freeze |
+| `batch_size_limit` | 10,000 | 100–100,000 | Max records per batch |
+| `domain_probe_timeout` | 5s | 1s–30s | DNS/HTTP probe timeout |
+| `linkedin_api_timeout` | 10s | 5s–60s | LinkedIn verification timeout |
+| `high_fail_rate_threshold` | 50% | 20%–80% | Alert trigger for batch fail rate |
+
+### Configuration Precedence
+
+```
+1. Doctrine (constants) — immutable, highest priority
+2. Environment variables — deployment-specific
+3. Batch parameters — per-batch overrides
+4. Defaults — fallback values
+```
+
+---
+
+## 17. Promotion Gates
+
+| Gate | Artifact | Requirement | Status |
+|------|----------|-------------|--------|
+| G1 | PRD | Stage definition approved | [x] |
+| G2 | ADR | Architecture decision recorded (ADR-002) | [x] |
+| G3 | Schema Docs | Intake, Recovery, AIR tables documented | [x] |
+| G4 | AIR Doctrine | AIR contract defined | [x] |
+| G5 | Linear Issue | Work item created and assigned | [ ] |
+| G6 | PR | Code reviewed and merged | [ ] |
+| G7 | Checklist | Compliance verification complete | [x] |
+
+---
+
+## 18. Human Override Rules
+
+### When Override Is Permitted
+
+Human override is permitted **only** for:
+
+| Override | Condition | Approval Required |
+|----------|-----------|-------------------|
+| Force EXHAUSTED | Record stuck in recovery loop | SHQ Admin |
+| Skip batch | Known bad source data | Hub Owner |
+| Retry after EXHAUSTED | External fix confirmed | SHQ Admin |
+| Kill switch activation | Batch-level anomaly | SHQ Admin |
+| Kill switch release | Anomaly resolved | SHQ Admin + Hub Owner |
+
+### Override Requirements
+
+All overrides require:
+
+1. Named approver
+2. Timestamp
+3. Reason documented
+4. AIR event emitted (`event_type = OVERRIDE`)
+
+### Override Prohibitions
+
+Human override is **never permitted** for:
+
+| Prohibited Override | Why |
+|---------------------|-----|
+| Flip FAILED to AUTHORIZED | Violates recovery flow; creates new intake instead |
+| Bypass Gate Zero verification | Violates existence check requirement |
+| Mint sovereign ID from Gate Zero | Only Mint Worker has mint authority |
+| Modify AIR records | AIR is append-only |
+| Skip AIR emission | Every outcome must emit AIR |
+
+---
+
 ## Approval
 
 | Role     | Name | Date |
