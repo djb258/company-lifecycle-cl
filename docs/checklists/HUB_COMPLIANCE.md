@@ -244,13 +244,61 @@ No exceptions. No partial compliance.
 
 ---
 
+## Identity Funnel (ADR-004)
+
+### Funnel Architecture
+
+- [x] 5-pass funnel implemented (existence, name, domain, collision, firmographic)
+- [x] Cost-first, accuracy-second approach
+- [x] All passes deterministic ($0 cost)
+- [x] LLM usage feature-flagged and disabled by default
+- [x] Unified error table with pass discriminator
+
+### Funnel Passes
+
+- [x] Pass 1: Existence Verification (domain resolution)
+- [x] Pass 2: Name Canonicalization (regex-based normalization)
+- [x] Pass 3: Domain-Name Coherence (token matching)
+- [x] Pass 4: Collision Detection (deterministic resolution)
+- [x] Pass 5: Firmographic Coherence (validation only, no enrichment)
+
+### Confidence Envelope
+
+- [x] `cl.identity_confidence` table created
+- [x] Scoring formula documented in CL_PASS_CONTRACTS.md
+- [x] Buckets defined: HIGH (70+), MEDIUM (40-69), LOW (20-39), UNVERIFIED (0-19)
+- [x] Recomputation script: `recompute-confidence.js`
+
+### Funnel Scripts
+
+- [x] `existence-verification-worker.js` implemented
+- [x] `pass-2-name-canonicalization.js` implemented
+- [x] `pass-3-domain-coherence.js` implemented
+- [x] `pass-4-collision-detection.js` implemented
+- [x] `pass-5-firmographic-coherence.js` implemented
+- [x] `recompute-confidence.js` implemented
+
+### Kill Switches
+
+- [x] Error rate kill switch: >50% triggers pause
+- [x] LLM usage gate: >5% disables LLM, continues deterministic
+- [x] Timeout threshold: >30s/record avg triggers pause
+
+### Documentation
+
+- [x] Pass contracts documented: `docs/CL_PASS_CONTRACTS.md`
+- [x] Funnel report generated: `docs/CL_FUNNEL_REPORT.md`
+- [x] ADR-004 created and accepted
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT
 
 **Blockers:** None
 
-**Doctrine Version:** 1.1
+**Doctrine Version:** 1.2
 
 ---
 

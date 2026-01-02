@@ -2,16 +2,36 @@
 
 **From:** Company Lifecycle (CL) Hub
 **To:** Outreach Hub / Company Target
-**Date:** 2026-01-01
+**Date:** 2026-01-02
 **Status:** READY FOR CONSUMPTION
+**Version:** 2.0 (Identity Funnel Complete)
 
 ---
 
 ## 1. Executive Summary
 
-The Company Lifecycle (CL) hub has minted **71,820 sovereign company identities**, including **10,739 new NC (North Carolina) companies**.
+The Company Lifecycle (CL) hub has minted **71,820 sovereign company identities** and run them through a **5-pass identity funnel** for verification and confidence scoring.
 
-Outreach may now begin targeting these companies using the sovereign identity (`company_sov_id`) as the canonical reference.
+### Key Numbers
+
+| Metric | Count |
+|--------|-------|
+| Total Sovereign IDs | 71,820 |
+| Existence Verified | 9,494+ (verification in progress) |
+| HIGH Confidence | 4,809 |
+| MEDIUM Confidence | 4,530 |
+| Canonical Names | 9,486 |
+| Collisions Resolved | 4,332 |
+
+### What's New (v2.0)
+
+1. **Confidence Scoring** — Every company has a confidence bucket (HIGH/MEDIUM/LOW/UNVERIFIED)
+2. **Existence Verification** — Domain resolution confirms company exists
+3. **Name Canonicalization** — Normalized names and aliases in `cl.company_names`
+4. **Collision Detection** — Duplicates identified and resolved
+5. **Domain Coherence** — Domain-name matching scores in `cl.company_domains`
+
+**Recommendation:** Start outreach with HIGH and MEDIUM confidence companies.
 
 ---
 
@@ -30,17 +50,21 @@ Outreach may now begin targeting these companies using the sovereign identity (`
 
 ## 3. Tables Available
 
-### 3.1 Primary Tables
+### 3.1 Primary Tables (USE THESE)
 
 | Table | Schema | Records | Purpose |
 |-------|--------|---------|---------|
-| `company_identity` | cl | 71,820 | **Sovereign identities (USE THIS)** |
+| `company_identity` | cl | 71,820 | **Sovereign identities** |
+| `identity_confidence` | cl | 71,820 | **Confidence scores (NEW)** |
+| `company_names` | cl | 14,133 | **Canonical names & aliases (NEW)** |
+| `company_domains` | cl | 70,298 | **Domain health & coherence (NEW)** |
 | `company_identity_bridge` | cl | 71,820 | Source ↔ Sovereign mapping |
 
 ### 3.2 Reference Only (Do Not Write)
 
 | Table | Schema | Purpose |
 |-------|--------|---------|
+| `cl_errors` | cl | Unified funnel errors (CL internal) |
 | `company_lifecycle_identity_staging` | cl | Intake staging (CL internal) |
 | `company_lifecycle_error` | cl | Error routing (CL internal) |
 | `company_master` | company | Source data (READ-ONLY) |
@@ -94,32 +118,75 @@ CREATE TABLE cl.company_identity_bridge (
 
 ## 5. Query Patterns
 
-### 5.1 Get All NC Companies (New Batch)
+### 5.1 Get HIGH Confidence Companies (RECOMMENDED FOR OUTREACH)
 
 ```sql
 SELECT
-  company_unique_id AS sovereign_id,
-  company_name,
-  company_domain,
-  linkedin_company_url
-FROM cl.company_identity
-WHERE lifecycle_run_id LIKE 'RUN-NC-%';
+  ci.company_unique_id AS sovereign_id,
+  ci.company_name,
+  ci.canonical_name,
+  ci.company_domain,
+  ci.linkedin_company_url,
+  ic.confidence_score,
+  ic.confidence_bucket
+FROM cl.company_identity ci
+JOIN cl.identity_confidence ic ON ci.company_unique_id = ic.company_unique_id
+WHERE ic.confidence_bucket = 'HIGH'
+ORDER BY ic.confidence_score DESC;
+```
+
+**Returns:** ~4,809 rows (highest quality targets)
+
+### 5.2 Get HIGH + MEDIUM Confidence Companies
+
+```sql
+SELECT
+  ci.company_unique_id AS sovereign_id,
+  ci.company_name,
+  ci.canonical_name,
+  ci.company_domain,
+  ci.linkedin_company_url,
+  ic.confidence_score,
+  ic.confidence_bucket
+FROM cl.company_identity ci
+JOIN cl.identity_confidence ic ON ci.company_unique_id = ic.company_unique_id
+WHERE ic.confidence_bucket IN ('HIGH', 'MEDIUM')
+ORDER BY ic.confidence_score DESC;
+```
+
+**Returns:** ~9,339 rows
+
+### 5.3 Get All NC Companies
+
+```sql
+SELECT
+  ci.company_unique_id AS sovereign_id,
+  ci.company_name,
+  ci.company_domain,
+  ci.linkedin_company_url,
+  ic.confidence_bucket
+FROM cl.company_identity ci
+LEFT JOIN cl.identity_confidence ic ON ci.company_unique_id = ic.company_unique_id
+WHERE ci.lifecycle_run_id LIKE 'RUN-NC-%';
 ```
 
 **Returns:** 10,739 rows
 
-### 5.2 Get All Sovereign Companies
+### 5.4 Get All Sovereign Companies with Confidence
 
 ```sql
 SELECT
-  company_unique_id AS sovereign_id,
-  company_name,
-  company_domain,
-  linkedin_company_url,
-  source_system,
-  created_at
-FROM cl.company_identity
-ORDER BY created_at DESC;
+  ci.company_unique_id AS sovereign_id,
+  ci.company_name,
+  ci.company_domain,
+  ci.linkedin_company_url,
+  ci.source_system,
+  ic.confidence_score,
+  ic.confidence_bucket,
+  ci.created_at
+FROM cl.company_identity ci
+LEFT JOIN cl.identity_confidence ic ON ci.company_unique_id = ic.company_unique_id
+ORDER BY ic.confidence_score DESC NULLS LAST;
 ```
 
 **Returns:** 71,820 rows
@@ -158,9 +225,47 @@ WHERE linkedin_company_url ILIKE '%epic-games%';
 
 ---
 
-## 6. Doctrine Rules (MUST FOLLOW)
+## 6. Confidence Scoring (NEW)
 
-### 6.1 Use Sovereign ID as FK
+### 6.1 Confidence Buckets
+
+| Bucket | Score | Meaning | Outreach Recommendation |
+|--------|-------|---------|-------------------------|
+| **HIGH** | 70-100 | Strong identity signals, domain verified, name matches | Start here |
+| **MEDIUM** | 40-69 | Moderate confidence, verified but weaker signals | Second priority |
+| **LOW** | 20-39 | Weak signals, existence verified only | Review before outreach |
+| **UNVERIFIED** | 0-19 | Pending verification or failed | Do not target yet |
+
+### 6.2 What Goes Into the Score
+
+```
+Base: 20 points (if existence verified)
++ Domain resolves successfully: included in base
++ Name match score >= 70: +60 pts
++ Name match score >= 40: +40 pts
++ Canonical name extracted: +5 pts
++ Multiple aliases found: +5 pts
++ Domain-name coherence >= 80%: +10 pts
++ Unresolved collision: -20 pts
++ Firmographic verified: +5 pts
+```
+
+### 6.3 Schema: cl.identity_confidence
+
+```sql
+CREATE TABLE cl.identity_confidence (
+  company_unique_id UUID PRIMARY KEY,  -- FK to company_identity
+  confidence_score INT,                -- 0-100
+  confidence_bucket TEXT,              -- HIGH/MEDIUM/LOW/UNVERIFIED
+  computed_at TIMESTAMPTZ
+);
+```
+
+---
+
+## 7. Doctrine Rules (MUST FOLLOW)
+
+### 7.1 Use Sovereign ID as FK
 
 ```
 ✅ DO:   Store company_sov_id (UUID) as your foreign key
@@ -258,10 +363,14 @@ Before starting outreach, confirm:
 
 - [ ] Database connection established
 - [ ] Can query `cl.company_identity` successfully
+- [ ] Can query `cl.identity_confidence` successfully
 - [ ] Outreach tables use `company_sov_id` (UUID) as FK
+- [ ] Filter by `confidence_bucket IN ('HIGH', 'MEDIUM')` for quality targets
 - [ ] No direct references to `company.company_master`
 - [ ] Handle NULL domain (use LinkedIn)
 - [ ] Handle NULL LinkedIn (use domain)
+- [ ] Join to `cl.company_names` for canonical name if needed
+- [ ] Join to `cl.company_domains` for domain health if needed
 
 ---
 
@@ -281,7 +390,11 @@ Before starting outreach, confirm:
 | Artifact | Reference |
 |----------|-----------|
 | NC Pipeline Run | `RUN-NC-2026-01-01T17-46-16` |
-| ADR | ADR-003 (Identity Anchor & State Expansion) |
+| Identity Funnel Run | `2026-01-02` |
+| ADR-003 | Identity Anchor & State Expansion |
+| ADR-004 | Identity Funnel Implementation |
+| Pass Contracts | `docs/CL_PASS_CONTRACTS.md` |
+| Funnel Report | `docs/CL_FUNNEL_REPORT.md` |
 | ERD | `docs/schema/CL_ERD.md` |
 | Doctrine | `docs/doctrine/CL_DOCTRINE.md` |
 
@@ -291,11 +404,16 @@ Before starting outreach, confirm:
 
 | Role | Name | Date |
 |------|------|------|
-| CL Hub Owner | SHQ | 2026-01-01 |
+| CL Hub Owner | SHQ | 2026-01-02 |
 | Outreach Lead | | |
 
 ---
 
-**Handoff Status:** COMPLETE
+**Handoff Status:** COMPLETE (v2.0)
 
-Outreach may begin targeting NC companies immediately using sovereign IDs from `cl.company_identity`.
+Outreach should:
+1. **Start with HIGH confidence** companies (~4,809)
+2. **Expand to MEDIUM confidence** as capacity allows (~4,530)
+3. **Avoid UNVERIFIED** until verification completes
+
+Use `cl.identity_confidence` to filter targets by quality.
