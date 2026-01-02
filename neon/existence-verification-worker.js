@@ -22,7 +22,9 @@ const CONFIG = {
   BATCH_SIZE: 100,              // Records per batch
   VERIFICATION_RUN_ID: `VERIFY-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`,
   // Treat 403 as PASS (site exists, just blocks bots)
-  ACCEPT_403: true
+  ACCEPT_403: true,
+  // Keep-alive ping interval (ms) to prevent Neon timeout
+  KEEPALIVE_INTERVAL_MS: 30000  // 30 seconds
 };
 
 // Stats tracking
@@ -41,6 +43,29 @@ const stats = {
 // Rolling error window for kill switch
 const errorWindow = [];
 
+// Keep-alive ping to prevent Neon connection timeout
+let keepAliveInterval = null;
+
+function startKeepAlive(client) {
+  keepAliveInterval = setInterval(async () => {
+    try {
+      await client.query('SELECT 1');
+      process.stdout.write('💓'); // Heartbeat indicator
+    } catch (err) {
+      console.error('\n⚠️  Keep-alive ping failed:', err.message);
+    }
+  }, CONFIG.KEEPALIVE_INTERVAL_MS);
+  console.log(`✓ Keep-alive ping enabled (every ${CONFIG.KEEPALIVE_INTERVAL_MS / 1000}s)`);
+}
+
+function stopKeepAlive() {
+  if (keepAliveInterval) {
+    clearInterval(keepAliveInterval);
+    keepAliveInterval = null;
+    console.log('\n✓ Keep-alive stopped');
+  }
+}
+
 async function main() {
   const client = new Client({ connectionString });
 
@@ -53,6 +78,9 @@ async function main() {
     console.log('Concurrency:', CONFIG.CONCURRENCY);
     console.log('Name match threshold:', CONFIG.NAME_MATCH_THRESHOLD);
     console.log('');
+
+    // Start keep-alive ping
+    startKeepAlive(client);
 
     // 1. Create error table if not exists
     await createErrorTable(client);
@@ -98,6 +126,7 @@ async function main() {
     console.error('FATAL ERROR:', error.message);
     throw error;
   } finally {
+    stopKeepAlive();
     await client.end();
   }
 }
