@@ -66,57 +66,103 @@ function stopKeepAlive() {
   }
 }
 
+// Create a new database connection with retry logic
+async function createConnection(retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const client = new Client({ connectionString });
+      await client.connect();
+      return client;
+    } catch (err) {
+      console.error(`Connection attempt ${attempt}/${retries} failed:`, err.message);
+      if (attempt === retries) throw err;
+      await new Promise(r => setTimeout(r, 2000 * attempt)); // Exponential backoff
+    }
+  }
+}
+
 async function main() {
-  const client = new Client({ connectionString });
+  console.log('==========================================');
+  console.log('CL EXISTENCE VERIFICATION WORKER');
+  console.log('==========================================');
+  console.log('Run ID:', CONFIG.VERIFICATION_RUN_ID);
+  console.log('Concurrency:', CONFIG.CONCURRENCY);
+  console.log('Name match threshold:', CONFIG.NAME_MATCH_THRESHOLD);
+  console.log('Auto-reconnect: ENABLED');
+  console.log('');
+
+  let client = await createConnection();
+  startKeepAlive(client);
 
   try {
-    await client.connect();
-    console.log('==========================================');
-    console.log('CL EXISTENCE VERIFICATION WORKER');
-    console.log('==========================================');
-    console.log('Run ID:', CONFIG.VERIFICATION_RUN_ID);
-    console.log('Concurrency:', CONFIG.CONCURRENCY);
-    console.log('Name match threshold:', CONFIG.NAME_MATCH_THRESHOLD);
-    console.log('');
-
-    // Start keep-alive ping
-    startKeepAlive(client);
-
     // 1. Create error table if not exists
     await createErrorTable(client);
 
     // 2. Add verification columns to company_identity if not exist
     await addVerificationColumns(client);
 
-    // 3. Get unverified NC companies
-    const companies = await getUnverifiedCompanies(client);
-    stats.total = companies.length;
-    console.log('Companies to verify:', stats.total);
+    // Main processing loop with reconnection
+    let continueProcessing = true;
 
-    if (stats.total === 0) {
-      console.log('No companies to verify. Exiting.');
-      return;
-    }
+    while (continueProcessing) {
+      try {
+        // 3. Get unverified companies (re-query each loop to get remaining)
+        const companies = await getUnverifiedCompanies(client);
+        stats.total = companies.length + stats.processed; // Adjust total
+        console.log(`\nCompanies remaining: ${companies.length}`);
 
-    // 4. Process in batches with concurrency control
-    for (let i = 0; i < companies.length; i += CONFIG.BATCH_SIZE) {
-      const batch = companies.slice(i, i + CONFIG.BATCH_SIZE);
-      console.log(`\nBatch ${Math.floor(i / CONFIG.BATCH_SIZE) + 1}/${Math.ceil(companies.length / CONFIG.BATCH_SIZE)}`);
+        if (companies.length === 0) {
+          console.log('✓ All companies verified!');
+          continueProcessing = false;
+          break;
+        }
 
-      // Process batch with bounded concurrency
-      await processBatchWithConcurrency(client, batch, CONFIG.CONCURRENCY);
+        // 4. Process in batches with concurrency control
+        for (let i = 0; i < companies.length; i += CONFIG.BATCH_SIZE) {
+          const batch = companies.slice(i, i + CONFIG.BATCH_SIZE);
+          const batchNum = Math.floor((stats.processed + i) / CONFIG.BATCH_SIZE) + 1;
+          const totalBatches = Math.ceil((stats.processed + companies.length) / CONFIG.BATCH_SIZE);
+          console.log(`\nBatch ${batchNum}/${totalBatches}`);
 
-      // Check kill switch
-      if (shouldKill()) {
-        console.error('\n🛑 KILL SWITCH ACTIVATED - Error rate exceeded threshold');
-        console.error(`Error rate: ${getErrorRate().toFixed(2)} > ${CONFIG.ERROR_RATE_KILL_SWITCH}`);
-        break;
+          // Process batch with bounded concurrency
+          await processBatchWithConcurrency(client, batch, CONFIG.CONCURRENCY);
+
+          // Check kill switch
+          if (shouldKill()) {
+            console.error('\n🛑 KILL SWITCH ACTIVATED - Error rate exceeded threshold');
+            console.error(`Error rate: ${getErrorRate().toFixed(2)} > ${CONFIG.ERROR_RATE_KILL_SWITCH}`);
+            continueProcessing = false;
+            break;
+          }
+
+          // Progress report
+          const elapsed = (Date.now() - stats.startTime) / 1000;
+          const rate = stats.processed / elapsed;
+          console.log(`  Progress: ${stats.processed}/${stats.total} (${rate.toFixed(1)}/sec) | Pass: ${stats.passed} | Fail: ${stats.failed}`);
+        }
+
+        continueProcessing = false; // Normal completion
+
+      } catch (error) {
+        if (error.message.includes('Connection terminated') ||
+            error.message.includes('connection') ||
+            error.code === 'ECONNRESET') {
+          console.error('\n⚠️  Connection lost. Reconnecting in 5s...');
+          stopKeepAlive();
+          await new Promise(r => setTimeout(r, 5000));
+
+          try {
+            await client.end().catch(() => {}); // Clean up old connection
+          } catch (e) {}
+
+          client = await createConnection();
+          startKeepAlive(client);
+          console.log('✓ Reconnected! Resuming...');
+          // Loop continues, will re-query remaining companies
+        } else {
+          throw error; // Re-throw non-connection errors
+        }
       }
-
-      // Progress report
-      const elapsed = (Date.now() - stats.startTime) / 1000;
-      const rate = stats.processed / elapsed;
-      console.log(`  Progress: ${stats.processed}/${stats.total} (${rate.toFixed(1)}/sec) | Pass: ${stats.passed} | Fail: ${stats.failed}`);
     }
 
     // 5. Final report
@@ -127,7 +173,7 @@ async function main() {
     throw error;
   } finally {
     stopKeepAlive();
-    await client.end();
+    await client.end().catch(() => {});
   }
 }
 
