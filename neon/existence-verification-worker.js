@@ -66,12 +66,23 @@ function stopKeepAlive() {
   }
 }
 
+// Track connection state for error handling
+let connectionError = null;
+
 // Create a new database connection with retry logic
 async function createConnection(retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       const client = new Client({ connectionString });
+
+      // Handle connection errors via event (critical for pg module)
+      client.on('error', (err) => {
+        console.error('\n⚠️  Client error event:', err.message);
+        connectionError = err;
+      });
+
       await client.connect();
+      connectionError = null; // Clear any previous error
       return client;
     } catch (err) {
       console.error(`Connection attempt ${attempt}/${retries} failed:`, err.message);
@@ -126,6 +137,11 @@ async function main() {
 
           // Process batch with bounded concurrency
           await processBatchWithConcurrency(client, batch, CONFIG.CONCURRENCY);
+
+          // Check for connection error (from event handler)
+          if (connectionError) {
+            throw connectionError;
+          }
 
           // Check kill switch
           if (shouldKill()) {
