@@ -14,17 +14,17 @@ const connectionString = process.env.VITE_DATABASE_URL ||
 
 // Configuration
 const CONFIG = {
-  CONCURRENCY: 10,              // Parallel requests
-  TIMEOUT_MS: 10000,            // 10s timeout per request
+  CONCURRENCY: 20,              // Higher concurrency with hard timeouts
+  TIMEOUT_MS: 5000,             // 5s timeout per request
   NAME_MATCH_THRESHOLD: 0,      // Name match is informational only
   ERROR_RATE_KILL_SWITCH: 0.8,  // Kill if >80% DOMAIN failures
   ERROR_WINDOW_SIZE: 100,       // Rolling window for error rate
-  BATCH_SIZE: 100,              // Records per batch
+  BATCH_SIZE: 100,              // Back to normal batch size
   VERIFICATION_RUN_ID: `VERIFY-${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}`,
   // Treat 403 as PASS (site exists, just blocks bots)
   ACCEPT_403: true,
   // Keep-alive ping interval (ms) to prevent Neon timeout
-  KEEPALIVE_INTERVAL_MS: 30000  // 30 seconds
+  KEEPALIVE_INTERVAL_MS: 15000  // 15 seconds
 };
 
 // Stats tracking
@@ -53,6 +53,9 @@ function startKeepAlive(client) {
       process.stdout.write('💓'); // Heartbeat indicator
     } catch (err) {
       console.error('\n⚠️  Keep-alive ping failed:', err.message);
+      // Stop pinging dead connection
+      stopKeepAlive();
+      connectionError = err;
     }
   }, CONFIG.KEEPALIVE_INTERVAL_MS);
   console.log(`✓ Keep-alive ping enabled (every ${CONFIG.KEEPALIVE_INTERVAL_MS / 1000}s)`);
@@ -350,18 +353,26 @@ async function verifyCompany(company) {
   return result;
 }
 
-// Check if domain resolves
+// Check if domain resolves with hard timeout
 async function checkDomain(domain) {
-  return new Promise((resolve) => {
-    const result = {
-      resolved: false,
-      statusCode: null,
-      redirectChain: [],
-      finalUrl: null,
-      error: null,
-      html: null
-    };
+  const result = {
+    resolved: false,
+    statusCode: null,
+    redirectChain: [],
+    finalUrl: null,
+    error: null,
+    html: null
+  };
 
+  // Hard timeout wrapper - ensures we never hang
+  const hardTimeout = new Promise((resolve) => {
+    setTimeout(() => {
+      result.error = 'Hard timeout';
+      resolve(result);
+    }, CONFIG.TIMEOUT_MS + 2000); // 2s buffer over request timeout
+  });
+
+  const checkPromise = new Promise((resolve) => {
     // Normalize domain
     let url = domain;
     if (!url.startsWith('http')) {
@@ -402,6 +413,7 @@ async function checkDomain(domain) {
             if (redirectUrl.startsWith('/')) {
               redirectUrl = `${parsedUrl.protocol}//${parsedUrl.host}${redirectUrl}`;
             }
+            res.destroy(); // Clean up before redirect
             makeRequest(redirectUrl, redirectCount + 1);
             return;
           }
@@ -418,24 +430,32 @@ async function checkDomain(domain) {
             if (is403) {
               // Site exists but blocks bots - no HTML to analyze
               result.html = null;
+              res.destroy();
               resolve(result);
               return;
             }
 
-            // Collect HTML for coherence checks (limit to 100KB)
+            // Collect HTML for coherence checks (limit to 50KB for speed)
             let html = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
-              if (html.length < 100000) {
+              if (html.length < 50000) {
                 html += chunk;
+              } else {
+                res.destroy(); // Stop reading if we have enough
               }
             });
             res.on('end', () => {
               result.html = html;
               resolve(result);
             });
+            res.on('close', () => {
+              result.html = html;
+              resolve(result);
+            });
           } else {
             result.error = `HTTP ${res.statusCode}`;
+            res.destroy();
             resolve(result);
           }
         });
@@ -460,6 +480,9 @@ async function checkDomain(domain) {
 
     makeRequest(url);
   });
+
+  // Race between actual check and hard timeout
+  return Promise.race([checkPromise, hardTimeout]);
 }
 
 // Extract company name from HTML
