@@ -206,6 +206,144 @@ All overrides require:
 
 ---
 
+## 17. Handoff: CL → Company Target (CT)
+
+### Handoff Overview
+
+When CL mints a new `company_uid` or promotes a company to a new lifecycle stage, it **hands off** to the **Company Target (CT)** hub for targeting and segmentation.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     CL → CT HANDOFF FLOW                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    ┌─────────────────────┐                    ┌─────────────────────┐
+    │   COMPANY LIFECYCLE │                    │   COMPANY TARGET    │
+    │        (CL)         │                    │        (CT)         │
+    │                     │                    │                     │
+    │  • Mints identity   │ ──────────────────►│  • Receives identity│
+    │  • Promotes stage   │  IDENTITY_MINTED   │  • Qualifies target │
+    │  • Retires identity │  STAGE_PROMOTED    │  • Segments company │
+    │                     │  IDENTITY_RETIRED  │  • Routes to hubs   │
+    └─────────────────────┘                    └─────────────────────┘
+```
+
+### Handoff Events
+
+| Event | Trigger | Payload | CT Action |
+|-------|---------|---------|-----------|
+| `IDENTITY_MINTED` | New company created | `company_uid`, `legal_name`, `cl_stage` | Initialize target record |
+| `STAGE_PROMOTED` | Company promoted to new stage | `company_uid`, `old_stage`, `new_stage`, `promoted_at` | Update targeting rules |
+| `IDENTITY_RETIRED` | Company retired | `company_uid`, `retired_at`, `reason` | Deactivate targeting |
+
+### Handoff Contract (CL → CT)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `company_uid` | UUID | **YES** | Sovereign identifier from CL |
+| `legal_name` | string | YES | Canonical company name |
+| `cl_stage` | enum | YES | `OUTREACH` / `SALES` / `CLIENT` |
+| `event_type` | enum | YES | `IDENTITY_MINTED` / `STAGE_PROMOTED` / `IDENTITY_RETIRED` |
+| `event_timestamp` | datetime | YES | When event occurred |
+| `correlation_id` | UUID | YES | Trace ID for audit |
+
+### Handoff Rules (DOCTRINE)
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                       CL → CT HANDOFF DOCTRINE                                ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   1. CL INITIATES, CT RECEIVES                                               ║
+║      CL pushes events to CT. CT never pulls from CL.                         ║
+║                                                                               ║
+║   2. IDENTITY IS READ-ONLY FOR CT                                            ║
+║      CT may enrich targeting data but CANNOT modify company_uid,             ║
+║      legal_name, or cl_stage. Only CL owns these fields.                     ║
+║                                                                               ║
+║   3. EVERY HANDOFF MUST BE ACKNOWLEDGED                                      ║
+║      CT must emit CT_HANDOFF_ACK or CT_HANDOFF_NACK within 30 seconds.      ║
+║                                                                               ║
+║   4. FAILED HANDOFFS QUEUE FOR RETRY                                         ║
+║      If CT is unavailable, CL queues events in cl.handoff_queue.            ║
+║                                                                               ║
+║   5. AUDIT TRAIL IS MANDATORY                                                ║
+║      All handoff events logged to cl.audit_trail with correlation_id.       ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Related Documents
+
+| Document | Purpose |
+|----------|---------|
+| [[PRD_COMPANY_TARGET]] | Full CT hub specification |
+| [[ADR-002-CL-CT-Handoff]] | Architecture decision for handoff protocol |
+
+---
+
+## 18. Identity Gate (Downstream Eligibility)
+
+### Gate Overview
+
+The Identity Gate controls which companies are **eligible for downstream consumption** (Outreach, Company Target, etc.).
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                    IDENTITY GATE DOCTRINE                                      ║
+╠═══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║   ELIGIBILITY CONTRACT:                                                       ║
+║   eligible_for_outreach = (identity_pass >= 1 AND identity_status = 'PASS')  ║
+║                                                                               ║
+║   CRITICAL: existence_verified is INFORMATIONAL ONLY.                        ║
+║   It MUST NOT unlock downstream pipelines.                                   ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Gate Implementation (BEHAVIOR-ONLY)
+
+| Principle | Description |
+|-----------|-------------|
+| **BEHAVIOR-ONLY** | Gate is a VIEW + code logic. No data mutation. |
+| **NON-DESTRUCTIVE** | No bulk updates to cl.company_identity rows. |
+| **ADDITIVE-ONLY** | All changes are new VIEWs, tables, or code. |
+| **INSTANT-ROLLBACK** | Drop VIEW + set `ENFORCE_IDENTITY_GATE=false` reverts behavior. |
+
+### Gate Components
+
+| Component | Type | Purpose |
+|-----------|------|---------|
+| `cl.v_company_identity_eligible` | VIEW | Computes eligibility from raw data |
+| `cl.identity_gate_audit` | TABLE | Logs gate check summaries per run |
+| `cl.identity_gate_failures` | TABLE | Logs records that failed gate downstream |
+| `ENFORCE_IDENTITY_GATE` | ENV VAR | Kill switch (default: true) |
+
+### Eligibility Reasons
+
+| Reason | Meaning |
+|--------|---------|
+| `PASS` | Eligible for outreach |
+| `PENDING` | Identity pass not yet complete |
+| `FAIL_STATE` | State coherence failed (contradiction) |
+| `FAIL_NAME` | Name coherence below threshold |
+| `FAIL_DOMAIN` | Domain verification failed |
+| `UNKNOWN` | Unclassified failure |
+
+### Out of Scope
+
+The Identity Gate rollout does **NOT** include:
+
+- Re-running existence verification
+- Bulk updating cl.company_identity rows
+- Modifying upstream CL data
+- Any data mutation
+
+These are **upstream CL operations** and are explicitly out of scope for the gate rollout.
+
+---
+
 ## Approval
 
 | Role     | Name | Date |
