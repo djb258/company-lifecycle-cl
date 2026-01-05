@@ -48,6 +48,9 @@ const { MultiStateOrchestrator } = require('./orchestrator');
 // CLI entry point adapters
 const { ADAPTERS } = require('./ingest');
 
+// Backfill service
+const { LegacyBackfillService } = require('./backfill_verified_companies');
+
 module.exports = {
   // Base classes
   SourceAdapter,
@@ -66,4 +69,7 @@ module.exports = {
 
   // Available source adapters
   ADAPTERS,
+
+  // Backfill service (one-time migration)
+  LegacyBackfillService,
 };
