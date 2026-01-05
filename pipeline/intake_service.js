@@ -19,6 +19,10 @@
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 
+// Default connection string for CLI usage
+const DEFAULT_CONNECTION =
+  'postgresql://Marketing%20DB_owner:npg_OsE4Z2oPCpiT@ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech:5432/Marketing%20DB?sslmode=require';
+
 /**
  * @typedef {Object} IntakeConfig
  * @property {string} [connectionString] - Database connection string
@@ -44,7 +48,8 @@ class IntakeService {
     this.connectionString =
       config.connectionString ||
       process.env.VITE_DATABASE_URL ||
-      process.env.DATABASE_URL;
+      process.env.DATABASE_URL ||
+      DEFAULT_CONNECTION;
 
     this.dryRun = config.dryRun || false;
     this.pool = null;

@@ -23,6 +23,10 @@
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 
+// Default connection string for CLI usage
+const DEFAULT_CONNECTION =
+  'postgresql://Marketing%20DB_owner:npg_OsE4Z2oPCpiT@ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech:5432/Marketing%20DB?sslmode=require';
+
 /**
  * INVARIANT CHECK: Verification before minting
  * This function MUST be called before any identity minting.
@@ -66,7 +70,8 @@ class LifecycleWorker {
     this.connectionString =
       config.connectionString ||
       process.env.VITE_DATABASE_URL ||
-      process.env.DATABASE_URL;
+      process.env.DATABASE_URL ||
+      DEFAULT_CONNECTION;
 
     this.dryRun = config.dryRun || false;
     this.pool = null;
@@ -133,7 +138,8 @@ class LifecycleWorker {
     };
 
     try {
-      // Query pending candidates for this state
+      // Query candidates for this state (PENDING or VERIFIED_LEGACY)
+      // VERIFIED_LEGACY: Pre-verified companies from legacy system - trust their verification
       const candidatesQuery = `
         SELECT
           candidate_id,
@@ -141,34 +147,68 @@ class LifecycleWorker {
           source_record_id,
           state_code,
           raw_payload,
-          ingestion_run_id
+          ingestion_run_id,
+          verification_status,
+          verified_at
         FROM cl.company_candidate
         WHERE state_code = $1
-          AND verification_status = 'PENDING'
+          AND verification_status IN ('PENDING', 'VERIFIED_LEGACY')
+          AND company_unique_id IS NULL
         ORDER BY created_at ASC
         LIMIT $2
       `;
 
       const candidatesResult = await pool.query(candidatesQuery, [state_code, batch_size]);
-      console.log(`[CL Worker] Found ${candidatesResult.rows.length} pending candidates for ${state_code}`);
+      const pendingCount = candidatesResult.rows.filter(r => r.verification_status === 'PENDING').length;
+      const legacyCount = candidatesResult.rows.filter(r => r.verification_status === 'VERIFIED_LEGACY').length;
+      console.log(`[CL Worker] Found ${candidatesResult.rows.length} candidates for ${state_code} (${pendingCount} pending, ${legacyCount} legacy verified)`);
 
       for (const candidate of candidatesResult.rows) {
         results.processed++;
 
         try {
-          // Run verification (state-agnostic)
-          const verification = await this.verifyCandidate(candidate);
+          let verification;
+
+          // DOCTRINE: VERIFIED_LEGACY candidates were pre-verified by legacy system
+          // We trust their verification but still flow through the canonical path
+          if (candidate.verification_status === 'VERIFIED_LEGACY') {
+            // Trust legacy verification - extract fields from raw_payload
+            const raw = candidate.raw_payload;
+            verification = {
+              passed: true,
+              legacy: true,
+              extracted: {
+                company_name: raw.company_name ? String(raw.company_name).trim() : null,
+                company_domain: raw.company_domain ? String(raw.company_domain).toLowerCase().trim() : null,
+                linkedin_url: raw.linkedin_url || null,
+              },
+            };
+
+            // Validate admission gate even for legacy (fail closed)
+            if (!verification.extracted.company_domain && !verification.extracted.linkedin_url) {
+              verification = {
+                passed: false,
+                error: 'LEGACY_ADMISSION_GATE_FAILED: Missing both company_domain and linkedin_url',
+              };
+            }
+          } else {
+            // Run full verification for PENDING candidates (state-agnostic)
+            verification = await this.verifyCandidate(candidate);
+          }
 
           if (verification.passed) {
-            // Update candidate status to VERIFIED
-            await this.updateCandidateStatus(candidate.candidate_id, 'VERIFIED', null);
+            // Update candidate status to VERIFIED (or keep VERIFIED_LEGACY)
+            if (candidate.verification_status !== 'VERIFIED_LEGACY') {
+              await this.updateCandidateStatus(candidate.candidate_id, 'VERIFIED', null);
+            }
             results.verified++;
 
             // Mint identity - INVARIANT: Pass verification result to enforce the guard
             const identityId = await this.mintIdentity(candidate, verification.extracted, verification);
             if (identityId) {
               results.minted++;
-              console.log(`[CL Worker] Minted identity ${identityId} for candidate ${candidate.candidate_id}`);
+              const source = verification.legacy ? '[LEGACY]' : '';
+              console.log(`[CL Worker] ${source} Minted identity ${identityId} for candidate ${candidate.candidate_id}`);
             }
           } else {
             // Update candidate status to FAILED

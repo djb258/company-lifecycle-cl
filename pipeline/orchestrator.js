@@ -19,6 +19,10 @@ const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 const { LifecycleWorker } = require('./lifecycle_worker');
 
+// Default connection string for CLI usage
+const DEFAULT_CONNECTION =
+  'postgresql://Marketing%20DB_owner:npg_OsE4Z2oPCpiT@ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech:5432/Marketing%20DB?sslmode=require';
+
 /**
  * @typedef {Object} OrchestratorConfig
  * @property {string} [connectionString] - Database connection string
@@ -45,7 +49,8 @@ class MultiStateOrchestrator {
     this.connectionString =
       config.connectionString ||
       process.env.VITE_DATABASE_URL ||
-      process.env.DATABASE_URL;
+      process.env.DATABASE_URL ||
+      DEFAULT_CONNECTION;
 
     this.dryRun = config.dryRun || false;
     this.batchSize = config.batchSize || 100;
@@ -91,7 +96,8 @@ class MultiStateOrchestrator {
   }
 
   /**
-   * Discover states with pending candidates
+   * Discover states with candidates ready for processing
+   * Includes both PENDING and VERIFIED_LEGACY status
    *
    * @returns {Promise<string[]>} - Array of state codes
    */
@@ -101,7 +107,8 @@ class MultiStateOrchestrator {
     const query = `
       SELECT DISTINCT state_code
       FROM cl.company_candidate
-      WHERE verification_status = 'PENDING'
+      WHERE verification_status IN ('PENDING', 'VERIFIED_LEGACY')
+        AND company_unique_id IS NULL
       ORDER BY state_code ASC
     `;
 
