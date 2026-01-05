@@ -24,6 +24,52 @@ doctrine:
   ctb_path: "sys/company-lifecycle"
   owner: "Barton / Supreme Headquarters (SHQ)"
 
+  # Sovereign Intake Engine Configuration
+  intake_engine:
+    version: "1.0.0"
+    doctrine: "STATE_AS_DATA"
+    description: |
+      State-agnostic Sovereign Intake Engine.
+      NC is Source Stream #001, not special.
+      State is DATA, not CODE.
+      All states use the same verification logic.
+
+    source_streams:
+      nc_sos_excel:
+        id: "SS-001"
+        name: "NC Secretary of State Excel"
+        state_code: "NC"
+        adapter: "NCExcelSourceAdapter"
+        status: "active"
+      # Future streams:
+      # tx_api:
+      #   id: "SS-002"
+      #   name: "TX API"
+      #   state_code: "TX"
+      #   adapter: "TXApiSourceAdapter"
+      #   status: "planned"
+
+    admission_gate:
+      rule: "company_domain IS NOT NULL OR linkedin_url IS NOT NULL"
+      fail_action: "reject"
+
+    verification:
+      pipeline: "LifecycleWorker.verifyCandidate"
+      state_agnostic: true
+      rules:
+        - "Admission gate (domain OR LinkedIn)"
+        - "Company name required"
+        - "Domain format validation"
+        - "LinkedIn URL format validation"
+        - "Generic email domain rejection"
+
+    identity_minting:
+      trigger: "verification_status = 'VERIFIED'"
+      dedup_keys:
+        - company_domain
+        - linkedin_company_url
+      sovereign_id: "company_unique_id"
+
 deliverables:
   repos:
     - name: "company-lifecycle-cl"
