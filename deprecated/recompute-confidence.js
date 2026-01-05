@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: recompute-confidence.js is retired. Confidence is computed during verification.");
+
 // Confidence Envelope Recomputation
 // Runs after all passes to update confidence scores
 

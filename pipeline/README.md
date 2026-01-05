@@ -1,6 +1,6 @@
 # Company Lifecycle Pipeline
 
-**Sovereign Intake Engine v1.0**
+**Sovereign Intake Engine v2.0**
 
 ## Doctrine
 
@@ -10,6 +10,16 @@ NC IS SOURCE STREAM #001, NOT SPECIAL.
 ALL STATES USE THE SAME VERIFICATION LOGIC.
 IDENTITY MINTING ONLY AFTER VERIFIED STATUS.
 ```
+
+## INVARIANT (LOCKED)
+
+> **If any code path mints an identity without passing through
+> `cl.company_candidate → verifyCandidate()`, the build is invalid.**
+
+This invariant is enforced by:
+1. `assertVerificationComplete()` guard in lifecycle_worker.js
+2. CI pipeline guard blocking deprecated file imports
+3. CI pipeline guard blocking direct identity table writes
 
 ## Architecture
 
@@ -155,6 +165,18 @@ const result = await orchestrator.run();
 
 ## CLI Usage
 
+### Step 1: Ingest Source Data
+
+```bash
+# Ingest NC Excel file
+node pipeline/ingest.js --source NC --file "Companies NC.xlsx"
+
+# Dry run (no database commits)
+node pipeline/ingest.js --source NC --file data.xlsx --dry-run
+```
+
+### Step 2: Verify and Mint Identities
+
 ```bash
 # Process all pending states
 node pipeline/orchestrator.js
@@ -167,6 +189,16 @@ node pipeline/orchestrator.js --dry-run
 
 # Custom batch size
 node pipeline/orchestrator.js --batch-size 50
+```
+
+### Complete Workflow
+
+```bash
+# 1. Ingest source data into cl.company_candidate
+node pipeline/ingest.js --source NC --file "Companies NC.xlsx"
+
+# 2. Verify candidates and mint identities
+node pipeline/orchestrator.js --state NC
 ```
 
 ## Verification Rules (State-Agnostic)

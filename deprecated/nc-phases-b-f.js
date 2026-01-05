@@ -1,3 +1,19 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+// This file is part of the OLD NC-specific pipeline that violated the
+// sovereign intake contract by minting identities BEFORE verification.
+//
+// USE INSTEAD: pipeline/orchestrator.js
+//
+// See deprecated/README.md for details.
+// ============================================================================
+throw new Error(
+  "DEPRECATED: nc-phases-b-f.js is retired. " +
+  "Use 'node pipeline/orchestrator.js --state NC' instead. " +
+  "This file minted identities before verification, violating the sovereign intake contract."
+);
+
 // NC Phases B-F: Full CL Pipeline Execution (OPTIMIZED WITH BATCH INSERTS)
 // Loads NC companies and runs through hardened CL bootstrap
 

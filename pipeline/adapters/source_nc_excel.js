@@ -1,7 +1,7 @@
 /**
  * NC Excel Source Adapter
  *
- * SOURCE STREAM: #001 - North Carolina Secretary of State Excel Export
+ * SOURCE STREAM: SS-001 - North Carolina Company Data
  *
  * DOCTRINE:
  * - NC is ONE source stream, not the lifecycle itself
@@ -13,30 +13,41 @@
  * - Do NOT put verification logic here
  * - Do NOT special-case NC in lifecycle code
  * - State (NC) is DATA, embedded in every record
+ *
+ * SUPPORTED FORMATS:
+ * - NC SOS Excel (official state export)
+ * - Clay Export (enrichment platform export)
  */
 
 const XLSX = require('xlsx');
 const { SourceAdapter } = require('./source_adapter');
 
 /**
- * NC SOS Excel Column Mapping
+ * NC Column Mappings for different source formats
  *
- * Maps Excel columns to standard fields.
+ * Maps various Excel column names to standard fields.
  * This is the ONLY place NC-specific column names should appear.
  */
 const NC_COLUMN_MAP = {
-  // Identity columns
+  // Identity columns - SOS format
   sosId: 'SOS ID',
   companyName: 'Company Name',
-  // Alternative names
   companyNameAlt: 'Legal Name',
 
-  // Domain/contact columns
+  // Identity columns - Clay format
+  clayName: 'Name',
+
+  // Domain/contact columns - SOS format
   website: 'Website',
   websiteAlt: 'Web Site',
   email: 'Email',
 
-  // Address columns (for domain extraction)
+  // Domain/contact columns - Clay format
+  clayDomain: 'Domain',
+  clayLinkedIn: 'LinkedIn URL',
+
+  // Location columns
+  location: 'Location',
   mailingAddress: 'Mailing Address',
   principalAddress: 'Principal Address',
 
@@ -47,6 +58,10 @@ const NC_COLUMN_MAP = {
   // Date columns
   dateFormed: 'Date Formed',
   dateIncorporated: 'Date Incorporated',
+
+  // Clay-specific
+  industry: 'Primary Industry',
+  size: 'Size',
 };
 
 /**
@@ -58,7 +73,7 @@ const NC_COLUMN_MAP = {
 class NCExcelSourceAdapter extends SourceAdapter {
   constructor() {
     super({
-      source_system: 'nc_sos_excel',
+      source_system: 'NC_EXCEL_SS001',
       state_code: 'NC',
     });
   }
@@ -94,23 +109,48 @@ class NCExcelSourceAdapter extends SourceAdapter {
   }
 
   /**
-   * Get source record ID from NC SOS row
+   * Get source record ID from NC row
    *
-   * Uses SOS ID as unique identifier within NC source.
+   * Uses SOS ID if available, otherwise generates deterministic ID
+   * from domain/linkedin/name combination.
    *
    * @param {Object} raw - Raw Excel row
+   * @param {number} [rowIndex] - Row index for fallback ID
    * @returns {string}
    */
-  getSourceRecordId(raw) {
+  getSourceRecordId(raw, rowIndex = 0) {
+    // Try SOS ID first
     const sosId = raw[NC_COLUMN_MAP.sosId] || raw['SOS ID'] || raw['sosId'];
-    if (!sosId) {
-      throw new Error('NC record missing SOS ID');
+    if (sosId) {
+      return String(sosId).trim();
     }
-    return String(sosId).trim();
+
+    // Generate deterministic ID from available fields
+    const domain = this._extractDomain(raw);
+    const linkedin = raw[NC_COLUMN_MAP.clayLinkedIn] || raw['LinkedIn URL'];
+    const name = this._extractCompanyName(raw);
+
+    if (domain) {
+      return `NC-DOM-${domain.replace(/\./g, '-')}`;
+    }
+    if (linkedin) {
+      const slug = linkedin.split('/company/')[1]?.replace(/\/$/, '') || '';
+      return `NC-LI-${slug}`;
+    }
+    if (name) {
+      // Slugify company name
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50);
+      return `NC-NAME-${slug}-${rowIndex}`;
+    }
+
+    // Last resort: row index
+    return `NC-ROW-${rowIndex}`;
   }
 
   /**
    * Extract standard fields from NC Excel row
+   *
+   * Supports both SOS format and Clay export format.
    *
    * @param {Object} raw - Raw Excel row
    * @returns {Object}
@@ -119,31 +159,47 @@ class NCExcelSourceAdapter extends SourceAdapter {
     return {
       company_name: this._extractCompanyName(raw),
       company_domain: this._extractDomain(raw),
-      linkedin_url: null, // NC SOS doesn't provide LinkedIn
+      linkedin_url: this._extractLinkedIn(raw),
     };
   }
 
   /**
+   * Extract LinkedIn URL from row
+   * @private
+   */
+  _extractLinkedIn(raw) {
+    const linkedin = raw[NC_COLUMN_MAP.clayLinkedIn] || raw['LinkedIn URL'];
+    if (!linkedin) return null;
+    return String(linkedin).trim();
+  }
+
+  /**
    * Extract company name from row
+   * Supports both SOS and Clay formats
    * @private
    */
   _extractCompanyName(raw) {
     const name =
       raw[NC_COLUMN_MAP.companyName] ||
       raw[NC_COLUMN_MAP.companyNameAlt] ||
+      raw[NC_COLUMN_MAP.clayName] ||
       raw['Company Name'] ||
-      raw['Legal Name'];
+      raw['Legal Name'] ||
+      raw['Name'];
 
     return name ? String(name).trim() : null;
   }
 
   /**
    * Extract domain from row
+   * Supports both SOS and Clay formats
    * @private
    */
   _extractDomain(raw) {
-    // Try website field first
+    // Try direct domain field first (Clay format)
     let domain =
+      raw[NC_COLUMN_MAP.clayDomain] ||
+      raw['Domain'] ||
       raw[NC_COLUMN_MAP.website] ||
       raw[NC_COLUMN_MAP.websiteAlt] ||
       raw['Website'] ||

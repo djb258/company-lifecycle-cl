@@ -1,0 +1,135 @@
+name: Pipeline Guard
+
+# DOCTRINE: Enforce single pipeline execution path
+# Block any attempt to use deprecated files or bypass verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - 'pipeline/**'
+      - 'neon/**'
+      - 'deprecated/**'
+
+jobs:
+  pipeline-guard:
+    name: Pipeline Invariant Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check for deprecated file imports
+        run: |
+          echo "=========================================="
+          echo "PIPELINE GUARD - DEPRECATED FILE CHECK"
+          echo "=========================================="
+
+          # List of deprecated files that MUST NOT be imported
+          DEPRECATED_FILES=(
+            "nc-phases-b-f"
+            "nc-phase-a-validation"
+            "pass-2-name-canonicalization"
+            "pass-3-domain-coherence"
+            "pass-4-collision-detection"
+            "pass-5-firmographic-coherence"
+            "phase-d-error-routing"
+            "phase-e-audit"
+            "recompute-confidence"
+            "integrate-existence-pass"
+            "hardening-bootstrap"
+          )
+
+          FOUND_IMPORTS=0
+
+          for file in "${DEPRECATED_FILES[@]}"; do
+            # Search for imports of deprecated files in non-deprecated code
+            MATCHES=$(grep -r --include="*.js" --include="*.ts" "${file}" . \
+              --exclude-dir=deprecated \
+              --exclude-dir=node_modules \
+              --exclude-dir=.git \
+              2>/dev/null || true)
+
+            if [ -n "$MATCHES" ]; then
+              echo "❌ FOUND IMPORT OF DEPRECATED FILE: ${file}"
+              echo "$MATCHES"
+              FOUND_IMPORTS=1
+            fi
+          done
+
+          if [ $FOUND_IMPORTS -eq 1 ]; then
+            echo ""
+            echo "❌ PIPELINE GUARD FAILED"
+            echo "Deprecated files must not be imported."
+            echo "Use pipeline/orchestrator.js instead."
+            exit 1
+          fi
+
+          echo "✅ No deprecated file imports found"
+
+      - name: Check for direct identity table writes outside lifecycle_worker
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "PIPELINE GUARD - IDENTITY TABLE WRITE CHECK"
+          echo "=========================================="
+
+          # Search for INSERT INTO cl.company_identity outside of lifecycle_worker.js
+          ILLEGAL_INSERTS=$(grep -r --include="*.js" --include="*.ts" \
+            "INSERT INTO cl.company_identity" . \
+            --exclude="lifecycle_worker.js" \
+            --exclude-dir=deprecated \
+            --exclude-dir=node_modules \
+            --exclude-dir=.git \
+            2>/dev/null || true)
+
+          if [ -n "$ILLEGAL_INSERTS" ]; then
+            echo "❌ FOUND ILLEGAL IDENTITY TABLE WRITE"
+            echo "$ILLEGAL_INSERTS"
+            echo ""
+            echo "Identity minting MUST go through lifecycle_worker.js"
+            echo "to enforce the verification-before-minting invariant."
+            exit 1
+          fi
+
+          echo "✅ No illegal identity table writes found"
+
+      - name: Verify deprecated files have guards
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "PIPELINE GUARD - DEPRECATION GUARD CHECK"
+          echo "=========================================="
+
+          if [ -d "deprecated" ]; then
+            for file in deprecated/*.js; do
+              if [ -f "$file" ]; then
+                # Check if file starts with throw Error
+                if ! head -20 "$file" | grep -q "throw new Error"; then
+                  echo "❌ DEPRECATED FILE MISSING GUARD: $file"
+                  echo "All deprecated files must have 'throw new Error' at the top"
+                  exit 1
+                fi
+              fi
+            done
+            echo "✅ All deprecated files have guards"
+          else
+            echo "ℹ️  No deprecated directory found"
+          fi
+
+      - name: Pipeline Guard Summary
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "PIPELINE GUARD PASSED"
+          echo "=========================================="
+          echo ""
+          echo "✅ No deprecated file imports"
+          echo "✅ No illegal identity table writes"
+          echo "✅ All deprecated files have guards"
+          echo ""
+          echo "The single pipeline invariant is enforced:"
+          echo "  ingest.js → cl.company_candidate → lifecycle_worker.js → cl.company_identity"

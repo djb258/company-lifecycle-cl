@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: pass-4-collision-detection.js is retired. Dedup now happens BEFORE identity minting.");
+
 // PASS 4: Collision Detection & Resolution
 // Purpose: Eliminate duplicate identities
 // Cost: $0 deterministic; LLM gated (<3%)

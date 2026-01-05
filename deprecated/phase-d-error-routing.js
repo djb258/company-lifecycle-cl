@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: phase-d-error-routing.js is retired. Errors are now recorded in cl.company_candidate.verification_error.");
+
 // Phase D: ERROR Routing
 // Routes non-eligible staging rows to cl.company_lifecycle_error
 

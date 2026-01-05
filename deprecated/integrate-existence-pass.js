@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: integrate-existence-pass.js is retired. Existence verification is now part of the pre-minting gate.");
+
 // Integrate Existence Verification into Lean Schema
 // Migrates verified data into cl.company_domains and cl.cl_errors
 

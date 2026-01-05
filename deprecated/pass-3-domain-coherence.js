@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: pass-3-domain-coherence.js is retired. Verification now happens BEFORE identity minting.");
+
 // PASS 3: Domain ↔ Name Coherence
 // Purpose: Ensure domain actually belongs to the company
 // Cost: $0 (string matching only)

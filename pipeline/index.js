@@ -7,32 +7,33 @@
  * - NC is Source Stream #001, not special
  * - State is DATA, not CODE
  * - All states use the same verification logic
- * - Identity minting only after VERIFIED status
+ * - Identity minting ONLY after VERIFIED status
  *
- * COMPONENTS:
- * - SourceAdapter: Base class for source adapters
- * - NCExcelSourceAdapter: NC Secretary of State Excel adapter
- * - IntakeService: Ingests candidates from adapters
- * - LifecycleWorker: Verifies and mints identities
- * - MultiStateOrchestrator: Orchestrates multi-state processing
+ * INVARIANT (LOCKED):
+ * If any code path mints an identity without passing through
+ * cl.company_candidate → verifyCandidate(), the build is invalid.
+ *
+ * ENTRY POINTS (CLI):
+ * - ingest.js: Ingest source data into cl.company_candidate
+ * - orchestrator.js: Verify and mint identities
  *
  * USAGE:
  *
- * // Ingest NC Excel file
+ * # Step 1: Ingest source data
+ * node pipeline/ingest.js --source NC --file data.xlsx
+ *
+ * # Step 2: Verify and mint identities
+ * node pipeline/orchestrator.js --state NC
+ *
+ * # Or programmatically:
  * const { NCExcelSourceAdapter, IntakeService } = require('./pipeline');
  * const adapter = new NCExcelSourceAdapter();
  * const intake = new IntakeService();
- * await intake.ingest(adapter, { filePath: 'nc_data.xlsx' });
+ * await intake.ingest(adapter, { filePath: 'data.xlsx' });
  *
- * // Process all pending candidates
  * const { MultiStateOrchestrator } = require('./pipeline');
  * const orchestrator = new MultiStateOrchestrator();
  * await orchestrator.run();
- *
- * // Process single state
- * const { LifecycleWorker } = require('./pipeline');
- * const worker = new LifecycleWorker();
- * await worker.runLifecyclePipeline({ state_code: 'NC' });
  */
 
 // Source Adapters
@@ -41,8 +42,11 @@ const { NCExcelSourceAdapter, NC_COLUMN_MAP } = require('./adapters/source_nc_ex
 
 // Services
 const { IntakeService } = require('./intake_service');
-const { LifecycleWorker } = require('./lifecycle_worker');
+const { LifecycleWorker, assertVerificationComplete } = require('./lifecycle_worker');
 const { MultiStateOrchestrator } = require('./orchestrator');
+
+// CLI entry point adapters
+const { ADAPTERS } = require('./ingest');
 
 module.exports = {
   // Base classes
@@ -56,4 +60,10 @@ module.exports = {
   IntakeService,
   LifecycleWorker,
   MultiStateOrchestrator,
+
+  // Invariant enforcement
+  assertVerificationComplete,
+
+  // Available source adapters
+  ADAPTERS,
 };

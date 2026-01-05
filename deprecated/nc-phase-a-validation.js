@@ -1,3 +1,15 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+// This file is part of the OLD NC-specific pipeline.
+// USE INSTEAD: pipeline/orchestrator.js
+// See deprecated/README.md for details.
+// ============================================================================
+throw new Error(
+  "DEPRECATED: nc-phase-a-validation.js is retired. " +
+  "Use 'node pipeline/orchestrator.js --state NC' instead."
+);
+
 // NC Phase A: Source Validation (READ-ONLY)
 // Validates Companies NC.xlsx without any database writes
 

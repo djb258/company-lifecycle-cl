@@ -1,3 +1,15 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+// This file ran post-hoc verification AFTER identity minting.
+// New pipeline verifies BEFORE minting.
+// USE INSTEAD: pipeline/lifecycle_worker.js (via orchestrator.js)
+// ============================================================================
+throw new Error(
+  "DEPRECATED: pass-2-name-canonicalization.js is retired. " +
+  "Verification now happens BEFORE identity minting via lifecycle_worker.js"
+);
+
 // PASS 2: Name Canonicalization & Alias Extraction
 // Purpose: Collapse name ambiguity via deterministic normalization
 // Cost: $0 (regex only, no LLMs)

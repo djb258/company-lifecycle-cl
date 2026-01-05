@@ -26,23 +26,41 @@ doctrine:
 
   # Sovereign Intake Engine Configuration
   intake_engine:
-    version: "1.0.0"
+    version: "2.0.0"
     doctrine: "STATE_AS_DATA"
     description: |
       State-agnostic Sovereign Intake Engine.
       NC is Source Stream #001, not special.
       State is DATA, not CODE.
       All states use the same verification logic.
+      Identity minting ONLY after VERIFIED status.
+
+    # LOCKED INVARIANT
+    invariant: |
+      If any code path mints an identity without passing through
+      cl.company_candidate → verifyCandidate(), the build is invalid.
+
+    # Execution Path (SINGLE, CANONICAL)
+    execution_path:
+      - step: "ingest"
+        cli: "pipeline/ingest.js --source <STATE> --file <PATH>"
+        writes_to: "cl.company_candidate"
+        mints_identity: false
+      - step: "verify"
+        cli: "pipeline/orchestrator.js --state <STATE>"
+        reads_from: "cl.company_candidate"
+        mints_identity: true
+        guard: "assertVerificationComplete()"
 
     source_streams:
-      nc_sos_excel:
+      NC_EXCEL_SS001:
         id: "SS-001"
-        name: "NC Secretary of State Excel"
+        name: "NC Company Data (Excel/Clay)"
         state_code: "NC"
         adapter: "NCExcelSourceAdapter"
         status: "active"
       # Future streams:
-      # tx_api:
+      # TX_API_SS002:
       #   id: "SS-002"
       #   name: "TX API"
       #   state_code: "TX"
@@ -56,6 +74,7 @@ doctrine:
     verification:
       pipeline: "LifecycleWorker.verifyCandidate"
       state_agnostic: true
+      guard: "assertVerificationComplete"
       rules:
         - "Admission gate (domain OR LinkedIn)"
         - "Company name required"
@@ -65,10 +84,22 @@ doctrine:
 
     identity_minting:
       trigger: "verification_status = 'VERIFIED'"
+      guard: "assertVerificationComplete(candidate, verificationResult)"
       dedup_keys:
         - company_domain
         - linkedin_company_url
       sovereign_id: "company_unique_id"
+
+    deprecated:
+      path: "deprecated/"
+      reason: "Old NC-specific pipeline violated verification-before-minting invariant"
+      files:
+        - "nc-phases-b-f.js"
+        - "nc-phase-a-validation.js"
+        - "pass-2-name-canonicalization.js"
+        - "pass-3-domain-coherence.js"
+        - "pass-4-collision-detection.js"
+        - "pass-5-firmographic-coherence.js"
 
 deliverables:
   repos:

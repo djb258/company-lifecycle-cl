@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: phase-e-audit.js is retired. Audit is now part of orchestrator.js output.");
+
 // Phase E: Audit + Rollback Plan
 // Produces counts, diffs, and rollback SQL
 

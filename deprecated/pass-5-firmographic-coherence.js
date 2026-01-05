@@ -1,3 +1,8 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+throw new Error("DEPRECATED: pass-5-firmographic-coherence.js is retired. Verification now happens BEFORE identity minting.");
+
 // PASS 5: Firmographic Coherence (NOT Enrichment)
 // Purpose: Detect contradictions, NOT add data
 // Cost: $0 (validation only, no API calls)

@@ -7,17 +7,41 @@
  * - State is DATA, not CODE
  * - NC is Source Stream #001, not special
  * - All states use the SAME verification logic
- * - Identity minting only after VERIFIED status
+ * - Identity minting ONLY after VERIFIED status
  *
  * HARD CONSTRAINTS:
  * - Do NOT delete or re-mint existing IDs
  * - Do NOT weaken verification logic
  * - Do NOT special-case any state
  * - Fail closed if verification fails
+ *
+ * INVARIANT (LOCKED):
+ * If any code path mints an identity without passing through
+ * cl.company_candidate → verifyCandidate(), the build is invalid.
  */
 
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
+
+/**
+ * INVARIANT CHECK: Verification before minting
+ * This function MUST be called before any identity minting.
+ * @throws {Error} If verification has not been performed
+ */
+function assertVerificationComplete(candidate, verificationResult) {
+  if (!verificationResult) {
+    throw new Error(
+      `INVARIANT VIOLATION: Attempted to mint identity for candidate ${candidate.candidate_id} ` +
+      `without verification result. Identity minting BEFORE verification is FORBIDDEN.`
+    );
+  }
+  if (!verificationResult.passed) {
+    throw new Error(
+      `INVARIANT VIOLATION: Attempted to mint identity for candidate ${candidate.candidate_id} ` +
+      `with FAILED verification. Only VERIFIED candidates may be minted.`
+    );
+  }
+}
 
 /**
  * Verification result structure
@@ -140,8 +164,8 @@ class LifecycleWorker {
             await this.updateCandidateStatus(candidate.candidate_id, 'VERIFIED', null);
             results.verified++;
 
-            // Mint identity
-            const identityId = await this.mintIdentity(candidate, verification.extracted);
+            // Mint identity - INVARIANT: Pass verification result to enforce the guard
+            const identityId = await this.mintIdentity(candidate, verification.extracted, verification);
             if (identityId) {
               results.minted++;
               console.log(`[CL Worker] Minted identity ${identityId} for candidate ${candidate.candidate_id}`);
@@ -337,11 +361,18 @@ class LifecycleWorker {
    * DOCTRINE: Identity minting is the SOVEREIGN act.
    * Only performed after verification PASSES.
    *
+   * INVARIANT: This function MUST receive a passed verification result.
+   * Any attempt to call this without verification is an invariant violation.
+   *
    * @param {Object} candidate - Verified candidate record
    * @param {Object} extracted - Extracted and validated fields
+   * @param {VerificationResult} verificationResult - The verification result (MUST be passed)
    * @returns {Promise<string|null>} - Minted company_unique_id or null
    */
-  async mintIdentity(candidate, extracted) {
+  async mintIdentity(candidate, extracted, verificationResult) {
+    // INVARIANT CHECK: Verification MUST be complete before minting
+    assertVerificationComplete(candidate, verificationResult);
+
     if (this.dryRun) {
       console.log(`[CL Worker] [DRY RUN] Would mint identity for candidate ${candidate.candidate_id}`);
       return null;
@@ -420,4 +451,4 @@ class LifecycleWorker {
   }
 }
 
-module.exports = { LifecycleWorker };
+module.exports = { LifecycleWorker, assertVerificationComplete };

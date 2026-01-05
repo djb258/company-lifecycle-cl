@@ -1,3 +1,15 @@
+// ============================================================================
+// DEPRECATED: DO NOT USE
+// ============================================================================
+// This was a one-time migration for the old schema.
+// New pipeline uses cl.company_candidate for staging.
+// USE INSTEAD: neon/migrations/003_company_candidate_intake.sql
+// ============================================================================
+throw new Error(
+  "DEPRECATED: hardening-bootstrap.js is retired. " +
+  "Schema is now managed via migrations in neon/migrations/"
+);
+
 // CL Bootstrap Hardening Script
 // Applies the three hardening requirements retroactively:
 // 1. Idempotency Guard (company_fingerprint)
