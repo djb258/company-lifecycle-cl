@@ -1,0 +1,27 @@
+{
+  "name": "neon-agent",
+  "version": "1.0.0",
+  "description": "Database administration agent for Company Lifecycle",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "neon-agent": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "migrate": "node index.js migrate",
+    "audit": "node index.js audit",
+    "gate": "node index.js gate --summary",
+    "health": "node index.js health"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "pg": "^8.11.3"
+  },
+  "keywords": [
+    "neon",
+    "database",
+    "agent",
+    "company-lifecycle"
+  ]
+}

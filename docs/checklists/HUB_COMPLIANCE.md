@@ -1,5 +1,9 @@
 # Hub Compliance Checklist — Company Lifecycle Hub
 
+> **NOTE:** The multi-pass enrichment pipeline (pass-2 through pass-5) referenced below
+> has been QUARANTINED. See `meta/legacy_quarantine/README.md`.
+> The canonical pipeline is now: `cl.company_candidate → lifecycle_worker → mintIdentity`
+
 This checklist must be completed before any hub can ship.
 No exceptions. No partial compliance.
 
@@ -292,13 +296,74 @@ No exceptions. No partial compliance.
 
 ---
 
+## Four-Hub Architecture (ADR-005)
+
+### Hub Structure
+
+- [x] Hub 1: company_cl (Sovereign Identity) - This repo
+- [x] Hub 2: outreach (Engagement) - Outreach repo
+- [x] Hub 3: sales (Pipeline) - Lovable vault
+- [x] Hub 4: client (Customers) - Lovable vault
+
+### Schema Migration
+
+- [x] Single table approach for company_identity
+- [x] Status sync: existence_verified → identity_status
+- [x] Error data migrated to unified cl_errors
+- [x] Bloat tables dropped (v1 error tables, staging)
+- [x] Eligibility view: v_company_identity_eligible
+- [x] Summary view: v_identity_gate_summary
+
+### Gate Enforcement
+
+- [x] CL → Outreach gate: identity_status = 'PASS'
+- [x] Database trigger on outreach.outreach (outreach repo)
+- [x] Agent pre-check before promotion
+
+### Data Preserved
+
+- [x] 71,823 company_identity records
+- [x] 63,911 PASS status (88.98%)
+- [x] 7,912 FAIL status
+- [x] 59,812 company_candidate (audit log)
+- [x] Error records migrated (7,985 + legacy)
+
+---
+
+## Neon Agent
+
+### Agent Commands
+
+- [x] `neon-agent migrate` - Schema migrations
+- [x] `neon-agent audit` - Data quality checks
+- [x] `neon-agent gate` - Gate eligibility
+- [x] `neon-agent promote` - Stage promotions
+- [x] `neon-agent health` - System health
+- [x] `neon-agent sync` - Status sync
+
+### Agent Doctrine
+
+- [x] Agent enforces structure and movement
+- [x] Agent does not invent business logic
+- [x] Agent does not guess intent
+- [x] Agent does not rewrite identity
+- [x] Agent does not run enrichment
+
+### Agent Documentation
+
+- [x] PRD: docs/prd/PRD-NEON-AGENT.md
+- [x] ADR: docs/adr/ADR-005-four-hub-architecture.md
+- [x] Migration Guide: docs/OUTREACH_MIGRATION_GUIDE.md
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT
 
 **Blockers:** None
 
-**Doctrine Version:** 1.2
+**Doctrine Version:** 1.3
 
 ---
 
