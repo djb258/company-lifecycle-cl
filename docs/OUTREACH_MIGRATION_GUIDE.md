@@ -9,14 +9,34 @@ The Company Lifecycle (CL) repo now enforces sovereign identity with a gate:
 - `identity_status = 'FAIL'` = company failed verification
 - `sovereign_id` = `company_unique_id` from `cl.company_identity`
 
+## Legacy Orphan Reconciliation (Completed 2026-01-06)
+
+**1,698 legacy records** were reconciled from `outreach.outreach`:
+
+| Metric | Before | After |
+|--------|--------|-------|
+| outreach.outreach total | 65,609 | 63,911 |
+| Linked to PASS | 63,911 | 63,911 |
+| Orphans (not PASS) | 1,698 | 0 |
+| In quarantine | 0 | 1,698 |
+
+**Actions taken:**
+- Created `outreach.outreach_legacy_quarantine` table
+- Moved 1,698 FAIL-linked records to quarantine (reason: `IDENTITY_FAIL`)
+- All records preserved with original timestamps
+
+**Script:** `neon/reconcile-outreach-orphans.js`
+
 ## Current State (Outreach Repo)
 
 You have existing tables:
 ```
-outreach.company_target     (20,000 records)
-outreach.people             (0 records)
-outreach.engagement_events  (0 records)
-outreach.column_registry    (48 records)
+outreach.outreach                    (63,911 records) - All PASS-linked
+outreach.outreach_legacy_quarantine  (1,698 records)  - FAIL quarantine
+outreach.company_target              (20,000 records)
+outreach.people                      (0 records)
+outreach.engagement_events           (0 records)
+outreach.column_registry             (48 records)
 ```
 
 These use `company_unique_id` directly as the foreign key to CL.
