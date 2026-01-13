@@ -357,13 +357,65 @@ No exceptions. No partial compliance.
 
 ---
 
+## Multi-State Intake Doctrine Lock (ADR-006)
+
+### StateCsvSourceAdapter Base Class
+
+- [x] Base class created: `pipeline/adapters/state_csv_adapter.js`
+- [x] All adapters must extend `StateCsvSourceAdapter`
+- [x] Constructor enforces `state_code` declaration
+- [x] Constructor enforces `source_system` declaration
+- [x] Adapter registry prevents duplicate state_code
+- [x] Adapter registry prevents duplicate source_system
+
+### CSV Contract (Global)
+
+- [x] `Name` field required
+- [x] `Domain OR LinkedIn URL` required (at least one)
+- [x] Admission gate: `domain IS NOT NULL OR linkedin IS NOT NULL`
+- [x] Optional fields go to raw_payload only
+- [x] Identity is NEVER inferred from optional fields
+
+### Identity Field Allowlist
+
+- [x] Allowlist defined: `company_name, company_domain, linkedin_url`
+- [x] Allowlist is frozen (`Object.freeze`)
+- [x] No fields may be added without ADR
+
+### Compile-Time Guards
+
+- [x] `assertAdapterInheritance()` guard implemented
+- [x] `assertIdentityFieldAllowlist()` guard implemented
+- [x] Guards execute at module load time
+- [x] Guards fail with `process.exit(1)` on violation
+
+### Registered Adapters
+
+- [x] NC: `NCExcelSourceAdapter` (SS-001) - Active
+- [x] DE: `DECsvSourceAdapter` (SS-002) - Active
+
+### State Handling
+
+- [x] `state_code` injected by adapter (never parsed from CSV)
+- [x] State-specific logic isolated to adapters only
+- [x] No state parsing from Location field
+
+### Documentation
+
+- [x] ADR-006 created and accepted
+- [x] PRD-MULTI-STATE-INTAKE.md created
+- [x] COMPANY_LIFECYCLE_LOCK.md created
+- [x] GATE_ZERO_INTAKE.md updated (OR logic)
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT
 
 **Blockers:** None
 
-**Doctrine Version:** 1.3
+**Doctrine Version:** 1.4
 
 ---
 

@@ -8,9 +8,14 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "doctrine:verify": "node -e \"require('./pipeline/ingest.js')\" && echo 'DOCTRINE-LOCK: All guards passed'",
+    "ingest": "node pipeline/ingest.js",
+    "orchestrate": "node pipeline/orchestrator.js"
   },
   "dependencies": {
+    "csv-parse": "^5.5.6",
+    "xlsx": "^0.18.5",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",

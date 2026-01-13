@@ -3,16 +3,11 @@
  *
  * SOURCE STREAM: SS-001 - North Carolina Company Data
  *
- * DOCTRINE:
- * - NC is ONE source stream, not the lifecycle itself
- * - This adapter ONLY ingests, it does NOT verify
- * - All NC-specific logic is contained HERE, not in lifecycle
- * - Output is standard CandidateRecord format
- *
- * HARD CONSTRAINTS:
- * - Do NOT put verification logic here
- * - Do NOT special-case NC in lifecycle code
- * - State (NC) is DATA, embedded in every record
+ * DOCTRINE-LOCK:
+ * - Extends StateCsvSourceAdapter (inherits all invariants)
+ * - state_code: NC (explicitly declared, never parsed)
+ * - source_system: NC_EXCEL_SS001 (unique to this adapter)
+ * - NC is ONE source stream, not special
  *
  * SUPPORTED FORMATS:
  * - NC SOS Excel (official state export)
@@ -20,31 +15,21 @@
  */
 
 const XLSX = require('xlsx');
-const { SourceAdapter } = require('./source_adapter');
+const { StateCsvSourceAdapter } = require('./state_csv_adapter');
 
 /**
- * NC Column Mappings for different source formats
- *
+ * NC-specific column mappings.
  * Maps various Excel column names to standard fields.
- * This is the ONLY place NC-specific column names should appear.
+ * These are in ADDITION to the base class mappings.
  */
 const NC_COLUMN_MAP = {
-  // Identity columns - SOS format
+  // SOS format specific
   sosId: 'SOS ID',
-  companyName: 'Company Name',
   companyNameAlt: 'Legal Name',
 
-  // Identity columns - Clay format
-  clayName: 'Name',
-
-  // Domain/contact columns - SOS format
-  website: 'Website',
+  // SOS contact columns
   websiteAlt: 'Web Site',
   email: 'Email',
-
-  // Domain/contact columns - Clay format
-  clayDomain: 'Domain',
-  clayLinkedIn: 'LinkedIn URL',
 
   // Location columns
   location: 'Location',
@@ -58,28 +43,33 @@ const NC_COLUMN_MAP = {
   // Date columns
   dateFormed: 'Date Formed',
   dateIncorporated: 'Date Incorporated',
-
-  // Clay-specific
-  industry: 'Primary Industry',
-  size: 'Size',
 };
 
 /**
  * NC Excel Source Adapter
  *
- * Reads NC Secretary of State Excel files and produces
- * standard CandidateRecord objects for intake.
+ * Reads NC Secretary of State Excel files and Clay exports.
+ * Produces standard CandidateRecord objects for intake.
+ *
+ * INVARIANTS INHERITED FROM StateCsvSourceAdapter:
+ * - state_code explicitly declared (NC)
+ * - source_system explicitly declared (NC_EXCEL_SS001)
+ * - Identity fields restricted to allowlist
+ * - All other fields go to raw_payload only
+ *
+ * @extends StateCsvSourceAdapter
  */
-class NCExcelSourceAdapter extends SourceAdapter {
+class NCExcelSourceAdapter extends StateCsvSourceAdapter {
   constructor() {
     super({
       source_system: 'NC_EXCEL_SS001',
       state_code: 'NC',
+      state_name: 'North Carolina',
     });
   }
 
   /**
-   * Read records from NC Excel file
+   * Read records from NC Excel file.
    *
    * @param {Object} options
    * @param {string} options.filePath - Path to Excel file
@@ -103,113 +93,76 @@ class NCExcelSourceAdapter extends SourceAdapter {
     // Convert to JSON
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: null });
 
+    let rowIndex = 0;
     for (const row of rows) {
-      yield this.transform(row);
+      // Use parent's transform which enforces identity field restrictions
+      const candidate = this.transform(row);
+
+      // Override source_record_id with NC-specific logic
+      candidate.source_record_id = this.getSourceRecordId(row, rowIndex);
+
+      rowIndex++;
+      yield candidate;
     }
   }
 
   /**
-   * Get source record ID from NC row
-   *
-   * Uses SOS ID if available, otherwise generates deterministic ID
-   * from domain/linkedin/name combination.
+   * Get source record ID from NC row.
+   * Uses SOS ID if available, otherwise falls back to base class logic.
    *
    * @param {Object} raw - Raw Excel row
    * @param {number} [rowIndex] - Row index for fallback ID
    * @returns {string}
    */
   getSourceRecordId(raw, rowIndex = 0) {
-    // Try SOS ID first
+    // Try SOS ID first (NC-specific)
     const sosId = raw[NC_COLUMN_MAP.sosId] || raw['SOS ID'] || raw['sosId'];
     if (sosId) {
-      return String(sosId).trim();
+      return `NC-SOS-${String(sosId).trim()}`;
     }
 
-    // Generate deterministic ID from available fields
-    const domain = this._extractDomain(raw);
-    const linkedin = raw[NC_COLUMN_MAP.clayLinkedIn] || raw['LinkedIn URL'];
-    const name = this._extractCompanyName(raw);
-
-    if (domain) {
-      return `NC-DOM-${domain.replace(/\./g, '-')}`;
-    }
-    if (linkedin) {
-      const slug = linkedin.split('/company/')[1]?.replace(/\/$/, '') || '';
-      return `NC-LI-${slug}`;
-    }
-    if (name) {
-      // Slugify company name
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50);
-      return `NC-NAME-${slug}-${rowIndex}`;
-    }
-
-    // Last resort: row index
-    return `NC-ROW-${rowIndex}`;
+    // Fall back to base class logic
+    return super.getSourceRecordId(raw, rowIndex);
   }
 
   /**
-   * Extract standard fields from NC Excel row
+   * Extract company name from NC row.
+   * Extends base class to support NC SOS format.
    *
-   * Supports both SOS format and Clay export format.
-   *
+   * @protected
    * @param {Object} raw - Raw Excel row
-   * @returns {Object}
-   */
-  extractFields(raw) {
-    return {
-      company_name: this._extractCompanyName(raw),
-      company_domain: this._extractDomain(raw),
-      linkedin_url: this._extractLinkedIn(raw),
-    };
-  }
-
-  /**
-   * Extract LinkedIn URL from row
-   * @private
-   */
-  _extractLinkedIn(raw) {
-    const linkedin = raw[NC_COLUMN_MAP.clayLinkedIn] || raw['LinkedIn URL'];
-    if (!linkedin) return null;
-    return String(linkedin).trim();
-  }
-
-  /**
-   * Extract company name from row
-   * Supports both SOS and Clay formats
-   * @private
+   * @returns {string|null}
    */
   _extractCompanyName(raw) {
-    const name =
-      raw[NC_COLUMN_MAP.companyName] ||
-      raw[NC_COLUMN_MAP.companyNameAlt] ||
-      raw[NC_COLUMN_MAP.clayName] ||
-      raw['Company Name'] ||
-      raw['Legal Name'] ||
-      raw['Name'];
+    // Try base class fields first
+    const baseName = super._extractCompanyName(raw);
+    if (baseName) return baseName;
 
-    return name ? String(name).trim() : null;
+    // NC SOS specific: Legal Name
+    const legalName = raw[NC_COLUMN_MAP.companyNameAlt] || raw['Legal Name'];
+    return legalName ? String(legalName).trim() : null;
   }
 
   /**
-   * Extract domain from row
-   * Supports both SOS and Clay formats
-   * @private
+   * Extract domain from NC row.
+   * Extends base class to support NC SOS format and email extraction.
+   *
+   * @protected
+   * @param {Object} raw - Raw Excel row
+   * @returns {string|null}
    */
   _extractDomain(raw) {
-    // Try direct domain field first (Clay format)
-    let domain =
-      raw[NC_COLUMN_MAP.clayDomain] ||
-      raw['Domain'] ||
-      raw[NC_COLUMN_MAP.website] ||
-      raw[NC_COLUMN_MAP.websiteAlt] ||
-      raw['Website'] ||
-      raw['Web Site'];
+    // Try base class extraction first
+    const baseDomain = super._extractDomain(raw);
+    if (baseDomain) return baseDomain;
 
-    if (domain) {
-      return this._normalizeDomain(domain);
+    // NC SOS specific: Web Site
+    const webSite = raw[NC_COLUMN_MAP.websiteAlt] || raw['Web Site'];
+    if (webSite) {
+      return this._normalizeDomain(webSite);
     }
 
-    // Try extracting from email
+    // Try extracting from email (NC SOS format)
     const email = raw[NC_COLUMN_MAP.email] || raw['Email'];
     if (email && email.includes('@')) {
       const emailDomain = email.split('@')[1];
@@ -222,24 +175,17 @@ class NCExcelSourceAdapter extends SourceAdapter {
   }
 
   /**
-   * Normalize domain to standard format
+   * Normalize domain to standard format.
    * @private
    */
   _normalizeDomain(domain) {
     if (!domain) return null;
 
     let normalized = String(domain).trim().toLowerCase();
-
-    // Remove protocol
     normalized = normalized.replace(/^https?:\/\//, '');
-
-    // Remove www.
     normalized = normalized.replace(/^www\./, '');
-
-    // Remove trailing slash and path
     normalized = normalized.split('/')[0];
 
-    // Validate basic domain format
     if (!normalized.includes('.')) {
       return null;
     }
@@ -248,20 +194,13 @@ class NCExcelSourceAdapter extends SourceAdapter {
   }
 
   /**
-   * Check if domain is a generic email provider
+   * Check if domain is a generic email provider.
    * @private
    */
   _isGenericEmailDomain(domain) {
     const genericDomains = [
-      'gmail.com',
-      'yahoo.com',
-      'hotmail.com',
-      'outlook.com',
-      'aol.com',
-      'icloud.com',
-      'live.com',
-      'msn.com',
-      'mail.com',
+      'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
+      'aol.com', 'icloud.com', 'live.com', 'msn.com', 'mail.com'
     ];
     return genericDomains.includes(domain.toLowerCase());
   }

@@ -59,12 +59,18 @@ doctrine:
         state_code: "NC"
         adapter: "NCExcelSourceAdapter"
         status: "active"
+      DE_CSV_SS002:
+        id: "SS-002"
+        name: "DE Company Data (Clay CSV)"
+        state_code: "DE"
+        adapter: "DECsvSourceAdapter"
+        status: "active"
       # Future streams:
-      # TX_API_SS002:
-      #   id: "SS-002"
-      #   name: "TX API"
+      # TX_CSV_SS003:
+      #   id: "SS-003"
+      #   name: "TX Company Data"
       #   state_code: "TX"
-      #   adapter: "TXApiSourceAdapter"
+      #   adapter: "TXCsvSourceAdapter"
       #   status: "planned"
 
     admission_gate:

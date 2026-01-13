@@ -51,12 +51,17 @@ Each row represents a single intake attempt from a source list (Clay, Apollo, CS
 |--------|------|
 | `intake_id` | **Intake primary key.** Used exclusively by Gate Zero. Never referenced after sovereignty is minted. |
 
-### Identity Anchors (All Required)
+### Identity Anchors (At Least One Required)
 | Column | Role |
 |--------|------|
-| `company_domain` | Required. Domain to verify company web presence. |
-| `linkedin_company_url` | Required. LinkedIn page to verify existence and state. |
-| `intake_state` | Required. Claimed state to match against LinkedIn location. |
+| `company_domain` | Optional identity anchor. Used for existence verification if present. |
+| `linkedin_company_url` | Optional identity anchor. Used for existence verification if present. |
+| `intake_state` | Injected by adapter. NOT parsed from CSV. |
+
+**DOCTRINE-LOCK (Admission Gate):**
+- At least ONE of `company_domain` OR `linkedin_company_url` MUST be present
+- Records with NEITHER are rejected at admission gate
+- `intake_state` is ALWAYS injected by the source adapter, never parsed from CSV fields
 
 ### Descriptive Attributes
 | Column | Role |
@@ -120,7 +125,8 @@ Each row represents a single intake attempt from a source list (Clay, Apollo, CS
 | Invariant | Description |
 |-----------|-------------|
 | **Unique Intake ID** | No two rows may share the same `intake_id`. |
-| **All Anchors Required** | Every row must have `company_domain`, `linkedin_company_url`, and `intake_state`. |
+| **Admission Gate (OR)** | Every row must have `company_domain` OR `linkedin_company_url` (at least one). |
+| **State Injection** | `intake_state` is injected by adapter, never parsed from CSV. |
 | **No Deletion** | Rows are never deleted. Failed rows remain for audit. |
 | **Pre-Sovereignty** | This table has no relationship to `sovereign_company_id`. |
 | **Status Progression** | Status only moves forward: PENDING → PROCESSING → AUTHORIZED/FAILED. |

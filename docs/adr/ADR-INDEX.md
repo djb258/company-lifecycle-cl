@@ -18,6 +18,7 @@
 | ADR-003 | Identity Anchor Doctrine & State Expansion | Accepted | 2026-01-01 |
 | ADR-004 | Identity Funnel Implementation | Accepted | 2026-01-02 |
 | ADR-005 | Four-Hub Architecture | Accepted | 2026-01-06 |
+| ADR-006 | Multi-State Intake Doctrine Lock | Accepted | 2026-01-13 |
 
 ---
 
@@ -44,6 +45,7 @@
 
 ### Authority & Governance
 - ADR-001: CL as Sovereign Lifecycle Authority
+- ADR-006: Multi-State Intake Doctrine Lock
 
 ### Lifecycle Stages
 - ADR-002: Gate Zero as Pre-Sovereign Verification Stage
