@@ -19,6 +19,7 @@
 | ADR-004 | Identity Funnel Implementation | Accepted | 2026-01-02 |
 | ADR-005 | Four-Hub Architecture | Accepted | 2026-01-06 |
 | ADR-006 | Multi-State Intake Doctrine Lock | Accepted | 2026-01-13 |
+| ADR-007 | Multi-State Batch Ingestion Pipeline | Accepted | 2026-01-14 |
 
 ---
 
@@ -54,6 +55,9 @@
 - ADR-003: Identity Anchor Doctrine & State Expansion
 - ADR-004: Identity Funnel Implementation
 - ADR-005: Four-Hub Architecture
+
+### Operations
+- ADR-007: Multi-State Batch Ingestion Pipeline
 
 ### UI/UX
 _(No ADRs yet)_

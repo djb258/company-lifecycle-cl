@@ -18,6 +18,10 @@
 - [[ADR-004-identity-funnel-implementation]] - 5-Pass Funnel
 - [[ADR-005-four-hub-architecture]] - Four-Hub System
 - [[ADR-006-multi-state-intake-doctrine-lock]] - Multi-State Lock
+- [[ADR-007-multi-state-batch-ingestion]] - Batch Ingestion Pipeline
+
+### Run Logs
+- [[RUN-2026-01-14-MULTI-STATE-INGESTION]] - 2,350 companies across 8 states
 
 ### Product Requirements
 - [[PRD_COMPANY_LIFECYCLE]] - Core PRD
@@ -46,11 +50,12 @@
 
 | Metric | Value |
 |--------|-------|
-| Sovereign IDs | 71,820 |
+| Sovereign IDs | ~62,150 |
+| New (2026-01-14) | +2,350 |
 | HIGH Confidence | 4,809 |
 | MEDIUM Confidence | 4,530 |
-| States Active | NC, DE |
-| Doctrine Version | 1.4 |
+| States Active | NC, DE, VA, MD, PA, OH, KY, WV |
+| Doctrine Version | 1.5 |
 
 ---
 
@@ -60,6 +65,14 @@
 |--------|-------|---------|--------|
 | SS-001 | NC | NCExcelSourceAdapter | Active |
 | SS-002 | DE | DECsvSourceAdapter | Active |
+| CLAY_MULTI_DE | DE | Batch Script | Completed |
+| CLAY_MULTI_VA | VA | Batch Script | Completed |
+| CLAY_MULTI_MD | MD | Batch Script | Completed |
+| CLAY_MULTI_PA | PA | Batch Script | Completed |
+| CLAY_MULTI_OH | OH | Batch Script | Completed |
+| CLAY_MULTI_NC | NC | Batch Script | Completed |
+| CLAY_MULTI_KY | KY | Batch Script | Completed |
+| CLAY_MULTI_WV | WV | Batch Script | Completed |
 
 ---
 
@@ -109,6 +122,9 @@ linkedin_url
 
 | Date | Change | Reference |
 |------|--------|-----------|
+| 2026-01-14 | Multi-state batch ingestion (2,350 companies) | ADR-007 |
+| 2026-01-14 | 8-state expansion (DE, VA, MD, PA, OH, NC, KY, WV) | RUN-2026-01-14 |
+| 2026-01-14 | Batch scripts created | scripts/*.cjs |
 | 2026-01-13 | Multi-state intake doctrine lock | ADR-006 |
 | 2026-01-13 | Delaware adapter created | source_de_csv.js |
 | 2026-01-13 | Compile-time guards added | ingest.js |
