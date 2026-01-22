@@ -1,5 +1,5 @@
 # CL Schema ERD
-**Generated: 2026-01-22**
+**Updated: 2026-01-22**
 
 ## Visual ERD
 
@@ -19,6 +19,14 @@
   │   final_outcome = PASS   │
   │   entity_role            │
   │   eligibility_status     │
+  │   ────────────────────   │
+  │   LIFECYCLE POINTERS:    │  ← Write-once (trigger enforced)
+  │   outreach_id            │
+  │   sales_process_id       │
+  │   client_id              │
+  │   outreach_attached_at   │
+  │   sales_opened_at        │
+  │   client_promoted_at     │
   └───────────┬──────────────┘
               │
     ┌─────────┼─────────┬─────────────┐
@@ -73,8 +81,23 @@ cl.identity_confidence.company_unique_id → cl.company_identity.company_unique_
 | View | Rows | Purpose |
 |------|------|---------|
 | v_company_promotable | 51,910 | Canonical source for Outreach |
+| v_company_lifecycle_status | 51,910 | Lifecycle stage + pointers (for UI/Lovable.DAVE) |
 | v_company_identity_eligible | 51,910 | Eligible companies |
 | v_identity_gate_summary | 1 | Gate audit summary |
+
+### v_company_lifecycle_status (UI View)
+| Column | Type | Notes |
+|--------|------|-------|
+| sovereign_company_id | uuid | |
+| company_name | text | |
+| company_domain | text | |
+| outreach_id | uuid | Pointer to Outreach |
+| sales_process_id | uuid | Pointer to Sales |
+| client_id | uuid | Pointer to Client |
+| has_outreach | boolean | Derived |
+| has_sales | boolean | Derived |
+| is_client | boolean | Derived |
+| lifecycle_stage | text | PROSPECT → OUTREACH → SALES → CLIENT |
 
 ---
 
@@ -95,6 +118,14 @@ cl.identity_confidence.company_unique_id → cl.company_identity.company_unique_
 | eligibility_status | text | YES | ELIGIBLE |
 | existence_verified | boolean | YES | |
 | verified_at | timestamptz | YES | |
+| **outreach_id** | uuid | YES | Write-once pointer to Outreach |
+| **sales_process_id** | uuid | YES | Write-once pointer to Sales |
+| **client_id** | uuid | YES | Write-once pointer to Client |
+| outreach_attached_at | timestamptz | YES | Auto-set on first write |
+| sales_opened_at | timestamptz | YES | Auto-set on first write |
+| client_promoted_at | timestamptz | YES | Auto-set on first write |
+
+**Trigger:** `trg_write_once_pointers` - Blocks updates to non-NULL pointer columns.
 
 ### cl.company_identity_archive (22,263 rows) - ARCHIVED FAIL
 Same structure as company_identity plus:
