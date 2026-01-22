@@ -19,6 +19,7 @@
 - [[ADR-005-four-hub-architecture]] - Four-Hub System
 - [[ADR-006-multi-state-intake-doctrine-lock]] - Multi-State Lock
 - [[ADR-007-multi-state-batch-ingestion]] - Batch Ingestion Pipeline
+- [[ADR-008-lifecycle-pointer-registry]] - Write-Once Lifecycle Pointers
 
 ### Run Logs
 - [[RUN-2026-01-14-MULTI-STATE-INGESTION]] - 2,350 companies across 8 states
@@ -50,12 +51,12 @@
 
 | Metric | Value |
 |--------|-------|
-| Sovereign IDs | ~62,150 |
-| New (2026-01-14) | +2,350 |
-| HIGH Confidence | 4,809 |
-| MEDIUM Confidence | 4,530 |
+| Active Companies | 51,910 |
+| Archived (FAIL) | 22,263 |
+| Total Processed | 74,173 |
 | States Active | NC, DE, VA, MD, PA, OH, KY, WV |
 | Doctrine Version | 1.5 |
+| Lifecycle Pointers | outreach_id, sales_process_id, client_id |
 
 ---
 
@@ -122,13 +123,15 @@ linkedin_url
 
 | Date | Change | Reference |
 |------|--------|-----------|
+| 2026-01-22 | Lifecycle pointer registry (write-once) | ADR-008 |
+| 2026-01-22 | FAIL records archived (22,263) | archive-fail-final.js |
+| 2026-01-22 | CL cleanup to 51,910 PASS | Migration 008 |
+| 2026-01-22 | v_company_lifecycle_status view | Migration 008 |
 | 2026-01-14 | Multi-state batch ingestion (2,350 companies) | ADR-007 |
 | 2026-01-14 | 8-state expansion (DE, VA, MD, PA, OH, NC, KY, WV) | RUN-2026-01-14 |
 | 2026-01-14 | Batch scripts created | scripts/*.cjs |
 | 2026-01-13 | Multi-state intake doctrine lock | ADR-006 |
 | 2026-01-13 | Delaware adapter created | source_de_csv.js |
-| 2026-01-13 | Compile-time guards added | ingest.js |
-| 2026-01-13 | Downstream handoff created | DOWNSTREAM_SUB_HUB_HANDOFF.md |
 
 ---
 

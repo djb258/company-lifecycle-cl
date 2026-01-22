@@ -168,15 +168,37 @@ CL operates at 30,000–20,000 ft altitude. It defines **what** identity is and 
 | Attribute | Description |
 |-----------|-------------|
 | `company_unique_id` | Sovereign, immutable identifier (UUID) |
+| `sovereign_company_id` | Canonical sovereign ID (equals company_unique_id) |
 | `legal_name` | Canonical company name |
-| `cl_stage` | Current lifecycle truth (OUTREACH / SALES / CLIENT) |
-| `outreach_uid` | Pointer to active Outreach sub-hub record |
-| `sales_uid` | Pointer to active Sales sub-hub record |
-| `client_uid` | Pointer to active Client sub-hub record |
-| `created_at` | Identity mint timestamp |
-| `promoted_at` | Last promotion timestamp |
-| `retired_at` | Retirement timestamp (if applicable) |
-| `audit_trail` | Immutable history of all transitions |
+| `final_outcome` | PASS or FAIL (eligibility result) |
+| `final_reason` | Reason for outcome |
+| `entity_role` | PARENT_ANCHOR or CHILD_OPERATING_UNIT |
+| `eligibility_status` | ELIGIBLE, RESTRICTED_NONPROFIT, BLOCKED_NO_DOMAIN, EXCLUDED_POLICY |
+
+### Lifecycle Pointers (ADR-008)
+
+| Attribute | Description |
+|-----------|-------------|
+| `outreach_id` | Write-once pointer to Outreach sub-hub record |
+| `sales_process_id` | Write-once pointer to Sales sub-hub record |
+| `client_id` | Write-once pointer to Client sub-hub record |
+| `outreach_attached_at` | Timestamp when Outreach claimed this company |
+| `sales_opened_at` | Timestamp when Sales opened opportunity |
+| `client_promoted_at` | Timestamp when company became client |
+
+### Derived Lifecycle Stage
+
+Stage is **derived** from pointer presence, not stored:
+```
+PROSPECT → OUTREACH → SALES → CLIENT
+```
+
+| Stage | Condition |
+|-------|-----------|
+| CLIENT | `client_id IS NOT NULL` |
+| SALES | `sales_process_id IS NOT NULL` |
+| OUTREACH | `outreach_id IS NOT NULL` |
+| PROSPECT | All pointers NULL |
 
 **If a field is not listed above, it does not belong in CL.**
 

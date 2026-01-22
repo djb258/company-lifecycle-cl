@@ -20,6 +20,7 @@
 | ADR-005 | Four-Hub Architecture | Accepted | 2026-01-06 |
 | ADR-006 | Multi-State Intake Doctrine Lock | Accepted | 2026-01-13 |
 | ADR-007 | Multi-State Batch Ingestion Pipeline | Accepted | 2026-01-14 |
+| ADR-008 | Lifecycle Pointer Registry | Accepted | 2026-01-22 |
 
 ---
 
@@ -55,6 +56,7 @@
 - ADR-003: Identity Anchor Doctrine & State Expansion
 - ADR-004: Identity Funnel Implementation
 - ADR-005: Four-Hub Architecture
+- ADR-008: Lifecycle Pointer Registry
 
 ### Operations
 - ADR-007: Multi-State Batch Ingestion Pipeline

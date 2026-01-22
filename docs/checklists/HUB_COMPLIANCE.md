@@ -409,13 +409,54 @@ No exceptions. No partial compliance.
 
 ---
 
+## Lifecycle Pointer Registry (ADR-008)
+
+### Schema Extension
+
+- [x] `outreach_id` column added (UUID, nullable)
+- [x] `sales_process_id` column added (UUID, nullable)
+- [x] `client_id` column added (UUID, nullable)
+- [x] `outreach_attached_at` timestamp added
+- [x] `sales_opened_at` timestamp added
+- [x] `client_promoted_at` timestamp added
+
+### Write-Once Enforcement
+
+- [x] Trigger `trg_write_once_pointers` created
+- [x] Trigger blocks overwrite of non-NULL pointers
+- [x] Trigger blocks setting pointers to NULL
+- [x] Trigger allows same-value writes (no-op)
+- [x] Timestamps auto-set on first write
+
+### UI View
+
+- [x] `v_company_lifecycle_status` view created
+- [x] View exposes `has_outreach`, `has_sales`, `is_client` booleans
+- [x] View derives `lifecycle_stage` (PROSPECT/OUTREACH/SALES/CLIENT)
+- [x] View is read-only
+
+### Indexes
+
+- [x] Partial index on `outreach_id` (WHERE NOT NULL)
+- [x] Partial index on `sales_process_id` (WHERE NOT NULL)
+- [x] Partial index on `client_id` (WHERE NOT NULL)
+
+### Documentation
+
+- [x] ADR-008 created and accepted
+- [x] Migration 008 documented
+- [x] ERD updated with new columns
+- [x] Test script created (`test-write-once.js`)
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT
 
 **Blockers:** None
 
-**Doctrine Version:** 1.4
+**Doctrine Version:** 1.5
 
 ---
 
