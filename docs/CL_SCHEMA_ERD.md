@@ -1,5 +1,11 @@
 # CL Schema ERD
-**Updated: 2026-01-22**
+
+> **Source of Truth:** Neon PostgreSQL
+> **Verification Mode:** Read-Only
+> **Verification Date:** 2026-01-25
+> **Tables:** 21 | **Columns:** 265 | **Active Records:** 51,910
+
+**Updated: 2026-01-25**
 
 ## Visual ERD
 

@@ -1,244 +1,259 @@
 # cl.company_identity — Schema Documentation
 
-**Schema:** `cl`
-**Table:** `company_identity`
-**Status:** Doctrine-Locked
-**Last Documented:** 2025-12-26
+> **Source of Truth:** Neon PostgreSQL
+> **Verification Mode:** Read-Only
+> **Verification Date:** 2026-01-25
+> **Row Count:** 51,910
 
 ---
 
-## 1. Table Description
+## 1. Table Overview
 
-The `cl.company_identity` table is the **sovereign identity registry** for companies within the Company Lifecycle (CL) system.
+| Field | Value |
+|-------|-------|
+| **Schema** | cl |
+| **Table** | company_identity |
+| **Status** | Doctrine-Locked |
+| **Total Columns** | 32 |
+| **Total Rows** | 51,910 |
 
-Each row represents a single, unique company that has been formally admitted into the CL ecosystem. A record in this table is the **prerequisite** for any downstream system (Outreach, Sales, Client, Weewee.me, Shenandoah Valley Group) to reference that company.
-
-**This table represents:**
-- The existence of a company as a recognized entity
-- The canonical name of that company
-- One or more identity anchors (domain and/or LinkedIn URL)
-- The system that originated the record
-- When the identity was minted
-
-**This table does NOT represent:**
-- Lifecycle state (OUTREACH, SALES, CLIENT, RETIRED)
-- Promotion history
-- Enrichment data
-- Contact information
-- Business relationships
-- Any operational or transactional data
+The `cl.company_identity` table is the **sovereign identity registry** for companies within the Company Lifecycle (CL) system. Each row represents a formally admitted company that has passed through verification, eligibility assessment, and can progress through the sales funnel.
 
 ---
 
-## 2. Column Descriptions
+## 2. Column Dictionary (32 Columns — Verified from Neon)
 
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| `company_unique_id` | UUID | NO | The sovereign, globally unique identifier for this company. Auto-generated upon insert. This is the **only** identifier that downstream systems should use to reference this company. |
-| `company_name` | TEXT | NO | The canonical, human-readable name of the company. This is the authoritative display name, not a legal entity name or DBA. |
-| `company_domain` | TEXT | YES | The primary web domain associated with this company. Used as an identity anchor for matching and deduplication. |
-| `linkedin_company_url` | TEXT | YES | The LinkedIn company page URL for this company. Used as an identity anchor when domain is unavailable or ambiguous. |
-| `source_system` | TEXT | NO | The system or process that originated this identity record. Used for audit and provenance tracking. |
-| `created_at` | TIMESTAMPTZ | NO | The timestamp when this identity was minted. Auto-set to current time upon insert. |
+### Core Identity Columns
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `company_unique_id` | uuid | NO | gen_random_uuid() | Primary key, sovereign identifier |
+| `company_name` | text | NO | - | Company name from source system |
+| `company_domain` | text | YES | - | Company website domain |
+| `linkedin_company_url` | text | YES | - | LinkedIn company profile URL |
+| `source_system` | text | NO | - | Origin system (clay_import, clay, etc.) |
+| `created_at` | timestamptz | NO | now() | Record creation timestamp |
+| `company_fingerprint` | text | YES | - | Unique composite (domain + LinkedIn) |
+
+### Verification Columns
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `existence_verified` | boolean | YES | false | Company existence verified |
+| `verification_run_id` | text | YES | - | Verification run ID |
+| `verified_at` | timestamptz | YES | - | Verification completion time |
+| `domain_status_code` | integer | YES | - | HTTP status from domain check |
+| `name_match_score` | integer | YES | - | Name match quality (0-100) |
+| `state_match_result` | text | YES | - | State verification result |
+| `canonical_name` | text | YES | - | Normalized company name |
+| `state_verified` | text | YES | - | State verification status |
+
+### Identity Pass Columns
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `identity_pass` | integer | YES | 0 | Number of identity passes |
+| `identity_status` | text | YES | 'PENDING' | PENDING / PASS / FAIL |
+| `last_pass_at` | timestamptz | YES | - | Last pass timestamp |
+| `lifecycle_run_id` | text | YES | - | Lifecycle processing run ID |
+
+### Eligibility Columns
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `eligibility_status` | text | YES | - | ELIGIBLE or exclusion status |
+| `exclusion_reason` | text | YES | - | Reason if not eligible |
+| `final_outcome` | text | YES | - | PASS or FAIL |
+| `final_reason` | text | YES | - | Explanation for outcome |
+
+### Entity Hierarchy Columns
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `entity_role` | text | YES | - | PARENT_ANCHOR / CHILD_OPERATING_UNIT |
+| `sovereign_company_id` | uuid | YES | - | Reference to parent company |
+| `employee_count_band` | text | YES | - | Employee size range |
+
+### Lifecycle Pointer Columns (Write-Once)
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `outreach_id` | uuid | YES | - | **Write-once** pointer to Outreach |
+| `sales_process_id` | uuid | YES | - | **Write-once** pointer to Sales |
+| `client_id` | uuid | YES | - | **Write-once** pointer to Client |
+| `outreach_attached_at` | timestamptz | YES | - | Auto-set when outreach_id written |
+| `sales_opened_at` | timestamptz | YES | - | Auto-set when sales_process_id written |
+| `client_promoted_at` | timestamptz | YES | - | Auto-set when client_id written |
 
 ---
 
-## 3. Column ID Semantics
+## 3. Constraints
 
-### Primary Identifier
-| Column | Role |
-|--------|------|
-| `company_unique_id` | **Sovereign primary key.** All downstream references MUST use this value. |
+### Primary Key
 
-### Identity Anchors (At Least One Required)
-| Column | Role |
-|--------|------|
-| `company_domain` | Optional identity anchor. If present, should be unique per company. |
-| `linkedin_company_url` | Optional identity anchor. If present, should be unique per company. |
+| Constraint | Column |
+|------------|--------|
+| `company_identity_pkey` | company_unique_id |
 
-**Admission Gate:** At least ONE of `company_domain` or `linkedin_company_url` MUST be non-null. Records with neither are rejected by constraint.
+### Check Constraints
 
-### Descriptive Attributes
-| Column | Role |
-|--------|------|
-| `company_name` | Required descriptive attribute. Human-readable label. |
-
-### Metadata
-| Column | Role |
-|--------|------|
-| `source_system` | Required metadata. Provenance tracking. |
-| `created_at` | Required metadata. Temporal anchor. |
+| Constraint | Definition | Purpose |
+|------------|------------|---------|
+| `cl_identity_admission_gate` | `company_domain IS NOT NULL OR linkedin_company_url IS NOT NULL` | At least one identity anchor required |
+| `cl_identity_status_check` | `identity_status IN ('PENDING', 'PASS', 'FAIL')` | Valid status values |
+| `company_identity_final_outcome_check` | `final_outcome IN ('PASS', 'FAIL')` | Valid outcome values |
 
 ---
 
-## 4. Immutability & Invariants
+## 4. Indexes
+
+| Index | Column(s) | Unique | Purpose |
+|-------|-----------|--------|---------|
+| `company_identity_pkey` | company_unique_id | YES | Primary key |
+| `idx_company_identity_fingerprint_unique` | company_fingerprint | YES | Deduplication |
+| `idx_cl_company_domain` | company_domain | NO | Domain lookups |
+| `idx_cl_company_linkedin` | linkedin_company_url | NO | LinkedIn lookups |
+| `idx_cl_identity_existence` | existence_verified | NO | Verification filter |
+| `idx_cl_identity_pass` | identity_pass | NO | Pass count filter |
+| `idx_cl_identity_status` | identity_status | NO | Status filter |
+| `idx_company_identity_outreach_id` | outreach_id | NO | Outreach lookups |
+| `idx_company_identity_sales_process_id` | sales_process_id | NO | Sales lookups |
+| `idx_company_identity_client_id` | client_id | NO | Client lookups |
+
+---
+
+## 5. Trigger: Write-Once Enforcement
+
+**Trigger:** `trg_write_once_pointers`
+**Event:** BEFORE UPDATE
+**Function:** `cl.enforce_write_once_pointers()`
+
+```sql
+-- Enforces write-once semantics for lifecycle pointers
+-- Auto-sets timestamps on first write
+
+IF OLD.outreach_id IS NOT NULL AND NEW.outreach_id IS DISTINCT FROM OLD.outreach_id THEN
+  RAISE EXCEPTION 'outreach_id is write-once and already set';
+END IF;
+
+-- Same for sales_process_id and client_id
+
+-- Auto-timestamp on first write
+IF OLD.outreach_id IS NULL AND NEW.outreach_id IS NOT NULL THEN
+  NEW.outreach_attached_at := NOW();
+END IF;
+```
+
+---
+
+## 6. Data Distribution (Current State)
+
+| Metric | Value |
+|--------|-------|
+| Total Records | 51,910 |
+| Final Outcome = PASS | 51,910 (100%) |
+| Identity Status = PASS | 51,148 (98.53%) |
+| Identity Status = FAIL | 762 (1.47%) |
+| Eligibility = ELIGIBLE | 51,910 (100%) |
+| Entity Role = PARENT_ANCHOR | 47,186 (90.90%) |
+| Entity Role = CHILD_OPERATING_UNIT | 4,724 (9.10%) |
+| Outreach Attached | 0 (0%) |
+
+---
+
+## 7. Immutability Rules
 
 ### Immutable Columns (NEVER change after insert)
 
 | Column | Immutability |
 |--------|--------------|
-| `company_unique_id` | **IMMUTABLE.** Once assigned, this value is permanent for the lifetime of the record and beyond (even after retirement). |
-| `created_at` | **IMMUTABLE.** Reflects the moment of identity minting. |
-| `source_system` | **IMMUTABLE.** Reflects the original source. |
+| `company_unique_id` | IMMUTABLE — permanent sovereign ID |
+| `created_at` | IMMUTABLE — minting timestamp |
+| `source_system` | IMMUTABLE — origin provenance |
+
+### Write-Once Columns (Set once, then locked)
+
+| Column | Enforcement |
+|--------|-------------|
+| `outreach_id` | Trigger-enforced write-once |
+| `sales_process_id` | Trigger-enforced write-once |
+| `client_id` | Trigger-enforced write-once |
 
 ### Correctable Columns (May be updated with audit)
 
 | Column | Mutability |
 |--------|------------|
-| `company_name` | Correctable. May be updated if the original name was incorrect. |
-| `company_domain` | Correctable. May be updated if domain changes or was incorrect. |
-| `linkedin_company_url` | Correctable. May be updated if URL changes or was incorrect. |
-
-### Table-Level Invariants
-
-| Invariant | Description |
-|-----------|-------------|
-| **Unique ID** | No two rows may share the same `company_unique_id`. |
-| **Admission Gate** | Every row must have at least one of `company_domain` or `linkedin_company_url`. |
-| **No Deletion** | Rows are never deleted. Identity retirement is handled via lifecycle state (not in this table). |
-| **Single Source of Truth** | This table is the ONLY place where `company_unique_id` is minted. |
+| `company_name` | Correctable |
+| `company_domain` | Correctable |
+| `linkedin_company_url` | Correctable |
+| `canonical_name` | Correctable |
 
 ---
 
-## 5. Data Format Expectations
+## 8. AI Usage Notes
 
-### company_unique_id
-```
-Format: UUID v4 (auto-generated)
-Example: 3249de9e-26d4-482a-b498-540a5e5db73e
-Case: Lowercase with hyphens
-Generation: gen_random_uuid() — do NOT supply manually
-```
+### Correct Query Patterns
 
-### company_name
-```
-Format: Free text, UTF-8
-Example: "Acme Corporation"
-Case: Title case preferred, not enforced
-Length: Practical limit ~500 characters
-Avoid: Leading/trailing whitespace, control characters
-```
-
-### company_domain
-```
-Format: Domain only, no protocol, no path
-Example: "acme.com" (correct)
-Example: "https://acme.com" (INCORRECT)
-Example: "acme.com/about" (INCORRECT)
-Case: Lowercase only
-Normalization: Strip www., strip trailing dots
-```
-
-### linkedin_company_url
-```
-Format: Full LinkedIn company page URL
-Example: "https://www.linkedin.com/company/acme-corp"
-Example: "https://linkedin.com/company/12345" (numeric ID also valid)
-Case: Lowercase preferred
-Invalid: Personal profiles, showcase pages, school pages
-```
-
-### source_system
-```
-Format: Lowercase identifier, snake_case preferred
-Example: "outreach", "clay_import", "manual_entry", "weewee_intake"
-Purpose: Identifies the origin system for audit
-```
-
-### created_at
-```
-Format: ISO 8601 timestamp with timezone
-Example: 2025-12-26T11:45:00.000Z
-Timezone: Always stored as UTC
-Generation: Auto-set via now() — do NOT supply manually
-```
-
----
-
-## 6. AI Usage Notes
-
-### How to Read This Table Correctly
-
-**Purpose:** When you need to verify a company exists in CL or retrieve its sovereign identifier.
-
-**Query pattern for lookup by domain:**
 ```sql
+-- Lookup by domain
 SELECT company_unique_id, company_name
 FROM cl.company_identity
-WHERE company_domain = 'example.com'
-```
+WHERE company_domain = 'example.com';
 
-**Query pattern for lookup by LinkedIn:**
-```sql
+-- Lookup by LinkedIn
 SELECT company_unique_id, company_name
 FROM cl.company_identity
-WHERE linkedin_company_url LIKE '%linkedin.com/company/example%'
-```
+WHERE linkedin_company_url LIKE '%linkedin.com/company/example%';
 
-### What This Table Tells You
-
-- Whether a company has been formally admitted to CL
-- The sovereign ID to use for all downstream references
-- The canonical name to display
-- When the company was first recognized
-
-### What This Table Does NOT Tell You
-
-- Current lifecycle state (OUTREACH/SALES/CLIENT/RETIRED)
-- Whether the company is active or retired
-- Any enrichment or business data
-- Contact information or people associated
-
-### Correct Usage Pattern
-
-```
-1. External system has a company candidate
-2. Check if company_domain or linkedin_company_url exists in cl.company_identity
-3. If YES → Use existing company_unique_id
-4. If NO → Request CL to mint new identity (do NOT insert directly)
-5. Reference company_unique_id in all downstream operations
+-- Get eligible companies not yet in outreach
+SELECT company_unique_id, company_name, company_domain
+FROM cl.company_identity
+WHERE final_outcome = 'PASS'
+  AND outreach_id IS NULL;
 ```
 
 ### Anti-Patterns (Do NOT Do These)
 
 | Anti-Pattern | Why Wrong |
 |--------------|-----------|
-| Generate your own UUID and insert | Violates sovereign minting authority |
-| Store company_unique_id as mutable | ID is permanent; design accordingly |
-| Assume domain uniqueness | Multiple companies may share domain (rare but possible) |
-| Query without identity anchor | Always filter by domain or linkedin, never scan full table |
-| Use company_name as identifier | Names are not unique; always use company_unique_id |
+| Generate your own UUID | Violates sovereign minting |
+| Query without identity anchor | Full table scan |
+| Use company_name as identifier | Names are not unique |
+| Update write-once columns | Trigger will reject |
 
 ---
 
-## 7. SQL Comments (Apply to Database)
+## 9. SQL Comments
 
 ```sql
--- Table comment
 COMMENT ON TABLE cl.company_identity IS
-'Sovereign identity registry for Company Lifecycle (CL). Each row represents a formally admitted company. The company_unique_id is the only identifier downstream systems should use. This table does NOT contain lifecycle state, enrichment data, or operational information.';
+'Sovereign identity registry for Company Lifecycle. 32 columns tracking identity, verification, eligibility, and funnel progression. Write-once pattern for lifecycle pointers.';
 
--- Column comments
 COMMENT ON COLUMN cl.company_identity.company_unique_id IS
-'Sovereign, globally unique, immutable identifier. Auto-generated UUID. NEVER change or reuse.';
+'Sovereign, immutable UUID. Auto-generated. NEVER reuse.';
 
-COMMENT ON COLUMN cl.company_identity.company_name IS
-'Canonical human-readable company name. May be corrected if originally incorrect.';
-
-COMMENT ON COLUMN cl.company_identity.company_domain IS
-'Primary web domain (no protocol, lowercase). Identity anchor. At least one of domain or linkedin required.';
-
-COMMENT ON COLUMN cl.company_identity.linkedin_company_url IS
-'LinkedIn company page URL. Identity anchor. At least one of domain or linkedin required.';
-
-COMMENT ON COLUMN cl.company_identity.source_system IS
-'Origin system that created this identity. Immutable. Used for audit and provenance.';
-
-COMMENT ON COLUMN cl.company_identity.created_at IS
-'Timestamp when identity was minted. Immutable. Always UTC.';
+COMMENT ON COLUMN cl.company_identity.outreach_id IS
+'Write-once pointer to Outreach hub. Trigger-enforced immutability after first write.';
 ```
 
 ---
 
-**Documentation Version:** 1.0
-**Table Version:** 001 (001_cl_company_identity.sql)
+## 10. Document Control
+
+| Field | Value |
+|-------|-------|
+| **Source of Truth** | Neon PostgreSQL |
+| **Verification Mode** | Read-Only |
+| **Verification Date** | 2026-01-25 |
+| **Column Count** | 32 |
+| **Row Count** | 51,910 |
+| **Documentation Version** | 2.0 |
+| **Previous Version** | 1.0 (6 columns documented) |
+
+---
+
+> **VERIFICATION STAMP**
+> This document was generated from live Neon schema query on 2026-01-25.
+> All 32 columns verified against `information_schema.columns`.
+> Constraints verified against `information_schema.table_constraints`.
+> Trigger verified against `information_schema.triggers`.

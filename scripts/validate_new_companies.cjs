@@ -12,7 +12,13 @@ const fs = require('fs');
 const { parse } = require('csv-parse/sync');
 const { Pool } = require('pg');
 
-const CONNECTION_STRING = 'postgresql://Marketing%20DB_owner:npg_OsE4Z2oPCpiT@ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech:5432/Marketing%20DB?sslmode=require';
+// Use Doppler for secrets: doppler run -- node scripts/validate_new_companies.cjs
+const CONNECTION_STRING = process.env.VITE_DATABASE_URL;
+
+if (!CONNECTION_STRING) {
+  console.error('ERROR: VITE_DATABASE_URL not set. Run with: doppler run -- node scripts/validate_new_companies.cjs');
+  process.exit(1);
+}
 
 async function main() {
   const csvPath = process.argv[2] || 'c:\\Users\\CUSTOM PC\\Desktop\\Clay Tables\\pipeline_output\\NEW_COMPANIES_FOR_CLAY.csv';

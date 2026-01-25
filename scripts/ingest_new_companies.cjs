@@ -14,7 +14,13 @@ const { parse } = require('csv-parse/sync');
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 
-const CONNECTION_STRING = 'postgresql://Marketing%20DB_owner:npg_OsE4Z2oPCpiT@ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech:5432/Marketing%20DB?sslmode=require';
+// Use Doppler for secrets: doppler run -- node scripts/ingest_new_companies.cjs
+const CONNECTION_STRING = process.env.VITE_DATABASE_URL;
+
+if (!CONNECTION_STRING) {
+  console.error('ERROR: VITE_DATABASE_URL not set. Run with: doppler run -- node scripts/ingest_new_companies.cjs');
+  process.exit(1);
+}
 
 // State name to code mapping
 const STATE_MAP = {
