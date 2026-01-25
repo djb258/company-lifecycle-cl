@@ -1,0 +1,12 @@
+{
+  "schema_hash": "REGENERATE_WITH_DOPPLER",
+  "pipeline_intent_hash": "REGENERATE_WITH_DOPPLER",
+  "generated_at": "2026-01-25",
+  "source_of_truth": "Neon + Doctrine Docs",
+  "verification_mode": "INITIAL",
+  "schema_stats": {
+    "tables": 21,
+    "columns": 265
+  },
+  "_note": "Run 'doppler run -- node scripts/generate_contract_hash.cjs' to generate actual hashes"
+}

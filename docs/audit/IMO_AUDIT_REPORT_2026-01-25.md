@@ -228,6 +228,61 @@ doppler run -- node scripts/my_script.cjs
 
 ---
 
+---
+
+## Enforcement Status
+
+### CI Gate Configuration
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| GitHub Actions Workflow | ACTIVE | `.github/workflows/imo-audit.yml` |
+| Contract Hash Generator | ACTIVE | `scripts/generate_contract_hash.cjs` |
+| Contract Hash File | ACTIVE | `docs/audit/CONTRACT_HASH.json` |
+
+### Protection Mechanisms
+
+| Protection | Status | Behavior |
+|------------|--------|----------|
+| Schema Drift Detection | ACTIVE | CI fails on hash mismatch |
+| Pipeline Intent Protection | ACTIVE | CI fails on hash mismatch |
+| Doctrine File Verification | ACTIVE | CI fails on missing files |
+| Pattern Enforcement | ACTIVE | CI fails on forbidden patterns |
+
+### Override Mechanism
+
+**NONE**
+
+There is no manual override. There is no exception process.
+Failed CI blocks merge. Fix the issue or do not merge.
+
+### Enforcement Rules
+
+| Rule | Enforcement |
+|------|-------------|
+| Contract hash mismatch | BLOCKED |
+| Missing doctrine files | BLOCKED |
+| Doctrine not locked | BLOCKED |
+| Forbidden patterns detected | BLOCKED |
+| Any audit failure | BLOCKED |
+
+---
+
+## System Status
+
+| Field | Value |
+|-------|-------|
+| **System Status** | SELF-ENFORCING |
+| **Doctrine State** | LOCKED |
+| **CI Enforcement** | ENABLED |
+| **Schema Drift Protection** | ACTIVE |
+| **Pipeline Intent Protection** | ACTIVE |
+| **Override Mechanism** | NONE |
+
+---
+
 > Source of Truth: Neon
 > Verification Mode: Read-Only
 > Verification Date: 2026-01-25
+> Enforcement Date: 2026-01-25
+> Status: SEALED
