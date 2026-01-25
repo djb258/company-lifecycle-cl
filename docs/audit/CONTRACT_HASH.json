@@ -1,12 +1,11 @@
 {
-  "schema_hash": "REGENERATE_WITH_DOPPLER",
-  "pipeline_intent_hash": "REGENERATE_WITH_DOPPLER",
+  "schema_hash": "3e66141429d31864e6018d71241b681b49d1ae377a1744edafbc2dbafd49829b",
+  "pipeline_intent_hash": "2504d09dc603e801aea863cc61b3f557a7896261058d93acc3b96e44be91139d",
   "generated_at": "2026-01-25",
   "source_of_truth": "Neon + Doctrine Docs",
-  "verification_mode": "INITIAL",
+  "verification_mode": "GENERATE",
   "schema_stats": {
-    "tables": 21,
-    "columns": 265
-  },
-  "_note": "Run 'doppler run -- node scripts/generate_contract_hash.cjs' to generate actual hashes"
+    "tables": 17,
+    "columns": 230
+  }
 }
