@@ -471,4 +471,4 @@ If any box is unchecked, this hub may not ship.
 | Role | Name | Date |
 |------|------|------|
 | Hub Owner | SHQ | 2025-12-30 |
-| Compliance Officer | | |
+| Compliance Officer | CTB Remediation (Claude) | 2026-01-29 |
