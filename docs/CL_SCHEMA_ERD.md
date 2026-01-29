@@ -5,57 +5,101 @@
 > **Verification Date:** 2026-01-25
 > **Tables:** 21 | **Columns:** 265 | **Active Records:** 51,910
 
-**Updated: 2026-01-25**
+**Updated: 2026-01-29**
 
-## Visual ERD
+## Visual ERD (Mermaid)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     CL SCHEMA (Company Lifecycle)               │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+erDiagram
+    COMPANY_IDENTITY ||--o{ COMPANY_NAMES : "has"
+    COMPANY_IDENTITY ||--o{ COMPANY_DOMAINS : "has"
+    COMPANY_IDENTITY ||--o{ IDENTITY_CONFIDENCE : "has"
+    COMPANY_IDENTITY ||--o{ DOMAIN_HIERARCHY : "parent_of"
 
-  ┌──────────────────────────┐
-  │   company_identity       │  ← MASTER TABLE (51,910 PASS)
-  │   ══════════════════     │
-  │   company_unique_id [PK] │
-  │   sovereign_company_id   │
-  │   company_name           │
-  │   company_domain         │
-  │   linkedin_company_url   │
-  │   final_outcome = PASS   │
-  │   entity_role            │
-  │   eligibility_status     │
-  │   ────────────────────   │
-  │   LIFECYCLE POINTERS:    │  ← Write-once (trigger enforced)
-  │   outreach_id            │
-  │   sales_process_id       │
-  │   client_id              │
-  │   outreach_attached_at   │
-  │   sales_opened_at        │
-  │   client_promoted_at     │
-  └───────────┬──────────────┘
-              │
-    ┌─────────┼─────────┬─────────────┐
-    │         │         │             │
-    ▼         ▼         ▼             ▼
-┌────────┐ ┌────────┐ ┌──────────┐ ┌──────────────┐
-│company │ │company │ │identity  │ │domain        │
-│_names  │ │_domains│ │_confidence│ │_hierarchy    │
-│(78,204)│ │(51,910)│ │ (51,910) │ │   (4,705)    │
-└────────┘ └────────┘ └──────────┘ └──────────────┘
+    COMPANY_IDENTITY {
+        uuid company_unique_id PK
+        uuid sovereign_company_id
+        text company_name
+        text company_domain
+        text linkedin_company_url
+        text final_outcome
+        text entity_role
+        text eligibility_status
+        uuid outreach_id FK
+        uuid sales_process_id FK
+        uuid client_id FK
+        timestamptz outreach_attached_at
+        timestamptz sales_opened_at
+        timestamptz client_promoted_at
+    }
 
-  ┌──────────────────────────┐
-  │ company_identity_archive │  ← ARCHIVED FAIL (22,263)
-  │   final_outcome = FAIL   │
-  └──────────────────────────┘
+    COMPANY_NAMES {
+        uuid name_id PK
+        uuid company_unique_id FK
+        text name_variant
+        text name_type
+    }
 
-  ┌──────────────────────────┐
-  │     cl_errors_archive    │  ← ARCHIVED ERRORS (16,103)
-  └──────────────────────────┘
+    COMPANY_DOMAINS {
+        uuid domain_id PK
+        uuid company_unique_id FK
+        text domain
+        text domain_type
+    }
 
-  ┌──────────────────────────┐
-  │       cl_errors          │  ← WORK QUEUE (0 at steady state)
-  └──────────────────────────┘
+    IDENTITY_CONFIDENCE {
+        uuid confidence_id PK
+        uuid company_unique_id FK
+        integer confidence_score
+        text confidence_method
+    }
+
+    DOMAIN_HIERARCHY {
+        uuid hierarchy_id PK
+        text domain
+        uuid parent_company_id FK
+        uuid child_company_id FK
+        text relationship_type
+        integer confidence_score
+    }
+
+    COMPANY_CANDIDATE {
+        uuid candidate_id PK
+        text company_name
+        text company_domain
+        text source_system
+        text verification_status
+        text state_code
+    }
+
+    COMPANY_IDENTITY_BRIDGE {
+        uuid bridge_id PK
+        text source_id
+        uuid sovereign_company_id FK
+        text source_system
+    }
+
+    COMPANY_IDENTITY_ARCHIVE {
+        uuid company_unique_id PK
+        text final_outcome
+        text archive_reason
+        timestamptz archived_at
+    }
+
+    CL_ERRORS {
+        uuid error_id PK
+        uuid company_unique_id FK
+        text pass_name
+        text failure_reason_code
+        text final_outcome
+    }
+
+    CL_ERRORS_ARCHIVE {
+        uuid error_id PK
+        uuid company_unique_id
+        text pass_name
+        timestamptz archived_at
+    }
 ```
 
 ## Tables Summary
@@ -69,7 +113,7 @@
 | identity_confidence | 51,910 | Confidence scores |
 | domain_hierarchy | 4,705 | Parent-child relationships |
 | company_candidate | 62,162 | Intake candidates |
-| company_identity_bridge | 71,820 | Source ID → Sovereign ID mapping |
+| company_identity_bridge | 71,820 | Source ID to Sovereign ID mapping |
 | cl_errors | 0 | Work queue (empty at steady state) |
 | cl_errors_archive | 16,103 | Archived error history |
 | cl_err_existence | 7,985 | Legacy existence errors |
@@ -77,9 +121,9 @@
 ## Foreign Keys
 
 ```
-cl.company_domains.company_unique_id → cl.company_identity.company_unique_id
-cl.company_names.company_unique_id → cl.company_identity.company_unique_id
-cl.identity_confidence.company_unique_id → cl.company_identity.company_unique_id
+cl.company_domains.company_unique_id -> cl.company_identity.company_unique_id
+cl.company_names.company_unique_id -> cl.company_identity.company_unique_id
+cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_id
 ```
 
 ## Views
@@ -103,7 +147,7 @@ cl.identity_confidence.company_unique_id → cl.company_identity.company_unique_
 | has_outreach | boolean | Derived |
 | has_sales | boolean | Derived |
 | is_client | boolean | Derived |
-| lifecycle_stage | text | PROSPECT → OUTREACH → SALES → CLIENT |
+| lifecycle_stage | text | PROSPECT -> OUTREACH -> SALES -> CLIENT |
 
 ---
 
@@ -179,3 +223,61 @@ All archive tables mirror their source tables with additional columns:
 | identity_confidence_archive | 19,850 |
 | domain_hierarchy_archive | 1,878 |
 | cl_errors_archive | 16,103 |
+
+---
+
+## Legacy Reference (ASCII)
+
+<details>
+<summary>Click to expand ASCII ERD (preserved for reference)</summary>
+
+```
++---------------------------------------------------------------------+
+|                     CL SCHEMA (Company Lifecycle)                    |
++---------------------------------------------------------------------+
+
+  +----------------------------+
+  |   company_identity         |  <- MASTER TABLE (51,910 PASS)
+  |   ======================   |
+  |   company_unique_id [PK]   |
+  |   sovereign_company_id     |
+  |   company_name             |
+  |   company_domain           |
+  |   linkedin_company_url     |
+  |   final_outcome = PASS     |
+  |   entity_role              |
+  |   eligibility_status       |
+  |   ------------------------ |
+  |   LIFECYCLE POINTERS:      |  <- Write-once (trigger enforced)
+  |   outreach_id              |
+  |   sales_process_id         |
+  |   client_id                |
+  |   outreach_attached_at     |
+  |   sales_opened_at          |
+  |   client_promoted_at       |
+  +-----------+----------------+
+              |
+    +---------+---------+-----------+
+    |         |         |           |
+    v         v         v           v
++--------+ +--------+ +----------+ +--------------+
+|company | |company | |identity  | |domain        |
+|_names  | |_domains| |_confidence| |_hierarchy   |
+|(78,204)| |(51,910)| | (51,910) | |   (4,705)   |
++--------+ +--------+ +----------+ +--------------+
+
+  +----------------------------+
+  | company_identity_archive   |  <- ARCHIVED FAIL (22,263)
+  |   final_outcome = FAIL     |
+  +----------------------------+
+
+  +----------------------------+
+  |     cl_errors_archive      |  <- ARCHIVED ERRORS (16,103)
+  +----------------------------+
+
+  +----------------------------+
+  |       cl_errors            |  <- WORK QUEUE (0 at steady state)
+  +----------------------------+
+```
+
+</details>
