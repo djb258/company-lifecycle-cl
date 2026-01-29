@@ -1,0 +1,81 @@
+# ===============================================================================
+# REGISTRY - Hub Identity Declaration
+# ===============================================================================
+# Authority: imo-creator (Inherited)
+# Status: REQUIRED - Every hub MUST have a REGISTRY.yaml
+# ===============================================================================
+
+version: "1.0.0"
+last_updated: "2026-01-29"
+
+# ===============================================================================
+# HUB IDENTITY (CC-02)
+# ===============================================================================
+
+hub:
+  hub_id: "HUB-CL-001"
+  hub_name: "Company Lifecycle Hub"
+  description: "Sovereign identity minting and lifecycle stage management for companies"
+  owner: "Barton / Supreme Headquarters (SHQ)"
+  sovereign_reference: "imo-creator"
+
+# ===============================================================================
+# CONFORMANCE
+# ===============================================================================
+
+conformance:
+  parent: "imo-creator"
+  doctrine_version: "1.2.0"
+  ctb_version: "1.0.0"
+  domain_spec: "doctrine/REPO_DOMAIN_SPEC.md"
+
+# ===============================================================================
+# CTB PLACEMENT
+# ===============================================================================
+
+ctb:
+  mode: "realignment"
+  mutation_allowed: false
+  branches_used:
+    sys: true
+    data: true
+    app: true
+    ai: false
+    ui: true
+
+# ===============================================================================
+# SUB-HUBS (CC-03)
+# ===============================================================================
+
+subhubs:
+  - subhub_id: "SUBHUB-CL-INTAKE"
+    name: "Intake Engine"
+    description: "State-agnostic company candidate ingestion and verification"
+    path: "pipeline/"
+
+# ===============================================================================
+# SPOKES (CC-03 Interfaces)
+# ===============================================================================
+
+spokes:
+  ingress:
+    - spoke_id: "SPOKE-CL-I-001"
+      name: "NC Excel Adapter"
+      contract: "pipeline/adapters/nc_excel_adapter.js"
+    - spoke_id: "SPOKE-CL-I-002"
+      name: "State CSV Adapter"
+      contract: "pipeline/adapters/state_csv_adapter.js"
+
+  egress:
+    - spoke_id: "SPOKE-CL-O-001"
+      name: "Outreach Promotable View"
+      contract: "v_company_promotable"
+
+# ===============================================================================
+# DOCUMENT CONTROL
+# ===============================================================================
+
+document_control:
+  created: "2026-01-29"
+  last_modified: "2026-01-29"
+  status: "ACTIVE"
