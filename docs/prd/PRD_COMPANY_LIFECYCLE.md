@@ -29,6 +29,18 @@ The Company Lifecycle (CL) hub is the **constitutional root** for company identi
 
 CL owns identity. All other hubs are children that consume identity from CL.
 
+### Transformation Statement (CONST → VAR)
+
+> **This system transforms CONSTANTS (raw company candidates with unverified identity claims) into VARIABLES (sovereign company identities with lifecycle stage and promotion pointers).**
+
+| Constants (Inputs) | Variables (Outputs) |
+|--------------------|---------------------|
+| Company name (raw) | company_unique_id (sovereign) |
+| Company domain (unverified) | sovereign_company_id (immutable) |
+| LinkedIn URL (unverified) | eligibility_status (ELIGIBLE) |
+| Source system identifier | lifecycle_stage (PROSPECT/OUTREACH/SALES/CLIENT) |
+| State code | outreach_id, sales_process_id, client_id (pointers) |
+
 ---
 
 ## 4. CTB Placement
