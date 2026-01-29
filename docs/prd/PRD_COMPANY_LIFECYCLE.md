@@ -41,6 +41,23 @@ CL owns identity. All other hubs are children that consume identity from CL.
 | Source system identifier | lifecycle_stage (PROSPECT/OUTREACH/SALES/CLIENT) |
 | State code | outreach_id, sales_process_id, client_id (pointers) |
 
+### Category Exclusion Rules
+
+The following industry categories are **excluded** from the active company identity pool. Excluded companies are moved to `*_excluded` tables for audit retention but are not promoted through lifecycle stages.
+
+| Category | Description | Exclusion Reason |
+|----------|-------------|------------------|
+| EDUCATIONAL_INSTITUTION | Schools, universities, e-learning providers | Non-target market |
+| FINANCIAL_SERVICES | Wealth management, financial advisors, banking | Regulatory complexity |
+| GOVERNMENT_ENTITY | Government offices, law enforcement, public agencies | Non-commercial |
+| HEALTHCARE_FACILITY | Medical practices, hospitals, clinics | Regulatory complexity |
+| RELIGIOUS_ORGANIZATION | Churches, religious institutions | Non-commercial |
+| INSURANCE_ENTITY | Insurance carriers, agencies, brokers | Regulatory complexity |
+
+**Current Exclusion Stats (as of 2026-01-29):**
+- Total excluded: 5,327 companies (10.1% of intake)
+- Active pool: 47,348 companies
+
 ---
 
 ## 4. CTB Placement

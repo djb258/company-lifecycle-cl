@@ -35,13 +35,17 @@ Map generic FACT role to your domain's source-of-truth tables.
 
 | Generic Role | Domain Table | Owner Schema | Description (10 words max) |
 |--------------|--------------|--------------|---------------------------|
-| FACT_TABLE | company_identity | cl | Master table for PASS companies |
+| FACT_TABLE | company_identity | cl | Master table for PASS companies (47,348) |
 | CANDIDATE_TABLE | company_candidate | cl | Intake candidates pending verification |
 | ARCHIVE_TABLE | company_identity_archive | cl | Archived FAIL companies |
 | BRIDGE_TABLE | company_identity_bridge | cl | Source ID to Sovereign ID mapping |
 | NAMES_TABLE | company_names | cl | Name variants per company |
 | DOMAINS_TABLE | company_domains | cl | Domain records for companies |
 | CONFIDENCE_TABLE | identity_confidence | cl | Confidence scores per company |
+| EXCLUDED_IDENTITY | company_identity_excluded | cl | Category-excluded companies (5,327) |
+| EXCLUDED_NAMES | company_names_excluded | cl | Names for excluded companies |
+| EXCLUDED_DOMAINS | company_domains_excluded | cl | Domains for excluded companies |
+| EXCLUDED_CONFIDENCE | identity_confidence_excluded | cl | Confidence for excluded companies |
 
 ---
 
@@ -67,6 +71,7 @@ Define data isolation boundaries within this domain.
 | INTAKE_LANE | company_candidate | No direct writes to company_identity |
 | IDENTITY_LANE | company_identity, company_names, company_domains | Read-only from external hubs |
 | ARCHIVE_LANE | company_identity_archive, cl_errors_archive | Append-only, no modifications |
+| EXCLUDED_LANE | company_identity_excluded, company_names_excluded, company_domains_excluded, identity_confidence_excluded | Category-filtered companies, read-only audit retention |
 
 ---
 
@@ -86,6 +91,8 @@ Define data isolation boundaries within this domain.
 |--------------|--------------|--------|
 | company_candidate | company_identity | Candidates must pass verification gate first |
 | cl_errors_archive | company_identity | Archived errors are historical record only |
+| company_identity_excluded | company_identity | Excluded companies are filtered out of active pool |
+| company_identity_excluded | v_company_promotable | Excluded companies not eligible for promotion |
 
 ---
 
@@ -133,7 +140,8 @@ Before this file is valid, verify:
 |-------|-------|
 | Created | 2026-01-29 |
 | Last Modified | 2026-01-29 |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Status | ACTIVE |
 | Parent Doctrine | IMO-Creator |
 | Validated | YES |
+| Notes | Added excluded tables for category filtering |

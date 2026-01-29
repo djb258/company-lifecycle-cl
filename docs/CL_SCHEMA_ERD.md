@@ -2,10 +2,24 @@
 
 > **Source of Truth:** Neon PostgreSQL
 > **Verification Mode:** Read-Only
-> **Verification Date:** 2026-01-25
-> **Tables:** 21 | **Columns:** 265 | **Active Records:** 51,910
+> **Verification Date:** 2026-01-29
+> **Tables:** 25 | **Columns:** 280+ | **Active Records:** 47,348
 
 **Updated: 2026-01-29**
+
+## Category Exclusion (2026-01-29)
+
+The following categories have been excluded from the active dataset and moved to `*_excluded` tables:
+
+| Category | Count Excluded | Description |
+|----------|----------------|-------------|
+| EDUCATIONAL_INSTITUTION | 1,332 | Schools, universities, e-learning |
+| FINANCIAL_SERVICES | 1,748 | Edward Jones, wealth mgmt, advisors |
+| GOVERNMENT_ENTITY | 466 | Government offices, law enforcement |
+| HEALTHCARE_FACILITY | 1,663 | Medical practices, hospitals, clinics |
+| RELIGIOUS_ORGANIZATION | 118 | Churches, religious institutions |
+| INSURANCE_ENTITY | 0 | (No specific matches in dataset) |
+| **TOTAL EXCLUDED** | **5,327** | **10.1% of original dataset** |
 
 ## Visual ERD (Mermaid)
 
@@ -100,23 +114,62 @@ erDiagram
         text pass_name
         timestamptz archived_at
     }
+
+    COMPANY_IDENTITY_EXCLUDED {
+        uuid company_unique_id PK
+        text company_name
+        text company_domain
+        text exclusion_category
+        timestamptz excluded_at
+    }
+
+    COMPANY_NAMES_EXCLUDED {
+        uuid name_id PK
+        uuid company_unique_id FK
+        text name_variant
+    }
+
+    COMPANY_DOMAINS_EXCLUDED {
+        uuid domain_id PK
+        uuid company_unique_id FK
+        text domain
+    }
+
+    IDENTITY_CONFIDENCE_EXCLUDED {
+        uuid confidence_id PK
+        uuid company_unique_id FK
+        integer confidence_score
+    }
 ```
 
 ## Tables Summary
 
+### Active Tables
+
 | Table | Rows | Purpose |
 |-------|------|---------|
-| company_identity | 51,910 | Master table - PASS companies only |
+| company_identity | 47,348 | Master table - PASS companies only |
 | company_identity_archive | 22,263 | Archived FAIL companies |
-| company_names | 78,204 | Name variants per company |
-| company_domains | 51,910 | Domain records for active companies |
-| identity_confidence | 51,910 | Confidence scores |
+| company_names | ~70,843 | Name variants per company |
+| company_domains | ~47,348 | Domain records for active companies |
+| identity_confidence | ~47,348 | Confidence scores |
 | domain_hierarchy | 4,705 | Parent-child relationships |
 | company_candidate | 62,162 | Intake candidates |
 | company_identity_bridge | 71,820 | Source ID to Sovereign ID mapping |
 | cl_errors | 0 | Work queue (empty at steady state) |
 | cl_errors_archive | 16,103 | Archived error history |
 | cl_err_existence | 7,985 | Legacy existence errors |
+
+### Excluded Tables (Category Filtered)
+
+| Table | Rows | Purpose |
+|-------|------|---------|
+| company_identity_excluded | 5,327 | Companies excluded by category filter |
+| company_names_excluded | 7,361 | Name variants for excluded companies |
+| company_domains_excluded | 5,327 | Domain records for excluded companies |
+| identity_confidence_excluded | 5,327 | Confidence scores for excluded companies |
+
+**Exclusion Categories:** EDUCATIONAL_INSTITUTION, FINANCIAL_SERVICES, GOVERNMENT_ENTITY, HEALTHCARE_FACILITY, RELIGIOUS_ORGANIZATION, INSURANCE_ENTITY
 
 ## Foreign Keys
 
@@ -130,9 +183,9 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 
 | View | Rows | Purpose |
 |------|------|---------|
-| v_company_promotable | 51,910 | Canonical source for Outreach |
-| v_company_lifecycle_status | 51,910 | Lifecycle stage + pointers (for UI/Lovable.DAVE) |
-| v_company_identity_eligible | 51,910 | Eligible companies |
+| v_company_promotable | 47,348 | Canonical source for Outreach |
+| v_company_lifecycle_status | 47,348 | Lifecycle stage + pointers (for UI/Lovable.DAVE) |
+| v_company_identity_eligible | 47,348 | Eligible companies |
 | v_identity_gate_summary | 1 | Gate audit summary |
 
 ### v_company_lifecycle_status (UI View)
@@ -153,7 +206,7 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 
 ## Table Details
 
-### cl.company_identity (51,910 rows) - MASTER
+### cl.company_identity (47,348 rows) - MASTER
 | Column | Type | Nullable | Notes |
 |--------|------|----------|-------|
 | company_unique_id | uuid | NO | PK |
