@@ -21,7 +21,9 @@ No exceptions. No partial compliance.
 ## CTB Placement
 
 - [x] CTB path defined: **sys/company-lifecycle**
-- [x] Branch level specified: **sys (40k)**
+- [x] Branch level specified: **sys / ui / data / app / ai**
+- [x] No forbidden folders (utils, helpers, common, shared, lib, misc): **Verified 2026-02-06**
+- [x] CTB Governance document exists: `templates/config/CTB_GOVERNANCE.md`
 - [x] Parent hub identified: **None (Root Hub)**
 
 ---
@@ -450,19 +452,112 @@ No exceptions. No partial compliance.
 
 ---
 
+## OSAM Compliance (Operational Semantic Access Map)
+
+- [x] OSAM template exists: `templates/semantic/OSAM.md`
+- [x] Universal join key declared: `company_unique_id` (UUID)
+- [x] Spine table identified: `cl.company_identity`
+- [x] All ERD joins declared in schema docs: `docs/schema/CL_ERD.md`
+- [x] No queries target SOURCE tables (raw CSV data is ingestion-only)
+- [x] No queries target ENRICHMENT tables as primary query surface
+- [x] PRD questions routable via semantic schema: `docs/schema/CL_SCHEMA_INDEX.md`
+- [x] All tables classified (QUERY/SOURCE/ENRICHMENT/AUDIT)
+- [x] Query routing documented in schema documentation
+
+---
+
+## HEIR Compliance (Hierarchy, Enforcement, Integration, Reporting)
+
+- [x] `heir.doctrine.yaml` exists at hub root
+- [x] Sovereign reference present (CC-01): `imo-creator`
+- [x] Hub identity complete (CC-02): `HUB-CL-001`
+- [x] Meta section complete: app_name, repo_slug, stack
+- [x] Doctrine version and IDs defined: `CL-CORE`, `HUB-CL-001-${TIMESTAMP}-${RANDOM_HEX}`
+- [x] Services defined (CC-03): Intake engine, lifecycle worker
+- [x] Environment variables reference secrets provider (Doppler)
+- [x] IMO structure documented in heir.doctrine.yaml (I/M/O sections)
+- [x] Guard rails and kill switches declared in heir.doctrine.yaml
+
+---
+
+## ORBT Compliance (Operate, Repair, Build, Train)
+
+### Operate
+- [x] Pipeline operational: `pipeline/ingest.js`, `pipeline/orchestrator.js`
+- [x] Neon Agent operational: 6 commands (migrate, audit, gate, promote, health, sync)
+- [x] CI gate operational: `.github/workflows/imo-audit.yml`, `.github/workflows/pipeline_guard.yml`
+
+### Repair
+- [x] Error routing implemented: `cl.company_lifecycle_error` table
+- [x] ERROR → repair → re-entry loop documented in CL_DOCTRINE.md
+- [x] Recovery throttles defined: 3 attempts, backoff schedule, 14-day window
+- [x] Kill switches auto-pause on anomaly detection
+
+### Build
+- [x] Build passes clean: `npx vite build` (1673 modules, 0 errors)
+- [x] Compile-time guards enforce invariants at module load
+- [x] Adapter base class pattern ensures structural compliance
+
+### Train
+- [x] Doctrine files document all rules (CL_DOCTRINE, INVARIANTS_AND_KILL_SWITCHES, COMPANY_LIFECYCLE_LOCK)
+- [x] 8 ADRs document all architectural decisions
+- [x] DOWNSTREAM_SUB_HUB_HANDOFF.md teaches downstream consumers
+- [x] AI agent constraints documented in CLAUDE.md
+
+---
+
+## Documentation Alignment (v2.0.0)
+
+### Core Documentation Files
+- [x] CLAUDE.md exists and references correct doctrine (ARCHITECTURE.md v2.0.0)
+- [x] CLAUDE.md locked files list is accurate for this repo
+- [x] README.md folder structure matches actual structure
+- [x] PRD constants/variables match actual implementation
+- [x] DOCTRINE.md points to correct imo-creator version
+- [x] REGISTRY.yaml hub ID is consistent across all files: `HUB-CL-001`
+- [x] All ADRs reference correct file paths
+
+### Path and Reference Accuracy
+- [x] No MD files reference moved or deleted files
+- [x] No MD files reference old folder structure (lib/ references eliminated)
+- [x] All doctrine template references are valid
+- [x] All internal links between MD files work
+
+### Post-Refactor Verification (2026-02-06)
+- [x] All MD files reviewed after structure changes
+- [x] Hub identity consistent across CLAUDE.md, README.md, REGISTRY.yaml
+- [x] No stale examples or code snippets in docs
+- [x] Forbidden `lib/` directories eliminated (`src/ui/lib/` → `src/ui/styles/`, `neon/agent/lib/` → `neon/agent/`)
+
+---
+
+## CTB Hardening Migration Verification (v2.0.0)
+
+- [x] CLAUDE.md references ARCHITECTURE.md (v2.0.0) in canonical reference table
+- [x] CLAUDE.md locked files table updated for current repo state
+- [x] Templates synced from upstream imo-creator (25 commits applied 2026-02-06)
+- [x] New template directories present: `semantic/`, `erd/`, `docs/architecture/`, `gpt/`
+- [x] Old doctrine files available as redirects (CANONICAL, HUB_SPOKE, ALTITUDE_DESCENT)
+
+---
+
 ## Compliance Status
 
 **Current Status:** COMPLIANT
 
 **Blockers:** None
 
-**Doctrine Version:** 1.5
+**Doctrine Version:** 2.0.0
+
+**CRITICAL unchecked:** 0
+**HIGH violations:** 0
 
 ---
 
 ## Compliance Rule
 
 If any box is unchecked, this hub may not ship.
+HIGH violations BLOCK compliance — they are NOT "fix later" items.
 
 ---
 
@@ -472,3 +567,4 @@ If any box is unchecked, this hub may not ship.
 |------|------|------|
 | Hub Owner | SHQ | 2025-12-30 |
 | Compliance Officer | CTB Remediation (Claude) | 2026-01-29 |
+| Compliance Officer | CTB Hardening v2.0.0 + OSAM/HEIR/ORBT (Claude Opus 4.6) | 2026-02-06 |

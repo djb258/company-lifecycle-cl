@@ -1,8 +1,8 @@
 # CL Schema Documentation Index
 
 > **Source of Truth:** Neon PostgreSQL
-> **Last Updated:** 2026-01-25
-> **Schema Statistics:** 21 tables | 265 columns | 44 constraints | 3 FKs
+> **Last Updated:** 2026-02-04
+> **Schema Statistics:** 21 tables | 265 columns | 44 constraints | 3 FKs | 106,065 active records
 
 ---
 
@@ -11,7 +11,7 @@
 ### Core Tables
 | Document | Table | Description |
 |----------|-------|-------------|
-| [CL_COMPANY_IDENTITY.md](CL_COMPANY_IDENTITY.md) | `company_identity` | Master company registry (51,910 rows) |
+| [CL_COMPANY_IDENTITY.md](CL_COMPANY_IDENTITY.md) | `company_identity` | Master company registry (106,065 rows) |
 | [CL_COMPANY_NAMES.md](CL_COMPANY_NAMES.md) | `company_names` | Company name variants |
 | [CL_COMPANY_DOMAINS.md](CL_COMPANY_DOMAINS.md) | `company_domains` | Domain records with DNS/SSL |
 | [CL_IDENTITY_CONFIDENCE.md](CL_IDENTITY_CONFIDENCE.md) | `identity_confidence` | Confidence scoring |
@@ -125,5 +125,7 @@ ORDER BY ic.overall_confidence_score NULLS FIRST;
 | Field | Value |
 |-------|-------|
 | Created | 2026-01-25 |
+| Updated | 2026-02-04 |
 | Status | Active |
 | Maintainer | System |
+| Last Intake | Hunter DOL Enrichment (+54,155 records) |

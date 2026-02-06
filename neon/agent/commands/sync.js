@@ -1,6 +1,6 @@
 // Sync Command - Sync identity_status with verification results
 
-import { getClient } from '../lib/db.js';
+import { getClient } from '../db.js';
 
 export async function syncIdentityStatus(options) {
   console.log('='.repeat(60));

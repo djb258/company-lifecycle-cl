@@ -1,0 +1,339 @@
+# [HUB_NAME] Conceptual Schema Definitions
+
+**Purpose and Invariants — No Implementation**
+
+---
+
+## Preamble
+
+This document defines the **conceptual schema** for [HUB_NAME].
+
+This is **not** a database design document. This is **not** SQL. This is **not** an implementation specification.
+
+This document defines:
+
+- **What concepts exist**
+- **What invariants must hold**
+- **What relationships are allowed**
+- **What guarantees the hub provides**
+
+Implementation details are the responsibility of engineering teams, constrained by these definitions.
+
+---
+
+## 1. [PRIMARY_CONCEPT]
+
+### 1.1 Concept
+
+**[PRIMARY_CONCEPT]** is the sovereign record that establishes [PRIMARY_CONCEPT_PURPOSE].
+
+[CONCEPT_SCOPE_STATEMENT]
+
+### 1.2 Owned Attributes
+
+| Attribute | Purpose |
+|-----------|---------|
+| `[PRIMARY_IDENTIFIER]` | The sovereign, immutable identifier. Format is opaque to consumers. |
+| `[ATTRIBUTE_1]` | [ATTRIBUTE_1_PURPOSE] |
+| `[ATTRIBUTE_2]` | [ATTRIBUTE_2_PURPOSE] |
+| `created_at` | Timestamp when record was created. |
+| `created_by` | Actor who created the record (system or human). |
+
+### 1.3 Invariants
+
+| Invariant | Description |
+|-----------|-------------|
+| **UNIQUE** | No two records may share the same `[PRIMARY_IDENTIFIER]`. |
+| **IMMUTABLE** | Once `[PRIMARY_IDENTIFIER]` is assigned, it cannot be changed. |
+| **NON-REUSABLE** | A retired `[PRIMARY_IDENTIFIER]` cannot be assigned to a new record. |
+| **REQUIRED** | `[PRIMARY_IDENTIFIER]` and `[REQUIRED_FIELD]` must always have values. |
+| **SINGLE SOURCE** | Only [HUB_NAME] may create [PRIMARY_CONCEPT] records. |
+
+### 1.4 Lifecycle
+
+```
+    [ Does Not Exist ]
+           │
+           │  MINT (by [HUB_NAME] only)
+           ▼
+    [ [PRIMARY_CONCEPT] EXISTS ]
+           │
+           │  (immutable for lifetime)
+           │
+           ▼
+    [ RETIREMENT or MERGE ]
+           │
+           ▼
+    [ Record preserved, state = RETIRED ]
+```
+
+### 1.5 Constraints
+
+- [PRIMARY_CONCEPT] **cannot** be deleted (only retired)
+- [PRIMARY_CONCEPT] **cannot** be modified after creation (except [CORRECTABLE_FIELDS])
+- [PRIMARY_CONCEPT] **must** exist before any sub-hub can reference it
+
+---
+
+## 2. [LIFECYCLE_CONCEPT]
+
+### 2.1 Concept
+
+**[LIFECYCLE_CONCEPT]** represents the current truth of where a record exists in the business relationship continuum.
+
+This is the **single source of truth** for lifecycle position. No other system may declare lifecycle state.
+
+### 2.2 Owned Attributes
+
+| Attribute | Purpose |
+|-----------|---------|
+| `[LIFECYCLE_STATE_FIELD]` | Current lifecycle state ([STATE_1], [STATE_2], [STATE_3], [STATE_N]). |
+| `[SUB_HUB_POINTER_1]` | Pointer to active [SUB_HUB_1] sub-hub (if any). |
+| `[SUB_HUB_POINTER_2]` | Pointer to active [SUB_HUB_2] sub-hub (if any). |
+| `promoted_at` | Timestamp of most recent promotion. |
+| `promoted_by` | Actor who triggered most recent promotion. |
+| `retired_at` | Timestamp of retirement (if applicable). |
+| `retired_by` | Actor who triggered retirement (if applicable). |
+
+### 2.3 Invariants
+
+| Invariant | Description |
+|-----------|-------------|
+| **SINGLE STATE** | A record can only be in one lifecycle state at a time. |
+| **FORWARD ONLY** | Transitions must follow: [STATE_1] → [STATE_2] → [STATE_N] → RETIRED. |
+| **EVENT REQUIRED** | State cannot change without a verified event. |
+| **HUB ONLY** | Only [HUB_NAME] may modify lifecycle state. |
+| **SUB-HUB DEPENDENCY** | Sub-hub pointers only populated when that stage is reached. |
+
+### 2.4 State Definitions
+
+| State | Meaning | Sub-Hubs Active |
+|-------|---------|-----------------|
+| `[STATE_1]` | [STATE_1_DESCRIPTION] | [ACTIVE_SUB_HUBS] |
+| `[STATE_2]` | [STATE_2_DESCRIPTION] | [ACTIVE_SUB_HUBS] |
+| `[STATE_N]` | [STATE_N_DESCRIPTION] | [ACTIVE_SUB_HUBS] |
+| `RETIRED` | No longer active. Preserved for audit. | None (all deactivated) |
+
+### 2.5 Transition Rules
+
+| From | To | Required Event | Sub-Hub Action |
+|------|----|----------------|----------------|
+| (new) | [STATE_1] | [CREATION_EVENT] | [ACTIVATION_ACTION] |
+| [STATE_1] | [STATE_2] | [TRANSITION_EVENT] | [ACTIVATION_ACTION] |
+| Any | RETIRED | Retirement requested | Deactivate all |
+
+### 2.6 Constraints
+
+- Regression is **prohibited** ([STATE_2] cannot become [STATE_1])
+- Skipping is **prohibited** ([STATE_1] cannot become [STATE_N] directly)
+- Sub-hub activation **requires** [HUB_NAME] promotion
+- Sub-hub **cannot** self-promote
+
+---
+
+## 3. [HISTORY_CONCEPT]
+
+### 3.1 Concept
+
+**[HISTORY_CONCEPT]** is the append-only audit trail of every state transition.
+
+This provides complete traceability of how a record moved through its lifecycle.
+
+### 3.2 Owned Attributes
+
+| Attribute | Purpose |
+|-----------|---------|
+| `[PRIMARY_IDENTIFIER]` | Reference to the entity this event belongs to. |
+| `event_type` | Type of lifecycle event ([EVENT_TYPE_1], [EVENT_TYPE_2], [EVENT_TYPE_N]). |
+| `from_state` | State before transition (null for creation). |
+| `to_state` | State after transition. |
+| `triggered_by_event` | The verified event that caused this transition. |
+| `actor` | Who/what initiated the transition. |
+| `timestamp` | When the transition occurred. |
+| `evidence` | Reference to supporting documentation. |
+
+### 3.3 Invariants
+
+| Invariant | Description |
+|-----------|-------------|
+| **APPEND ONLY** | Records can only be added, never modified or deleted. |
+| **IMMUTABLE** | Once written, history records cannot be changed. |
+| **COMPLETE** | Every state transition must create a history record. |
+| **ORDERED** | History records must be chronologically ordered. |
+| **TRACEABLE** | Every record must identify actor and triggering event. |
+
+### 3.4 Event Types
+
+| Event Type | Description | Required Fields |
+|------------|-------------|-----------------|
+| `[EVENT_TYPE_1]` | [EVENT_DESCRIPTION] | [REQUIRED_FIELDS] |
+| `[EVENT_TYPE_2]` | [EVENT_DESCRIPTION] | [REQUIRED_FIELDS] |
+| `[EVENT_TYPE_N]` | [EVENT_DESCRIPTION] | [REQUIRED_FIELDS] |
+
+### 3.5 Constraints
+
+- History **cannot** be backdated
+- History **cannot** be edited after creation
+- History **must** be created atomically with state change
+- History **must** include sufficient detail for audit
+
+---
+
+## 4. [EXTERNAL_MAPPING_CONCEPT]
+
+### 4.1 Concept
+
+**[EXTERNAL_MAPPING_CONCEPT]** links external system identifiers to the sovereign `[PRIMARY_IDENTIFIER]`.
+
+External identifiers are **aliases**, not primary identity. [HUB_NAME] remains authoritative.
+
+### 4.2 Owned Attributes
+
+| Attribute | Purpose |
+|-----------|---------|
+| `[PRIMARY_IDENTIFIER]` | The sovereign identifier this maps to. |
+| `source_system` | The external system that provided this identifier. |
+| `external_id` | The identifier from the external system. |
+| `confidence` | How confident the hub is in this mapping (HIGH, MEDIUM, LOW). |
+| `linked_at` | When this mapping was established. |
+| `linked_by` | Who/what established this mapping. |
+| `status` | Whether this mapping is active or deprecated. |
+
+### 4.3 Invariants
+
+| Invariant | Description |
+|-----------|-------------|
+| **MANY TO ONE** | Multiple external IDs can map to one `[PRIMARY_IDENTIFIER]`. |
+| **UNIQUE PER SOURCE** | An external ID from a given source can only map to one record. |
+| **NON-AUTHORITATIVE** | External IDs never override `[PRIMARY_IDENTIFIER]`. |
+| **TRACEABLE** | Every mapping records who created it and when. |
+| **PRESERVABLE** | Deprecated mappings are preserved for audit, not deleted. |
+
+### 4.4 Source Systems
+
+| Source | Description | Example External ID |
+|--------|-------------|---------------------|
+| `[SOURCE_1]` | [SOURCE_DESCRIPTION] | [EXAMPLE_ID] |
+| `[SOURCE_2]` | [SOURCE_DESCRIPTION] | [EXAMPLE_ID] |
+
+### 4.5 Constraints
+
+- External systems **cannot** create `[PRIMARY_IDENTIFIER]`
+- External IDs are **suggestions**, [HUB_NAME] decides
+- Mapping changes **must** be audited
+- Deprecated mappings **cannot** be reactivated
+
+---
+
+## 5. [BOOTSTRAP_CONCEPT — e.g., Staging, Bridge, Error]
+
+### 5.1 [STAGING_TABLE_NAME]
+
+**[STAGING_TABLE_NAME]** is the pre-sovereign intake table where candidates are staged before processing.
+
+| Attribute | Purpose |
+|-----------|---------|
+| `[STAGING_ID]` | Primary key for staging record |
+| `[SOURCE_REF]` | Reference to source table record |
+| `source_system` | Origin system |
+| `[CANDIDATE_FIELD_1]` | [FIELD_PURPOSE] |
+| `[CANDIDATE_FIELD_2]` | [FIELD_PURPOSE] |
+| `[IDEMPOTENCY_KEY]` | Idempotency key |
+| `lifecycle_run_id` | Run versioning tag |
+
+### 5.2 [BRIDGE_TABLE_NAME]
+
+**[BRIDGE_TABLE_NAME]** maps source IDs to sovereign IDs. This is the ONLY join surface for downstream consumers.
+
+| Attribute | Purpose |
+|-----------|---------|
+| `bridge_id` | Primary key |
+| `[SOURCE_ID_FIELD]` | From source table (UNIQUE) |
+| `[SOVEREIGN_ID_FIELD]` | Sovereign ID (UNIQUE, FK to [PRIMARY_TABLE]) |
+| `source_system` | Origin system |
+| `lifecycle_run_id` | Run versioning tag |
+
+**Invariants:**
+
+| Invariant | Description |
+|-----------|-------------|
+| **UNIQUE SOURCE** | One source ID maps to exactly one sovereign ID |
+| **UNIQUE SOVEREIGN** | One sovereign ID maps to exactly one source ID |
+| **NO FK TO SOURCE** | Bridge does not enforce FK to source tables |
+| **ONLY JOIN SURFACE** | Downstream consumers MUST join through bridge |
+
+### 5.3 [ERROR_TABLE_NAME]
+
+**[ERROR_TABLE_NAME]** captures failed records for repair and re-entry.
+
+| Attribute | Purpose |
+|-----------|---------|
+| `error_id` | Primary key |
+| `[SOURCE_REF]` | Source reference |
+| `[STAGING_REF]` | Reference to staging record |
+| `failure_stage` | Stage where failure occurred |
+| `failure_reason` | Reason code |
+| `failure_details` | JSON details |
+| `repair_hint` | Guidance for repair |
+| `status` | ACTIVE or RESOLVED |
+| `attempt_count` | Retry counter |
+| `lifecycle_run_id` | Run versioning tag |
+
+**Invariants:**
+
+| Invariant | Description |
+|-----------|-------------|
+| **REPAIR-REENTRY** | Repaired records re-enter at same stage |
+| **NO SOURCE MUTATION** | Errors never modify source tables |
+| **TRACEABLE** | Every error has reason and repair hint |
+
+---
+
+## 6. Schema Relationship Summary
+
+```
+[REPLACE WITH ASCII DIAGRAM SHOWING ENTITY RELATIONSHIPS]
+
+Suggested structure:
+- Primary concept at top
+- Lifecycle state attached 1:1
+- History, external mapping, merge/retirement as 1:many children
+- Sub-hub pointers referencing downstream
+- Bootstrap tables (staging, bridge, error) as support
+```
+
+---
+
+## 7. Guarantees
+
+[HUB_NAME] provides the following guarantees to all consumers:
+
+| Guarantee | Description |
+|-----------|-------------|
+| **Identity Uniqueness** | No two records share the same `[PRIMARY_IDENTIFIER]`. |
+| **Identity Permanence** | Once created, identity persists forever (even if retired). |
+| **State Consistency** | Lifecycle state is always valid and consistent. |
+| **Audit Completeness** | Every state change is recorded and traceable. |
+| **[ADDITIONAL_GUARANTEE]** | [GUARANTEE_DESCRIPTION] |
+
+---
+
+## 8. Anti-Patterns (Prohibited)
+
+The following patterns violate [HUB_NAME] schema doctrine:
+
+| Anti-Pattern | Why Prohibited |
+|--------------|----------------|
+| Storing `[PRIMARY_IDENTIFIER]` as mutable | Violates identity immutability |
+| Creating records outside [HUB_NAME] | Violates single source of truth |
+| Deleting records | Violates preservation requirement |
+| Modifying history records | Violates append-only invariant |
+| Backdating events | Violates audit integrity |
+| Skipping lifecycle states | Violates forward-only transitions |
+| Self-promoting sub-hubs | Violates [HUB_NAME] promotion authority |
+
+---
+
+**Doctrine Version:** [VERSION]
+**Status:** Locked
+**Last Updated:** [YYYY-MM-DD]

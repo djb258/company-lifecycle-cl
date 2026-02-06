@@ -1,6 +1,6 @@
 // Health Checker - System health checks
 
-import { getClient } from '../lib/db.js';
+import { getClient } from '../db.js';
 
 export class HealthChecker {
   async run(options) {

@@ -1,6 +1,6 @@
 // Audit Runner - Data quality checks
 
-import { getClient } from '../lib/db.js';
+import { getClient } from '../db.js';
 
 export class AuditRunner {
   async run(options) {

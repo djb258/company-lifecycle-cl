@@ -1,0 +1,430 @@
+# [HUB_NAME] Invariants & Kill Switches
+
+**Hard Constraints and Emergency Controls — Doctrine Locked**
+
+---
+
+## Preamble
+
+This document defines the **invariants** (rules that must always hold) and **kill switches** (emergency controls) for [HUB_NAME].
+
+These are **non-negotiable**. They cannot be bypassed by configuration, feature flags, or business requests.
+
+Violation of any invariant is a **system failure**, not a bug to be worked around.
+
+---
+
+## Part 1: Invariants
+
+Invariants are conditions that **must always be true**. If an invariant is violated, the system is in an invalid state.
+
+---
+
+### 1. Identity Invariants
+
+#### INV-ID-001: Unique [PRIMARY_IDENTIFIER]
+
+> **Every `[primary_identifier_field]` must be globally unique across all time.**
+
+- No two records may share the same `[primary_identifier_field]`
+- This includes [RETIRED_STATE_TERM] records
+- This includes [ABSORBED_STATE_TERM] records
+- Uniqueness is enforced at the [HUB_NAME] root level
+
+**If violated:** System is in corrupt state. All operations must halt.
+
+---
+
+#### INV-ID-002: Immutable [PRIMARY_IDENTIFIER]
+
+> **Once a `[primary_identifier_field]` is minted, it cannot be changed.**
+
+- The identifier is permanent
+- No "correction" or "update" is permitted
+- If identity was minted incorrectly, use [CORRECTION_MECHANISM]
+
+**If violated:** Audit trail is compromised. All downstream references are invalidated.
+
+---
+
+<!-- Add additional Identity Invariants as needed following the pattern:
+#### INV-ID-[NNN]: [INVARIANT_TITLE]
+> **[INVARIANT_STATEMENT]**
+- [RULE_1]
+- [RULE_2]
+- [RULE_3]
+**If violated:** [CONSEQUENCE]
+-->
+
+---
+
+### 2. Lifecycle State Invariants
+
+#### INV-LC-001: Single State
+
+> **A [ENTITY_NOUN] can only be in exactly one lifecycle state at any time.**
+
+- States are mutually exclusive
+- [STATE_LIST] cannot overlap
+- There is no "transitioning" intermediate state
+
+**If violated:** Business logic downstream will receive contradictory signals.
+
+---
+
+#### INV-LC-002: [TRANSITION_RULE_NAME]
+
+> **Lifecycle state can only transition along defined paths.**
+
+Valid transitions:
+```
+[STATE_A] -> [STATE_B] -> [STATE_C] -> [STATE_D]
+```
+
+Invalid transitions:
+```
+[STATE_B] -> [STATE_A] (prohibited)
+[STATE_D] -> any state (prohibited)
+```
+
+**If violated:** Audit trail becomes meaningless. [GATE_NOUN] gates are bypassed.
+
+---
+
+#### INV-LC-003: Event-Driven Transitions
+
+> **Lifecycle state cannot change without a verified triggering event.**
+
+- No time-based [TRANSITION_VERB]
+- No inference-based [TRANSITION_VERB]
+- No UI-driven direct state mutation
+- Every transition requires: event_type, source, timestamp, actor
+
+**If violated:** State changes cannot be audited or explained.
+
+---
+
+#### INV-LC-004: [HUB_NAME]-Only Mutation
+
+> **Only [HUB_NAME] may modify lifecycle state.**
+
+- [SUB_HUB_NOUN]s may emit events
+- [SUB_HUB_NOUN]s may NOT modify state
+- Downstream systems may read state
+- Downstream systems may NOT modify state
+
+**If violated:** Multiple systems will claim [TRANSITION_VERB] authority. Conflicts guaranteed.
+
+---
+
+<!-- Add additional Lifecycle State Invariants as needed following the INV-LC-[NNN] pattern -->
+
+---
+
+### 3. Sub-Hub Invariants
+
+#### INV-SH-001: [HUB_NAME] Activation Required
+
+> **Sub-hubs cannot self-activate. Only [HUB_NAME] may activate a sub-hub.**
+
+- [SUB_HUB_1] activated when [ACTIVATION_TRIGGER_1]
+- [SUB_HUB_2] activated when [ACTIVATION_TRIGGER_2]
+- [SUB_HUB_3] activated when [ACTIVATION_TRIGGER_3]
+
+**If violated:** Sub-hubs will exist without [HUB_NAME] records. Identity drift begins.
+
+---
+
+#### INV-SH-002: [ENTITY_NOUN] Anchor Required
+
+> **A sub-hub cannot exist without a valid `[primary_identifier_field]` in [HUB_NAME].**
+
+- Sub-hub creation requires [HUB_NAME] record to exist
+- Sub-hub creation requires [HUB_NAME]-minted sub-hub UID
+- Orphan sub-hubs are invalid
+
+**If violated:** Work will occur on [ENTITY_NOUN_PLURAL] that do not exist in the authoritative system.
+
+---
+
+#### INV-SH-003: No Cross-[TRANSITION_VERB_CAPITALIZED]
+
+> **A sub-hub cannot [TRANSITION_VERB] lifecycle state or activate other sub-hubs.**
+
+- [SUB_HUB_1] cannot [TRANSITION_VERB] to [STATE_B]
+- [SUB_HUB_2] cannot activate [SUB_HUB_3]
+- Sub-hubs emit facts, [HUB_NAME] declares truth
+
+**If violated:** [TRANSITION_VERB_CAPITALIZED] authority is fragmented. Audit becomes impossible.
+
+---
+
+<!-- Add additional Sub-Hub Invariants as needed following the INV-SH-[NNN] pattern -->
+
+---
+
+### 4. Audit Invariants
+
+#### INV-AU-001: Append-Only History
+
+> **Lifecycle history records can only be added, never modified or deleted.**
+
+- No UPDATE on history records
+- No DELETE on history records
+- History is immutable once written
+
+**If violated:** Audit trail is compromised. Compliance failures guaranteed.
+
+---
+
+#### INV-AU-002: Complete History
+
+> **Every state transition must create a corresponding history record.**
+
+- No silent state changes
+- Atomic: state change + history record in same transaction
+- If history write fails, state change must rollback
+
+**If violated:** Gaps in audit trail. Cannot explain how state changed.
+
+---
+
+#### INV-AU-003: Traceable Actions
+
+> **Every action must record who/what performed it and when.**
+
+Required for all operations:
+- `actor` (system or human identifier)
+- `timestamp` (when action occurred)
+- `source` (what triggered the action)
+
+**If violated:** Cannot attribute actions. Cannot investigate issues.
+
+---
+
+### 5. [INVARIANT_CATEGORY_5]
+
+#### INV-[CAT5_CODE]-001: [INVARIANT_TITLE]
+
+> **[INVARIANT_STATEMENT]**
+
+- [RULE_1]
+- [RULE_2]
+- [RULE_3]
+
+**If violated:** [CONSEQUENCE]
+
+---
+
+<!-- Add additional [INVARIANT_CATEGORY_5] invariants following the INV-[CAT5_CODE]-[NNN] pattern -->
+
+---
+
+### 6. [INVARIANT_CATEGORY_6]
+
+#### INV-[CAT6_CODE]-001: [INVARIANT_TITLE]
+
+> **[INVARIANT_STATEMENT]**
+
+- [RULE_1]
+- [RULE_2]
+- [RULE_3]
+
+**If violated:** [CONSEQUENCE]
+
+---
+
+<!-- Add additional [INVARIANT_CATEGORY_6] invariants following the INV-[CAT6_CODE]-[NNN] pattern -->
+
+---
+
+---
+
+## Part 2: Kill Switches
+
+Kill switches are **emergency controls** that halt operations when invariants are at risk.
+
+---
+
+### KS-001: Duplicate [PRIMARY_IDENTIFIER] Detection
+
+**Trigger:** Attempt to mint `[primary_identifier_field]` that already exists.
+
+**Action:**
+1. BLOCK the mint operation
+2. LOG the attempted duplication
+3. ALERT operations team
+4. RETURN error to caller
+
+**Resolution:** Investigate source of duplicate. May require [DEDUPLICATION_MECHANISM].
+
+---
+
+### KS-002: Invalid Transition Detection
+
+**Trigger:** Attempt to transition lifecycle state in prohibited direction.
+
+**Action:**
+1. BLOCK the transition
+2. LOG the invalid attempt
+3. PRESERVE current state
+4. RETURN error with explanation
+
+**Resolution:** Review business process. May indicate integration bug.
+
+---
+
+### KS-003: Unauthorized [SOVEREIGN_OPERATION] Attempt
+
+**Trigger:** System other than [HUB_NAME] attempts to [SOVEREIGN_OPERATION_VERB] `[primary_identifier_field]`.
+
+**Action:**
+1. REJECT the [SOVEREIGN_OPERATION_NOUN]
+2. LOG the unauthorized attempt
+3. ALERT security team
+4. RETURN error indicating only [HUB_NAME] may [SOVEREIGN_OPERATION_VERB]
+
+**Resolution:** Review integration design. Route through proper [HUB_NAME] intake.
+
+---
+
+### KS-[NNN]: [KILL_SWITCH_NAME]
+
+**Trigger:** [TRIGGER_CONDITION]
+
+**Action:**
+1. [ACTION_VERB_1] the [OPERATION]
+2. LOG the [EVENT_DESCRIPTION]
+3. [ACTION_VERB_2] [TARGET_TEAM_OR_STATE]
+4. [ACTION_VERB_3] [RESOLUTION_OR_ERROR]
+
+**Resolution:** [RESOLUTION_DESCRIPTION]
+
+---
+
+<!-- Add additional Kill Switches as needed following the KS-[NNN] pattern.
+Each Kill Switch must include Trigger, Action (numbered steps), and Resolution. -->
+
+---
+
+---
+
+## Part 3: Guarantees
+
+These are guarantees [HUB_NAME] provides to all consumers, **regardless of downstream behavior**.
+
+---
+
+### G-001: Identity Guarantee
+
+> **If a `[primary_identifier_field]` exists, it is globally unique and will remain stable forever.**
+
+Consumers can rely on:
+- [PRIMARY_IDENTIFIER] will not change
+- [PRIMARY_IDENTIFIER] will not be reused
+- [PRIMARY_IDENTIFIER] will not be deleted (only [RETIRED_STATE_TERM])
+
+---
+
+### G-002: State Guarantee
+
+> **The `[lifecycle_state_field]` returned by [HUB_NAME] is the single source of truth for lifecycle position.**
+
+Consumers can rely on:
+- State is authoritative
+- State was set by verified event
+- State transition history is available
+
+---
+
+### G-003: Audit Guarantee
+
+> **Every state change in [HUB_NAME] has a complete, immutable audit record.**
+
+Consumers can rely on:
+- History cannot be altered
+- Every transition is traceable
+- Actor and timestamp always available
+
+---
+
+### G-004: [GUARANTEE_CODE_004]
+
+> **[GUARANTEE_STATEMENT_004]**
+
+Consumers can rely on:
+- [RELIANCE_1]
+- [RELIANCE_2]
+- [RELIANCE_3]
+
+---
+
+### G-005: [GUARANTEE_CODE_005]
+
+> **[GUARANTEE_STATEMENT_005]**
+
+Consumers can rely on:
+- [RELIANCE_1]
+- [RELIANCE_2]
+- [RELIANCE_3]
+
+---
+
+<!-- Add additional Guarantees as needed following the G-[NNN] pattern -->
+
+---
+
+---
+
+## Part 4: Violation Response Protocol
+
+When an invariant is violated, the following protocol applies:
+
+### Severity Levels
+
+| Level | Description | Response Time |
+|-------|-------------|---------------|
+| **CRITICAL** | [CRITICAL_DESCRIPTION] | Immediate halt |
+| **HIGH** | [HIGH_DESCRIPTION] | Within 1 hour |
+| **MEDIUM** | [MEDIUM_DESCRIPTION] | Within 4 hours |
+| **LOW** | [LOW_DESCRIPTION] | Within 24 hours |
+
+### Response Steps
+
+1. **DETECT** -- Identify the violation
+2. **HALT** -- Stop related operations if CRITICAL
+3. **LOG** -- Record full context of violation
+4. **ALERT** -- Notify appropriate team
+5. **INVESTIGATE** -- Determine root cause
+6. **REMEDIATE** -- Fix the violation
+7. **VERIFY** -- Confirm invariants are restored
+8. **POSTMORTEM** -- Document learnings
+
+---
+
+## Part 5: Emergency Contacts
+
+| Role | Responsibility |
+|------|----------------|
+| **[ROLE_1]** | [RESPONSIBILITY_1] |
+| **[ROLE_2]** | [RESPONSIBILITY_2] |
+| **[ROLE_3]** | [RESPONSIBILITY_3] |
+| **[ROLE_4]** | [RESPONSIBILITY_4] |
+
+---
+
+## Final Declaration
+
+> **These invariants and kill switches are non-negotiable.**
+>
+> **They exist to protect the integrity of [PROTECTED_ASSET] across the entire ecosystem.**
+>
+> **No business requirement, no deadline, no executive request justifies bypassing them.**
+>
+> **If an invariant cannot be satisfied, the operation does not proceed.**
+
+---
+
+**Doctrine Version:** [VERSION]
+**Status:** Locked
+**Last Updated:** [YYYY-MM-DD]

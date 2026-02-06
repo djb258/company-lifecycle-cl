@@ -1,0 +1,91 @@
+# [HUB_NAME] Views — Schema Documentation
+
+> **Source of Truth:** [DATABASE_PLATFORM]
+> **Verification Mode:** Read-Only
+> **Verification Date:** [YYYY-MM-DD]
+
+---
+
+## Overview
+
+The [SCHEMA] schema includes [VIEW_COUNT] views for common query patterns:
+
+| View | Purpose |
+|------|---------|
+| `[VIEW_NAME_1]` | [VIEW_PURPOSE_1] |
+| `[VIEW_NAME_2]` | [VIEW_PURPOSE_2] |
+| `[VIEW_NAME_N]` | [VIEW_PURPOSE_N] |
+
+---
+
+## 1. [VIEW_NAME_1]
+
+[VIEW_DESCRIPTION — what this view shows and why it exists.]
+
+### Underlying Tables
+
+- `[TABLE_1]`
+- `[TABLE_2]`
+
+### Columns
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `[COLUMN_NAME]` | [TYPE] | [DESCRIPTION] |
+
+### Key Logic
+
+[DESCRIPTION of the business logic encoded in this view — e.g., eligibility criteria, computed flags, joins.]
+
+### Usage
+
+```sql
+-- [QUERY_DESCRIPTION]
+[SQL_EXAMPLE]
+```
+
+---
+
+## 2. [VIEW_NAME_2]
+
+[VIEW_DESCRIPTION]
+
+### Underlying Tables
+
+- `[TABLE_1]`
+- `[TABLE_2]`
+
+### Columns
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `[COLUMN_NAME]` | [TYPE] | [DESCRIPTION] |
+
+### Key Logic
+
+[LOGIC_DESCRIPTION]
+
+### Usage
+
+```sql
+-- [QUERY_DESCRIPTION]
+[SQL_EXAMPLE]
+```
+
+---
+
+## Performance Notes
+
+- Views are **read-only** — no INSERT/UPDATE/DELETE
+- [PERFORMANCE_NOTE — e.g., Consider materializing if query time exceeds threshold]
+- All views expose only data from [HUB_NAME]-owned tables
+
+---
+
+## Document Control
+
+| Field | Value |
+|-------|-------|
+| Created | [YYYY-MM-DD] |
+| Last Verified | [YYYY-MM-DD] |
+| Schema Version | [VERSION] |

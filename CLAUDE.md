@@ -1,228 +1,126 @@
-# CLAUDE.md — IMO-Creator
+# CLAUDE.md — Company Lifecycle (CL) Hub
 
 ## IDENTITY
 
-This is the **repo of repos**. All doctrine originates here. Downstream repos CONFORM to this repo. This repo conforms to NOTHING.
+This is a **child repository** governed by **imo-creator**.
 
-**Authority**: Sovereign (CC-01)
-**Purpose**: Define operating physics for all derived systems
+**Hub Name**: Company Lifecycle
+**Hub ID**: HUB-CL-001
+**Authority**: Inherited from imo-creator (CC-01)
+**Domain Spec**: `doctrine/REPO_DOMAIN_SPEC.md`
+**Purpose**: Sovereign authority for company identity minting, verification, and lifecycle state management
+
+---
+
+## CANONICAL REFERENCE
+
+| Template | imo-creator Path | Version |
+|----------|------------------|---------|
+| Architecture | `templates/doctrine/ARCHITECTURE.md` | 2.0.0 |
+| Tools | `templates/integrations/TOOLS.md` | 1.1.0 |
+| OSAM | `templates/semantic/OSAM.md` | 1.0.0 |
+| PRD | `templates/prd/PRD_HUB.md` | 1.0.0 |
+| ADR | `templates/adr/ADR.md` | 1.0.0 |
+| Checklist | `templates/checklists/HUB_COMPLIANCE.md` | 1.0.0 |
 
 ---
 
 ## LOCKED FILES (READ-ONLY)
 
-The following files are **LAW**. Claude Code may READ them. Claude Code may NEVER modify them.
+The following CL-specific files are **LOCKED**. Claude Code may READ them but may NEVER modify them.
 
-### Doctrine (Constitutional Law)
-
-| File | Purpose |
-|------|---------|
-| `templates/doctrine/CANONICAL_ARCHITECTURE_DOCTRINE.md` | Operating physics - CC layers, hub-spoke, constants vs variables |
-| `templates/doctrine/HUB_SPOKE_ARCHITECTURE.md` | Geometry law - hub owns logic, spokes are interfaces |
-| `templates/doctrine/ALTITUDE_DESCENT_MODEL.md` | Descent law - CC-01→02→03→04 sequence |
-| `templates/integrations/TOOLS.md` | Tool law - determinism first, LLM as tail only |
-
-### PRD Template
+### CL Domain Doctrine
 
 | File | Purpose |
 |------|---------|
-| `templates/prd/PRD_HUB.md` | Hub PRD format (15 sections) |
+| `docs/doctrine/CL_DOCTRINE.md` | Sovereign hub definition — what CL owns, lifecycle states, topology |
+| `docs/doctrine/INVARIANTS_AND_KILL_SWITCHES.md` | 20 invariants, 10 kill switches, violation protocol |
+| `docs/doctrine/COMPANY_LIFECYCLE_LOCK.md` | Non-negotiable intake rules, compile-time guards |
+| `docs/doctrine/CONCEPTUAL_SCHEMA.md` | Conceptual data definitions — concepts and invariants |
+| `docs/doctrine/AIR_DOCTRINE.md` | Action/Incident/Result telemetry contract |
 
-### ADR Template
-
-| File | Purpose |
-|------|---------|
-| `templates/adr/ADR.md` | Architecture Decision Record format |
-
-### Checklist Template
+### Domain Binding
 
 | File | Purpose |
 |------|---------|
-| `templates/checklists/HUB_COMPLIANCE.md` | Hub compliance checklist format |
+| `doctrine/REPO_DOMAIN_SPEC.md` | Domain bindings — maps generic roles to CL tables (GUARDSPEC-required) |
 
-### PR Templates
-
-| File | Purpose |
-|------|---------|
-| `templates/pr/PULL_REQUEST_TEMPLATE_HUB.md` | Hub PR format |
-| `templates/pr/PULL_REQUEST_TEMPLATE_SPOKE.md` | Spoke PR format |
-
-### Snap-On Toolbox (CONSTITUTIONAL)
-
-| File | Purpose |
-|------|--------|
-| `templates/SNAP_ON_TOOLBOX.yaml` | Master tool registry - all approved tools, throttles, gates, banned list |
-
-### Integration Specs
+### Governance
 
 | File | Purpose |
 |------|---------|
-| `templates/integrations/COMPOSIO.md` | Composio integration spec |
-| `templates/integrations/DOPPLER.md` | Doppler integration spec |
-| `templates/integrations/HEIR.md` | HEIR integration spec |
-| `templates/integrations/OBSIDIAN.md` | Obsidian integration spec |
-| `templates/integrations/doppler.yaml.template` | Doppler config template |
-| `templates/integrations/heir.doctrine.yaml.template` | HEIR config template |
+| `CONSTITUTION.md` | Governing scope — what is and isn't governed |
+| `DOCTRINE.md` | Conformance declaration — parent reference and binding docs |
+| `IMO_CONTROL.json` | Control plane contract — lifecycle phases, structure model |
+| `REGISTRY.yaml` | Hub identity — sub-hubs, spokes, document control |
 
 ---
 
-## TOOL DOCTRINE (CONSTITUTIONAL)
+## TOOL DOCTRINE
 
-**TOOLS.md and SNAP_ON_TOOLBOX.yaml are constitutional law.**
+Before suggesting ANY tool, library, or vendor:
 
-### Snap-On Toolbox Authority
+1. Check `templates/SNAP_ON_TOOLBOX.yaml` BANNED list first
+2. Prefer TIER 0 (FREE) tools
+3. Then TIER 1 (CHEAP)
+4. Then TIER 2 (SURGICAL) — gated, require conditions
+5. If NOT LISTED — ASK, may need ADR
 
-`templates/SNAP_ON_TOOLBOX.yaml` is the **master tool registry**. Before suggesting ANY tool, library, or vendor:
+**LLM is tail, not spine. Deterministic logic first, AI assists only.**
 
-| Step | Action |
-|------|--------|
-| 1 | Check BANNED list → If banned, STOP, suggest alternative |
-| 2 | Check TIER 0 (FREE) → Prefer free tools first |
-| 3 | Check TIER 1 (CHEAP) → Use existing subscriptions |
-| 4 | Check TIER 2 (SURGICAL) → Gated, require conditions |
-| 5 | If NOT LISTED → ASK, may need ADR |
+---
 
-### Core Rules
+## CL HUB ARCHITECTURE
 
-| Rule | Violation |
-|------|-----------|
-| Tools scoped to hub M layer only | Doctrine violation |
-| Spokes do not own tools | Doctrine violation |
-| Deterministic solution evaluated first | Doctrine violation |
-| LLM as tail arbitration only | Doctrine violation |
-| ADR required for every tool | PR rejected |
-| Tool ledger maintained per hub | Non-compliant |
-| Tool not in SNAP_ON_TOOLBOX.yaml | Doctrine violation |
+### Tech Stack
 
-### LLM Containment
+- **Frontend**: React 18 + TypeScript + Vite (port 8080)
+- **UI**: Radix UI (shadcn/ui) + Tailwind CSS
+- **Database**: PostgreSQL (Neon) — schema `cl`
+- **Auth**: Supabase
+- **State**: TanStack React Query
+- **Secrets**: Doppler
+- **CI**: GitHub Actions
+
+### CTB Structure
 
 ```
-ALLOWED:
-  Deterministic logic → exhausted → LLM arbitrates edge case → output validated → action
-
-FORBIDDEN:
-  User request → LLM decides → action
+src/
+├── sys/    → System infrastructure (main.tsx entry point)
+├── data/   → Supabase client, generated types
+├── app/    → Hooks, business logic
+├── ai/     → AI components (empty)
+└── ui/     → Pages, components, styles
 ```
 
-**LLM is tail, not spine. AI assists, it does not decide.**
+### Key Database Tables
 
----
+| Table | Schema | Purpose |
+|-------|--------|---------|
+| `company_identity` | cl | Sovereign identity registry (106k+ rows) |
+| `company_candidate` | cl | Intake staging |
+| `company_identity_bridge` | cl | Source ↔ sovereign mapping |
+| `company_names` | cl | Name variants |
+| `company_domains` | cl | Domain records |
+| `identity_confidence` | cl | Confidence scoring |
 
-## ENFORCEMENT
-
-### What LOCKED Means
-
-| Action | Permitted |
-|--------|-----------|
-| READ | ✅ Required before any downstream work |
-| WRITE | ❌ Prohibited. No exceptions. |
-| COPY structure | ✅ To downstream repos only |
-| MODIFY structure | ❌ Prohibited. ADR + human approval required. |
-| ADD sections | ❌ Prohibited. Doctrine violation. |
-| REMOVE sections | ❌ Prohibited. Doctrine violation. |
-| RENAME sections | ❌ Prohibited. Doctrine violation. |
-| REORDER sections | ❌ Prohibited. Doctrine violation. |
-| INTERPRET | ❌ Prohibited. Apply as written. |
-
-**Violation of any LOCKED file is a doctrine violation. Stop immediately.**
-
----
-
-## TEMPLATE RULES
-
-When a child repo uses a template:
-
-1. **Copy the template** to the child repo
-2. **Fill in bracketed values** `[PLACEHOLDER]` with actual values
-3. **DO NOT** add sections
-4. **DO NOT** remove sections
-5. **DO NOT** rename sections
-6. **DO NOT** add prose between sections
-7. **DO NOT** change table structures
-
-If the template doesn't fit your use case, you have two options:
-- A) Your use case is wrong. Conform.
-- B) Submit an ADR to imo-creator to modify the template. Human approval required.
-
-There is no option C.
-
----
-
-## DOWNSTREAM CONFORMANCE REQUIREMENTS
-
-Every repo that derives from imo-creator MUST:
-
-1. **Declare conformance** in its CLAUDE.md:
-   ```markdown
-   ## CANONICAL REFERENCE
-   
-   | Template | imo-creator Path | Version |
-   |----------|------------------|---------|
-   | Doctrine | templates/doctrine/CANONICAL_ARCHITECTURE_DOCTRINE.md | 1.1.0 |
-   | Hub-Spoke | templates/doctrine/HUB_SPOKE_ARCHITECTURE.md | 1.1.0 |
-   | Descent | templates/doctrine/ALTITUDE_DESCENT_MODEL.md | 1.1.0 |
-   | Tools | templates/integrations/TOOLS.md | 1.1.0 |
-   | PRD | templates/prd/PRD_HUB.md | 1.0.0 |
-   | ADR | templates/adr/ADR.md | 1.0.0 |
-   | Checklist | templates/checklists/HUB_COMPLIANCE.md | 1.0.0 |
-   ```
-
-2. **Match template structure exactly** - same sections, same order, same tables
-
-3. **Version-lock** - if imo-creator updates a template, downstream must update or be NON-COMPLIANT
-
-4. **Maintain tool ledger** - every hub must have registered tools with ADR references
-
----
-
-## CHANGE PROTOCOL
-
-Any change to a LOCKED FILE requires:
-
-| Step | Action | Authority |
-|------|--------|-----------|
-| 1 | ADR created in imo-creator | Human |
-| 2 | ADR approved | Human |
-| 3 | Template version incremented | Human |
-| 4 | Change applied | Human (not Claude Code) |
-| 5 | All downstream repos notified | Human |
-
-**No exceptions. No "quick fixes." No interpretation. No Claude Code modifications.**
-
----
-
-## HIERARCHY
+### Pipeline Architecture
 
 ```
-imo-creator (THIS REPO) ← SOVEREIGN
-│
-├── templates/doctrine/     ← CONSTITUTIONAL LAW (locked)
-│   ├── CANONICAL_ARCHITECTURE_DOCTRINE.md
-│   ├── HUB_SPOKE_ARCHITECTURE.md
-│   └── ALTITUDE_DESCENT_MODEL.md
-│
-├── templates/integrations/TOOLS.md ← CONSTITUTIONAL LAW (locked)
-│
-├── templates/prd/          ← TEMPLATE LAW (locked)
-├── templates/adr/          ← TEMPLATE LAW (locked)
-├── templates/checklists/   ← TEMPLATE LAW (locked)
-├── templates/pr/           ← TEMPLATE LAW (locked)
-├── templates/integrations/ ← SPEC LAW (locked)
-│
-├── company-lifecycle (child repo)
-│   └── Conforms to imo-creator
-│
-├── outreach (child repo)
-│   └── Conforms to imo-creator
-│
-├── sales (child repo)
-│   └── Conforms to imo-creator
-│
-└── client (child repo)
-    └── Conforms to imo-creator
+Source Adapters → Intake Service → Lifecycle Worker → Identity Table
+                  (company_candidate)  (verify + mint)   (company_identity)
 ```
 
-**Parent defines. Children conform. Never the reverse.**
+- **Entry**: `pipeline/ingest.js --source [STATE] --file [PATH]`
+- **Orchestrator**: `pipeline/orchestrator.js --state [STATE]`
+- **Adapters**: NC Excel (`source_nc_excel.js`), DE CSV (`source_de_csv.js`)
+- **All adapters extend**: `StateCsvSourceAdapter` (invariant enforcement)
+
+### Hard Invariant
+
+```
+IF any code path mints identity WITHOUT verifyCandidate() THEN build is INVALID
+```
 
 ---
 
@@ -230,42 +128,38 @@ imo-creator (THIS REPO) ← SOVEREIGN
 
 | Action | Permitted |
 |--------|-----------|
-| Read locked files | ✅ YES |
-| Read templates | ✅ YES |
-| Create NEW templates (with human approval) | ✅ YES |
-| Create ADR drafts (for human review) | ✅ YES |
-| Modify locked files | ❌ NO |
-| Modify template structure | ❌ NO |
-| Reinterpret templates | ❌ NO |
-| Add concepts not in canonical | ❌ NO |
-| "Improve" templates | ❌ NO |
-| Add "helpful" sections | ❌ NO |
-| Use LLM as primary solution | ❌ NO |
+| Read all files | YES |
+| Modify source code (`src/`, `pipeline/`, `scripts/`, `neon/`) | YES |
+| Create new source files | YES |
+| Modify CI workflows | YES (with care) |
+| Modify doctrine files | NO — LOCKED |
+| Modify `doctrine/REPO_DOMAIN_SPEC.md` | NO — LOCKED |
+| Modify `IMO_CONTROL.json` governance rules | NO — only `upstream_commit` field |
+| Create forbidden directories (`utils/`, `helpers/`, `lib/`, `common/`, `shared/`, `misc/`) | NO |
 
 ---
 
-## DRIFT DETECTION
+## FORBIDDEN PATTERNS
 
-If Claude Code sees a downstream file that doesn't match the template:
-
-1. **Flag it** - Report the drift
-2. **Do NOT "fix" it by adding to the template** - The template is correct
-3. **Do NOT add the drift to future work** - It's a bug, not a feature
-4. **Recommend conformance** - The downstream file must be corrected
-
-Drift is a child repo problem, not a template problem.
+| Pattern | Why |
+|---------|-----|
+| `src/utils/`, `src/helpers/`, `src/lib/`, `src/common/`, `src/shared/`, `src/misc/` | CTB violation — use proper branch |
+| Direct INSERT to `cl.company_identity` outside `lifecycle_worker.js` | Bypass verification invariant |
+| Import of deprecated files | Use canonical pipeline only |
+| Hardcoded connection strings | Use Doppler/env vars |
+| Identity minting without `verifyCandidate()` | Doctrine violation |
 
 ---
 
 ## GOLDEN RULES
 
-1. **This repo is the parent. It conforms to nothing.**
-2. **Locked files are law. Read, don't touch.**
-3. **Templates are structure. Fill in blanks, don't redesign.**
-4. **Children conform to parent. Never the reverse.**
-5. **Changes require ADR. No shortcuts.**
-6. **Drift is a bug. Templates are correct.**
-7. **Determinism first. LLM as tail only.**
+1. **This repo conforms to imo-creator. Parent defines, we conform.**
+2. **CL is the sovereign authority for company identity. All other hubs serve CL.**
+3. **Locked files are law. Read, don't touch.**
+4. **`company_unique_id` is immutable once minted.**
+5. **Verification before minting. Always.**
+6. **Determinism first. LLM as tail only.**
+7. **State is data, not code. All states use the same verification logic.**
 
 ---
 
@@ -274,6 +168,6 @@ Drift is a child repo problem, not a template problem.
 | Field | Value |
 |-------|-------|
 | Created | 2026-01-06 |
-| Last Modified | 2026-01-06 |
-| Status | LOCKED |
-| Authority | Human only |
+| Last Modified | 2026-02-06 |
+| Status | ACTIVE |
+| Authority | HUB-CL-001 / SHQ |

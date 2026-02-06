@@ -1,0 +1,226 @@
+# [HUB_NAME] Intake Lock (DOCTRINE-LOCK)
+
+**Status:** LOCKED
+**Version:** [VERSION]
+**Last Updated:** [YYYY-MM-DD]
+**Enforcement:** Compile-time guards in `[ENFORCEMENT_FILE_PATH]`
+
+---
+
+## Purpose
+
+This document encodes the **non-negotiable intake rules** for the [HUB_NAME] system. These rules are:
+
+1. **Permanent** — They do not change between states or over time
+2. **Enforced** — Compile-time guards fail the build if violated
+3. **Inherited** — All future adapters automatically inherit these rules
+
+**No future audit is required.** Any intake record that passes through the pipeline is guaranteed to comply with these invariants.
+
+---
+
+## Locked Invariants
+
+### 1. Data Contract (Global)
+
+| Field | Requirement | Used For |
+|-------|-------------|----------|
+| `[FIELD_NAME]` | [REQUIREMENT] | [USED_FOR] |
+| `[FIELD_NAME]` | [REQUIREMENT] | [USED_FOR] |
+| `[FIELD_NAME]` | [REQUIREMENT] | [USED_FOR] |
+| `[FIELD_NAME]` | [REQUIREMENT] | [USED_FOR] |
+
+**Admission Gate:** `[ADMISSION_GATE_EXPRESSION]`
+
+**Identity is NEVER inferred from optional fields.**
+
+---
+
+### 2. State Handling (Adapter Rule)
+
+| Rule | Enforcement |
+|------|-------------|
+| Adapter MUST inject its own state identifier | Constructor throws if missing |
+| State is NEVER parsed from intake fields | No intake column maps to state |
+| Each adapter declares a unique state identifier | Registry prevents duplicates |
+| Each adapter declares a unique source system | Registry prevents duplicates |
+| Adapters may NOT share state config | Compile-time guard fails on collision |
+
+**Implementation:**
+- All adapters extend `[ADAPTER_BASE_CLASS]`
+- `[ADAPTER_BASE_CLASS]` constructor enforces these rules
+- Adapter registry in `[ENFORCEMENT_FILE_PATH]` verifies at module load time
+
+---
+
+### 3. Identity Minting
+
+| Rule | Enforcement |
+|------|-------------|
+| Minting requires passed verification | Verification guard blocks unverified records |
+| Admission gate must pass | Gate expression evaluated before minting |
+| No downstream hub may modify identity | Primary identity field is immutable FK |
+| No downstream hub may re-mint identity | Only [HUB_NAME] has minting authority |
+
+**Identity Field Allowlist (LOCKED):**
+```
+[IDENTITY_FIELD_1]
+[IDENTITY_FIELD_2]
+[IDENTITY_FIELD_3]
+```
+
+No other fields may be used for identity decisions.
+
+---
+
+### 4. Lifecycle Order (Hard Gate)
+
+```
+Intake
+    |
+    v
+[STAGE_1] (staging)
+    |
+    v
+[STAGE_2] (verification)
+    |
+    v
+[STAGE_3] (sovereign ID minted)
+    |
+    v
+[STAGE_4] (downstream activation)
+    |
+    v
+[STAGE_N] (downstream hubs, read-only reference)
+```
+
+**Enforcement:**
+- Verification MUST complete before minting
+- Minting updates the staging record AFTER verification
+- Downstream hubs reference via FK only
+
+---
+
+### 5. Documentation Sync
+
+| Rule | Enforcement |
+|------|-------------|
+| Gate doctrine matches code | Logic enforced in both documentation and code |
+| State identifier is adapter-injected | Documented and enforced |
+| Allowlist is locked | Identity field allowlist returns frozen/immutable value |
+
+**If documentation drifts from code, code is authoritative.**
+
+---
+
+## Registered Adapters
+
+| State | Adapter | Source System | Status |
+|-------|---------|---------------|--------|
+| [STATE] | `[ADAPTER_CLASS]` | `[SOURCE_SYSTEM]` | Active |
+| [STATE] | `[ADAPTER_CLASS]` | `[SOURCE_SYSTEM]` | Active |
+
+---
+
+## Adding a New Adapter
+
+To add a new adapter (e.g., [NEW_STATE]):
+
+1. Create `[ADAPTER_DIRECTORY]/[NEW_ADAPTER_FILE]`
+2. Extend `[ADAPTER_BASE_CLASS]`
+3. Declare explicit state identifier: `'[NEW_STATE]'`
+4. Declare explicit source system: `'[NEW_SOURCE_SYSTEM]'`
+5. Add to adapter registry in `[ENFORCEMENT_FILE_PATH]`
+6. Compile-time guards will verify compliance automatically
+
+**Example:**
+```
+const { [ADAPTER_BASE_CLASS] } = require('./[ADAPTER_BASE_MODULE]');
+
+class [NEW_ADAPTER_CLASS] extends [ADAPTER_BASE_CLASS] {
+  constructor() {
+    super({
+      source_system: '[NEW_SOURCE_SYSTEM]',
+      state_code: '[NEW_STATE]',
+      state_name: '[NEW_STATE_NAME]',
+    });
+  }
+
+  async *read(options) {
+    // Implementation...
+  }
+}
+
+module.exports = { [NEW_ADAPTER_CLASS] };
+```
+
+**The new adapter automatically inherits all intake invariants.** No audit required.
+
+---
+
+## Compile-Time Guards
+
+The following guards execute at module load time (`[ENFORCEMENT_FILE_PATH]`):
+
+| Guard | What It Checks | Failure Mode |
+|-------|----------------|--------------|
+| `[GUARD_NAME]` | Adapter extends `[ADAPTER_BASE_CLASS]` | `process.exit(1)` |
+| `[GUARD_NAME]` | State identifier is valid | `process.exit(1)` |
+| `[GUARD_NAME]` | Source system is declared | `process.exit(1)` |
+| `[GUARD_NAME]` | Identity allowlist matches expected fields | `process.exit(1)` |
+| `[GUARD_NAME]` | No duplicate state identifiers | Constructor throws |
+| `[GUARD_NAME]` | No duplicate source systems | Constructor throws |
+
+**If any guard fails, the ingestion pipeline will not run.**
+
+---
+
+## Downstream Implications
+
+### [DOWNSTREAM_HUB]
+- Receives primary identity field only
+- Cannot modify or re-mint identity
+- Must wait for [HUB_NAME] verification
+
+### [DOWNSTREAM_HUB]
+- Cannot bind to [HUB_NAME] entity before verification
+- References via primary identity FK
+- Downstream data is DOWNSTREAM of identity
+
+### [DOWNSTREAM_HUB]
+- Read-only access to `[HUB_NAME]` identity table
+- Use enrichment fields from raw payload if needed
+- Cannot influence identity minting
+
+---
+
+## Traceability
+
+| Artifact | Path |
+|----------|------|
+| [ARTIFACT_NAME] | `[FILE_PATH]` |
+| [ARTIFACT_NAME] | `[FILE_PATH]` |
+| [ARTIFACT_NAME] | `[FILE_PATH]` |
+| [ARTIFACT_NAME] | `[FILE_PATH]` |
+| [ARTIFACT_NAME] | `[FILE_PATH]` |
+| [ARTIFACT_NAME] | `[FILE_PATH]` |
+
+---
+
+## Final Declaration
+
+> **This contract is LOCKED.**
+>
+> **Any intake record flows through the same lifecycle.**
+>
+> **No future adapter can bypass identity rules.**
+>
+> **No operator needs to rerun audits manually.**
+>
+> **The data is just data -- the spine holds.**
+
+---
+
+**Lock Version:** [VERSION]
+**Lock Date:** [YYYY-MM-DD]
+**Lock Authority:** [AUTHORITY]

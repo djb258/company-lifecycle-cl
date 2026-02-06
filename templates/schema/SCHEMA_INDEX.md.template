@@ -1,0 +1,94 @@
+# [HUB_NAME] Schema Documentation Index
+
+> **Source of Truth:** [DATABASE_PLATFORM]
+> **Last Updated:** [YYYY-MM-DD]
+> **Schema Statistics:** [TABLE_COUNT] tables | [COLUMN_COUNT] columns | [CONSTRAINT_COUNT] constraints | [ROW_COUNT] active records
+
+---
+
+## Quick Navigation
+
+### Core Tables
+
+| Document | Table | Description |
+|----------|-------|-------------|
+| [[TABLE_DOC_1].md]([TABLE_DOC_1].md) | `[TABLE_NAME]` | [DESCRIPTION] |
+
+### Staging Tables
+
+| Document | Table | Description |
+|----------|-------|-------------|
+| [[TABLE_DOC].md]([TABLE_DOC].md) | `[TABLE_NAME]` | [DESCRIPTION] |
+
+### Error & Audit Tables
+
+| Document | Tables | Description |
+|----------|--------|-------------|
+| [[TABLE_DOC].md]([TABLE_DOC].md) | `[TABLE_NAMES]` | [DESCRIPTION] |
+
+### Views
+
+| Document | Views | Description |
+|----------|-------|-------------|
+| [[VIEW_DOC].md]([VIEW_DOC].md) | `[VIEW_NAMES]` | [DESCRIPTION] |
+
+### ERD
+
+| Document | Description |
+|----------|-------------|
+| [[ERD_DOC].md]([ERD_DOC].md) | Visual entity relationship diagram |
+
+---
+
+## Schema Patterns
+
+### 1. Archive Strategy
+
+Every core table has a `_archive` counterpart with:
+- `archived_at` (timestamptz)
+- `archived_reason` (text)
+
+Archive tables: [LIST_ARCHIVE_TABLES]
+
+### 2. Audit Trail
+
+All tables include:
+- `created_at` / `updated_at` timestamps
+- Run IDs for batch tracking
+- [ADDITIONAL_AUDIT_PATTERNS]
+
+### 3. Foreign Key Hierarchy
+
+```
+[ASCII DIAGRAM OF FK RELATIONSHIPS]
+```
+
+### 4. [DOMAIN_SPECIFIC_PATTERN — e.g., Confidence Scoring, Deduplication]
+
+[PATTERN_DESCRIPTION]
+
+---
+
+## Common Queries
+
+### [QUERY_1_DESCRIPTION]
+
+```sql
+[SQL_EXAMPLE]
+```
+
+### [QUERY_2_DESCRIPTION]
+
+```sql
+[SQL_EXAMPLE]
+```
+
+---
+
+## Document Control
+
+| Field | Value |
+|-------|-------|
+| Created | [YYYY-MM-DD] |
+| Last Updated | [YYYY-MM-DD] |
+| Schema Version | [VERSION] |

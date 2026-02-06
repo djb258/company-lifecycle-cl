@@ -1,0 +1,153 @@
+# [HUB_NAME] Entity Relationship Diagram
+
+> **Source of Truth:** [DATABASE_PLATFORM]
+> **Last Updated:** [YYYY-MM-DD]
+> **Schema:** [SCHEMA]
+
+---
+
+## 1. Canonical Data Flow
+
+```
+[SOURCE_DESCRIPTION] (READ-ONLY)
+        │
+        │ COPY (never move)
+        ▼
+[STAGING_TABLE]
+        │
+        ├── ELIGIBLE ──────► [IDENTITY_TABLE] ([PRIMARY_IDENTIFIER])
+        │                            │
+        │                            ▼
+        │                    [BRIDGE_TABLE] (source ↔ sovereign)
+        │                            │
+        │                            ▼
+        │                    Downstream Consumers
+        │
+        └── INELIGIBLE ────► [ERROR_TABLE]
+                                     │
+                                     └── REPAIR → RE-ENTRY (same stage)
+```
+
+---
+
+## 2. Entity Relationship Diagram
+
+```
+[REPLACE WITH ASCII ERD SHOWING ALL ENTITIES AND RELATIONSHIPS]
+
+Recommended structure:
+┌──────────────────────────────────────────┐
+│            [PRIMARY_TABLE]               │
+│  [PRIMARY_IDENTIFIER] (PK)              │
+│  [KEY_COLUMNS...]                       │
+└──────────────────┬───────────────────────┘
+                   │
+      ┌────────────┼────────────┐
+      │            │            │
+      ▼            ▼            ▼
+┌──────────┐ ┌──────────┐ ┌──────────┐
+│ [CHILD_1]│ │ [CHILD_2]│ │ [CHILD_3]│
+│  (1:many)│ │  (1:many)│ │  (1:many)│
+└──────────┘ └──────────┘ └──────────┘
+```
+
+---
+
+## 3. Table Ownership
+
+| Table | Schema | Owner Hub | Purpose |
+|-------|--------|-----------|---------|
+| `[TABLE_NAME]` | [SCHEMA] | [HUB_NAME] | [PURPOSE] |
+
+---
+
+## 4. Key Relationships
+
+| Relationship | Type | Constraint | Notes |
+|-------------|------|------------|-------|
+| [TABLE_A] → [TABLE_B] | [1:1 / 1:N / N:1] | [FK / Logical] | [NOTES] |
+
+### Relationship Rules
+
+- [RELATIONSHIP_RULE_1 — e.g., No FK to source tables]
+- [RELATIONSHIP_RULE_2 — e.g., Bridge is the only join surface for consumers]
+- [RELATIONSHIP_RULE_3]
+
+---
+
+## 5. Data Flow Rules (Invariants)
+
+| Rule | Description |
+|------|-------------|
+| **COPY-NEVER-MOVE** | Data is copied from source to staging, never moved |
+| **READ-ONLY-SOURCE** | Source tables are never mutated by [HUB_NAME] |
+| **ONE-WAY-FLOW** | Data flows: source → staging → identity → bridge → consumers |
+| **NO-BACKWARD-WRITES** | [HUB_NAME] never writes back to source tables |
+| **ERROR-REPAIR-REENTRY** | Errors route to error table; repair re-enters same stage |
+| **IDEMPOTENT-PROCESSING** | [IDEMPOTENCY_KEY_DESCRIPTION] ensures one record per unique entity |
+| **BRIDGE-ONLY-JOIN** | Consumers join only through bridge table |
+
+---
+
+## 6. Idempotency Model
+
+**Key:** `[IDEMPOTENCY_KEY_FIELD]`
+
+**Formula:**
+```
+[IDEMPOTENCY_FORMULA — e.g., COALESCE(domain, '') || '::' || COALESCE(linkedin_url, '')]
+```
+
+**Enforcement:**
+- [ENFORCEMENT_MECHANISM — e.g., UNIQUE constraint, ON CONFLICT DO NOTHING]
+- [DEDUP_STRATEGY]
+
+---
+
+## 7. Error → Repair → Re-Entry Loop
+
+```
+┌──────────────┐
+│   Processing │
+│   (Stage N)  │
+└──────┬───────┘
+       │
+       ├── SUCCESS ──► Continue to next stage
+       │
+       └── FAILURE ──► [ERROR_TABLE]
+                              │
+                              │  (repair by human or AI)
+                              ▼
+                       ┌──────────────┐
+                       │  REPAIRED    │
+                       │  (re-entry)  │
+                       └──────┬───────┘
+                              │
+                              └──► Same stage (retry)
+```
+
+**Rules:**
+- Repaired records re-enter at the **same stage** where they failed
+- Error records are **preserved** (not deleted) after repair
+- Maximum retry attempts: [MAX_RETRIES]
+
+---
+
+## 8. Run Versioning
+
+**Pattern:** `[RUN_ID_FORMAT — e.g., RUN-YYYY-MM-DDTHH-MM-SS]`
+
+Every processing batch stamps:
+- `lifecycle_run_id` on processed records
+- Enables point-in-time audit
+- Enables selective re-processing
+
+---
+
+## Document Control
+
+| Field | Value |
+|-------|-------|
+| Created | [YYYY-MM-DD] |
+| Last Updated | [YYYY-MM-DD] |
+| Version | [VERSION] |

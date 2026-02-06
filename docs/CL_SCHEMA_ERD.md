@@ -2,10 +2,21 @@
 
 > **Source of Truth:** Neon PostgreSQL
 > **Verification Mode:** Read-Only
-> **Verification Date:** 2026-01-29
-> **Tables:** 25 | **Columns:** 280+ | **Active Records:** 47,348
+> **Verification Date:** 2026-02-04
+> **Tables:** 25 | **Columns:** 280+ | **Active Records:** 106,065
 
-**Updated: 2026-01-29**
+**Updated: 2026-02-04**
+
+## Recent Intake: Hunter DOL Enrichment (2026-02-04)
+
+| Metric | Value |
+|--------|-------|
+| Records Minted | 54,155 |
+| Source System | `hunter_dol_enrichment` |
+| Source Table | `dol.ein_urls` |
+| States | OH, PA, VA, MD, NC, KY, DC, WV |
+
+See: `docs/runs/RUN-2026-02-04-HUNTER-DOL-INTAKE.md`
 
 ## Category Exclusion (2026-01-29)
 
@@ -36,6 +47,7 @@ erDiagram
         text company_name
         text company_domain
         text linkedin_company_url
+        text source_system
         text final_outcome
         text entity_role
         text eligibility_status
@@ -148,11 +160,11 @@ erDiagram
 
 | Table | Rows | Purpose |
 |-------|------|---------|
-| company_identity | 47,348 | Master table - PASS companies only |
+| company_identity | 106,065 | Master table - PASS companies only |
 | company_identity_archive | 22,263 | Archived FAIL companies |
-| company_names | ~70,843 | Name variants per company |
-| company_domains | ~47,348 | Domain records for active companies |
-| identity_confidence | ~47,348 | Confidence scores |
+| company_names | ~125,000 | Name variants per company |
+| company_domains | ~106,065 | Domain records for active companies |
+| identity_confidence | ~106,065 | Confidence scores |
 | domain_hierarchy | 4,705 | Parent-child relationships |
 | company_candidate | 62,162 | Intake candidates |
 | company_identity_bridge | 71,820 | Source ID to Sovereign ID mapping |
@@ -171,6 +183,14 @@ erDiagram
 
 **Exclusion Categories:** EDUCATIONAL_INSTITUTION, FINANCIAL_SERVICES, GOVERNMENT_ENTITY, HEALTHCARE_FACILITY, RELIGIOUS_ORGANIZATION, INSURANCE_ENTITY
 
+### Source System Distribution
+
+| Source System | Count | % | Description |
+|---------------|-------|---|-------------|
+| `hunter_dol_enrichment` | 54,155 | 51.1% | Hunter.io DOL Form 5500 enrichment (2026-02-04) |
+| `clay_import` | ~30,000 | 28.3% | Clay import (legacy) |
+| `CLAY_MULTI_*` | ~21,910 | 20.6% | Multi-state Clay batches |
+
 ## Foreign Keys
 
 ```
@@ -183,9 +203,9 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 
 | View | Rows | Purpose |
 |------|------|---------|
-| v_company_promotable | 47,348 | Canonical source for Outreach |
-| v_company_lifecycle_status | 47,348 | Lifecycle stage + pointers (for UI/Lovable.DAVE) |
-| v_company_identity_eligible | 47,348 | Eligible companies |
+| v_company_promotable | 106,065 | Canonical source for Outreach |
+| v_company_lifecycle_status | 106,065 | Lifecycle stage + pointers (for UI/Lovable.DAVE) |
+| v_company_identity_eligible | 106,065 | Eligible companies |
 | v_identity_gate_summary | 1 | Gate audit summary |
 
 ### v_company_lifecycle_status (UI View)
@@ -206,7 +226,7 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 
 ## Table Details
 
-### cl.company_identity (47,348 rows) - MASTER
+### cl.company_identity (106,065 rows) - MASTER
 | Column | Type | Nullable | Notes |
 |--------|------|----------|-------|
 | company_unique_id | uuid | NO | PK |
@@ -290,7 +310,7 @@ All archive tables mirror their source tables with additional columns:
 +---------------------------------------------------------------------+
 
   +----------------------------+
-  |   company_identity         |  <- MASTER TABLE (51,910 PASS)
+  |   company_identity         |  <- MASTER TABLE (106,065 PASS)
   |   ======================   |
   |   company_unique_id [PK]   |
   |   sovereign_company_id     |

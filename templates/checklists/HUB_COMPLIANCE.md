@@ -24,8 +24,90 @@ See: `templates/audit/CONSTITUTIONAL_AUDIT_ATTESTATION.md`
 | Priority | Meaning | Ship Without? |
 |----------|---------|---------------|
 | **CRITICAL** | Blocks ship | NO — must be checked |
-| **HIGH** | Strongly recommended | Only with ADR exception |
+| **HIGH** | Blocks compliance | NO — must fix or downgrade with ADR |
 | **MEDIUM** | Nice to have | Yes, but document why |
+| **LOW** | Optional | Yes |
+
+---
+
+## COMPLIANCE GATE (MANDATORY)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      ZERO-TOLERANCE ENFORCEMENT RULE                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  You CANNOT mark a hub as COMPLIANT if:                                       ║
+║                                                                               ║
+║    1. ANY CRITICAL items are unchecked                                        ║
+║    2. ANY HIGH violations exist (unfixed)                                     ║
+║                                                                               ║
+║  HIGH violations are NOT "fix later" items.                                   ║
+║  HIGH violations BLOCK compliance.                                            ║
+║                                                                               ║
+║  The ONLY path forward is:                                                    ║
+║    → FIX the violation, OR                                                    ║
+║    → DOWNGRADE to MEDIUM with documented justification + ADR                  ║
+║                                                                               ║
+║  NEVER mark COMPLIANT with open HIGH/CRITICAL violations.                     ║
+║  This is a HARD RULE. No exceptions.                                          ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Common Mistake (DO NOT DO THIS)
+
+```
+❌ WRONG: "5 HIGH violations found. Status: COMPLIANT"
+   This is INVALID. HIGH violations block compliance.
+
+✅ RIGHT: "5 HIGH violations found. Status: NON-COMPLIANT"
+   Then fix the violations and re-audit.
+
+✅ RIGHT: "0 HIGH/CRITICAL violations. 3 MEDIUM. Status: COMPLIANT WITH NOTES"
+   Medium violations are documented but don't block.
+```
+
+**Constitutional Authority**: See CONSTITUTION.md §Violation Zero Tolerance
+
+---
+
+### AI Agent Compliance Rule (MANDATORY)
+
+**AI agents filling out this checklist are bound by CONSTITUTION.md §Violation Zero Tolerance.**
+
+| Prohibited Action | Consequence |
+|-------------------|-------------|
+| Marking COMPLIANT when CRITICAL items are unchecked | AUDIT INVALIDATED |
+| Marking COMPLIANT when HIGH violations exist (unfixed) | AUDIT INVALIDATED |
+| Downgrading violations to skip the gate | DOCTRINE VIOLATION |
+| Using "partial pass" or "conditional compliance" | NO SUCH STATUS EXISTS |
+| Proceeding past violations without human approval | WORK INVALIDATED |
+
+**Required behavior when violations exist:**
+
+```
+CHECKLIST FAILED
+────────────────
+Hub: [HUB-ID]
+Status: NON-COMPLIANT
+
+CRITICAL unchecked: [count]
+HIGH violations: [count]
+
+Violations:
+1. §[section] — [description]
+2. §[section] — [description]
+
+HUMAN ACTION REQUIRED:
+- Review violations above
+- Fix violations OR downgrade with ADR justification
+- Re-run checklist after remediation
+
+This hub CANNOT ship until violations are resolved.
+```
+
+**There is no "continue anyway" option. AI agents must STOP and report.**
 
 ---
 
@@ -59,6 +141,32 @@ If this statement cannot be completed, the hub is invalid.
 ## PRD Compliance (Behavioral Proof) {#section-a2}
 <!-- §A.2 -->
 
+### HSS — Hub-and-Spoke Set Up (MANDATORY)
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] HSS section exists at top of PRD |
+| CRITICAL | [ ] Idea/Need field is completed |
+| CRITICAL | [ ] Hub Justification (CONST → VAR) is completed |
+| CRITICAL | [ ] Hub-Spoke Decision is explicitly IMPLEMENTED or DECLINED |
+| CRITICAL | [ ] Candidate Constants are listed |
+| CRITICAL | [ ] Candidate Variables are listed |
+| CRITICAL | [ ] Candidate Tools reference SNAP-ON TOOLBOX only |
+
+**PRD without completed HSS section = INVALID**
+
+### HSS Validator (HARD FAIL)
+
+```
+IF PRD exists AND HSS section missing → FAIL
+IF PRD exists AND HSS section incomplete → FAIL
+
+There is no "PRD exists, skip HSS" path.
+This validator has no exceptions.
+```
+
+### PRD Body (Authoritative)
+
 | Priority | Check |
 |----------|-------|
 | CRITICAL | [ ] PRD exists for this hub |
@@ -67,6 +175,8 @@ If this statement cannot be completed, the hub is invalid.
 | CRITICAL | [ ] PRD declares constants (inputs) |
 | CRITICAL | [ ] PRD declares variables (outputs) |
 | CRITICAL | [ ] PRD declares pass structure (CAPTURE / COMPUTE / GOVERN) |
+| CRITICAL | [ ] PRD §6 Hub-Spoke Status matches HSS section |
+| CRITICAL | [ ] PRD §§1-15 restate all HSS decisions (no deferrals) |
 | HIGH | [ ] PRD explicitly states what is IN scope |
 | HIGH | [ ] PRD explicitly states what is OUT of scope |
 
@@ -76,6 +186,7 @@ If this statement cannot be completed, the hub is invalid.
 |-------|-------|
 | PRD Location | |
 | PRD Version | |
+| Governing ERD | |
 
 ---
 
@@ -90,6 +201,7 @@ If this statement cannot be completed, the hub is invalid.
 | CRITICAL | [ ] Each table has a producing pass (CAPTURE / COMPUTE / GOVERN) |
 | CRITICAL | [ ] Lineage to constants is enforced |
 | CRITICAL | [ ] No orphan tables (not referenced in PRD) |
+| CRITICAL | [ ] ERD aligns with OSAM (all joins declared) |
 | HIGH | [ ] No speculative tables (for future use) |
 | HIGH | [ ] No convenience tables (not serving transformation) |
 
@@ -97,6 +209,7 @@ If this statement cannot be completed, the hub is invalid.
 |-------|-------|
 | ERD Location | |
 | ERD Version | |
+| Governing OSAM | |
 
 ---
 
@@ -138,8 +251,59 @@ For **each table**, all four questions must pass:
 
 ---
 
-## Process Compliance (Execution Declaration) {#section-a6}
+## OSAM Compliance (Semantic Access Map) {#section-a6}
 <!-- §A.6 -->
+
+**OSAM is the authoritative query-routing contract. Violations are BLOCKING.**
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] OSAM exists for this hub (`doctrine/OSAM.md`) |
+| CRITICAL | [ ] OSAM declares universal join key |
+| CRITICAL | [ ] OSAM declares spine table |
+| CRITICAL | [ ] All ERD joins are declared in OSAM |
+| CRITICAL | [ ] No queries target SOURCE tables |
+| CRITICAL | [ ] No queries target ENRICHMENT tables as primary query surface |
+| CRITICAL | [ ] PRD questions are routable via OSAM |
+| HIGH | [ ] All tables classified (QUERY/SOURCE/ENRICHMENT/AUDIT) |
+| HIGH | [ ] Query routing table is complete |
+
+### OSAM Alignment Verification
+
+| Check | Result |
+|-------|--------|
+| ERD joins in OSAM | ______ / ______ aligned |
+| Undeclared joins | ______ (must be 0) |
+| SOURCE table queries | ______ (must be 0) |
+| Unroutable PRD questions | ______ (must be 0) |
+
+### OSAM Violation Detection
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         OSAM VIOLATIONS ARE BLOCKING                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  IF OSAM is missing                        → FAIL (constitutional violation)  ║
+║  IF ERD contains joins not in OSAM         → FAIL (alignment violation)       ║
+║  IF PRD requires unanswered questions      → FAIL (routing violation)         ║
+║  IF agent references undocumented paths    → FAIL (agent violation)           ║
+║  IF queries touch SOURCE/ENRICHMENT tables → FAIL (surface violation)         ║
+║                                                                               ║
+║  OSAM violations BLOCK compliance. There are no warnings.                     ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+| Field | Value |
+|-------|-------|
+| OSAM Location | |
+| OSAM Version | |
+
+---
+
+## Process Compliance (Execution Declaration) {#section-a7}
+<!-- §A.7 -->
 
 | Priority | Check |
 |----------|-------|
@@ -167,7 +331,7 @@ Part B assumes Part A passes.
 **Part B governs ship-readiness, not existence legitimacy.**
 Items marked CRITICAL define minimum operational safety, not architectural purity.
 
-**Section Anchors**: §B.1 through §B.11
+**Section Anchors**: §B.1 through §B.12
 
 ---
 
@@ -205,6 +369,7 @@ Items marked CRITICAL define minimum operational safety, not architectural purit
 | CRITICAL | [ ] CTB path defined (Trunk / Branch / Leaf) |
 | CRITICAL | [ ] No forbidden folders (utils, helpers, common, shared, lib, misc) |
 | HIGH | [ ] Branch level specified (sys / ui / ai / data / app) |
+| HIGH | [ ] CTB Governance document exists (`docs/CTB_GOVERNANCE.md`) |
 | MEDIUM | [ ] Parent hub identified (if nested hub) |
 
 ---
@@ -353,6 +518,92 @@ Items marked CRITICAL define minimum operational safety, not architectural purit
 
 ---
 
+## Documentation Alignment (MANDATORY) {#section-b12}
+<!-- §B.12 -->
+
+**MD files are AI instructions. Stale documentation causes AI agents to operate on bad information.**
+
+### Core Documentation Files
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] CLAUDE.md exists and references correct doctrine |
+| CRITICAL | [ ] CLAUDE.md locked files list is accurate for this repo |
+| CRITICAL | [ ] README.md folder structure matches actual structure |
+| CRITICAL | [ ] PRD constants/variables match actual implementation |
+| HIGH | [ ] DOCTRINE.md points to correct imo-creator version |
+| HIGH | [ ] REGISTRY.yaml hub ID is consistent across all files |
+| HIGH | [ ] All ADRs reference correct file paths |
+
+### Path and Reference Accuracy
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] No MD files reference moved or deleted files |
+| CRITICAL | [ ] No MD files reference old folder structure |
+| HIGH | [ ] All doctrine template references are valid |
+| HIGH | [ ] All internal links between MD files work |
+
+### Post-Refactor Verification
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] All MD files reviewed after structure changes |
+| CRITICAL | [ ] Hub identity consistent across CLAUDE.md, README.md, REGISTRY.yaml |
+| HIGH | [ ] No stale examples or code snippets in docs |
+
+### ERD Metrics Verification (MANDATORY)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    METRICS LIVE IN ERD_METRICS.yaml, NOT MD FILES             ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  MD files are ARCHITECTURE (CONST) — structure, rules, relationships.        ║
+║  ERD_METRICS.yaml is DATA (VAR) — counts, statistics, runtime state.         ║
+║                                                                               ║
+║  DO NOT put record counts in MD files.                                        ║
+║  DO put record counts in erd/ERD_METRICS.yaml.                                ║
+║                                                                               ║
+║  Before work sessions, sync ERD_METRICS.yaml from database.                   ║
+║  This ensures decisions are based on CURRENT data.                            ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] erd/ERD_METRICS.yaml exists (created from template) |
+| CRITICAL | [ ] ERD_METRICS.yaml has been synced this session |
+| CRITICAL | [ ] sync.last_updated is within stale_after_hours threshold |
+| HIGH | [ ] All tables from ERD.md are represented in ERD_METRICS.yaml |
+| HIGH | [ ] Queries section documents how to refresh each metric |
+
+**Metrics Sync Verification Output (REQUIRED):**
+
+```
+ERD METRICS STATUS
+──────────────────
+File: erd/ERD_METRICS.yaml
+Last Synced: [timestamp]
+Stale Threshold: [hours]
+Status: [CURRENT / STALE]
+
+Key Metrics:
+  [table_name]: [count] records
+  [table_name]: [count] records
+  [aggregate_name]: [value]
+
+Alerts: [count]
+```
+
+**If ERD_METRICS.yaml is missing or stale, sync before proceeding.**
+
+**Documentation drift is a violation. If structure changed, docs MUST be updated.**
+**Metrics are NOT in MD files. Metrics are in ERD_METRICS.yaml.**
+
+---
+
 ## CC Layer Verification
 
 | Priority | Layer | Check |
@@ -385,9 +636,10 @@ Items marked CRITICAL define minimum operational safety, not architectural purit
 |------|---------|----------------|------------|
 | A | Constitutional Validity | 4 | ___ / 4 |
 | A | PRD Compliance | 8 | ___ / 8 |
-| A | ERD Compliance | 6 | ___ / 6 |
+| A | ERD Compliance | 7 | ___ / 7 |
 | A | Pressure Test | 4 | ___ / 4 |
 | A | Upstream Flow Test | 5 | ___ / 5 |
+| A | **OSAM Compliance** | 7 | ___ / 7 |
 | A | Process Compliance | 6 | ___ / 6 |
 | B | All Operational Sections | varies | ___ / ___ |
 
@@ -398,6 +650,72 @@ Items marked CRITICAL define minimum operational safety, not architectural purit
 | MEDIUM | Optional | ___ / ___ |
 
 **If any CRITICAL item is unchecked, this hub may not ship.**
+**If any HIGH violation exists, this hub is NON-COMPLIANT.**
+
+---
+
+## Compliance Gate Verification (MANDATORY — CANNOT BE SKIPPED)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           ZERO-TOLERANCE GATE                                 ║
+║                                                                               ║
+║  YOU MUST FILL OUT THIS SECTION. SKIPPING IS A DOCTRINE VIOLATION.           ║
+║                                                                               ║
+║  Per CONSTITUTION.md §Violation Zero Tolerance:                               ║
+║  • Any violation = FAIL                                                       ║
+║  • No green checkmark with violations                                         ║
+║  • AI agents CANNOT mark COMPLIANT with unresolved violations                 ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Step 1: Count Your Violations (MANDATORY)
+
+| Violation Type | Count | Enter Number |
+|----------------|-------|--------------|
+| CRITICAL items unchecked | Must be 0 | ______ |
+| HIGH violations unfixed | Must be 0 | ______ |
+
+### Step 2: Gate Decision (MANDATORY)
+
+```
+IF CRITICAL unchecked > 0  →  STOP. Status = NON-COMPLIANT. No exceptions.
+IF HIGH violations > 0     →  STOP. Status = NON-COMPLIANT. No exceptions.
+IF BOTH = 0                →  MAY proceed to mark COMPLIANT.
+```
+
+### Step 3: Declare Status (MANDATORY)
+
+**Select ONE. This is your final declaration.**
+
+| Condition | Status | Select |
+|-----------|--------|--------|
+| CRITICAL > 0 OR HIGH > 0 | **NON-COMPLIANT** | [ ] ← ONLY valid option if violations exist |
+| CRITICAL = 0 AND HIGH = 0, MEDIUM items exist | **COMPLIANT WITH NOTES** | [ ] |
+| CRITICAL = 0 AND HIGH = 0, no MEDIUM items | **COMPLIANT** | [ ] |
+
+### Step 4: AI Agent Acknowledgment (MANDATORY FOR AI AGENTS)
+
+If you are an AI agent filling out this checklist, you MUST complete this acknowledgment:
+
+```
+I, [AI AGENT NAME], acknowledge that:
+
+[ ] I have read CONSTITUTION.md §Violation Zero Tolerance
+[ ] I understand that ANY violation = FAIL
+[ ] I have counted violations above truthfully
+[ ] I have NOT marked COMPLIANT if violations exist
+[ ] I understand that falsifying this checklist INVALIDATES the audit
+
+CRITICAL count declared above: ______
+HIGH count declared above: ______
+Status selected above: ______________________
+
+If CRITICAL > 0 or HIGH > 0 and I selected COMPLIANT, this audit is INVALID.
+```
+
+**AI agents who skip this acknowledgment or falsify counts have violated doctrine.**
 
 ---
 
@@ -405,6 +723,38 @@ Items marked CRITICAL define minimum operational safety, not architectural purit
 
 > **This hub remains valid only while all checklist items pass.**
 > **Any change that causes failure invalidates the hub until corrected.**
+> **HIGH violations BLOCK compliance — they are NOT "fix later" items.**
+>
+> **ZERO TOLERANCE: If you declared violations above and marked COMPLIANT, this audit is VOID.**
+
+---
+
+## CTB Hardening Migration Verification (v2.0.0) {#section-migration}
+<!-- §MIGRATION -->
+
+**Added 2026-02-06**: This section verifies compliance with CTB Hardening v2.0.0
+
+| Priority | Check |
+|----------|-------|
+| HIGH | [ ] DOCTRINE.md references ARCHITECTURE.md (not old files) |
+| HIGH | [ ] CLAUDE.md locked files table references ARCHITECTURE.md |
+| HIGH | [ ] No MD files reference old section numbers (e.g., "CANONICAL §3") |
+| MEDIUM | [ ] Reading order documentation references ARCHITECTURE.md |
+| MEDIUM | [ ] Any PRD/ADR traceability sections updated |
+
+**Section Reference Mapping:**
+
+| Old Reference | New Reference |
+|---------------|---------------|
+| CANONICAL_ARCHITECTURE_DOCTRINE.md | ARCHITECTURE.md |
+| CANONICAL §1 (CTB) | ARCHITECTURE.md Part II |
+| CANONICAL §2 (CC) | ARCHITECTURE.md Part III |
+| CANONICAL §3 (Hub-Spoke) | ARCHITECTURE.md Part IV |
+| CANONICAL §3.5 (IMO) | ARCHITECTURE.md Part V |
+| HUB_SPOKE_ARCHITECTURE.md | ARCHITECTURE.md Part IV |
+| ALTITUDE_DESCENT_MODEL.md | ARCHITECTURE.md Part VI |
+
+**Note**: Old files exist as REDIRECTs for backward compatibility. Migration recommended within 30 days.
 
 ---
 
@@ -413,9 +763,16 @@ Items marked CRITICAL define minimum operational safety, not architectural purit
 | Artifact | Reference |
 |----------|-----------|
 | Constitution | CONSTITUTION.md |
+| **Architecture Doctrine** | templates/doctrine/ARCHITECTURE.md |
+| CTB Topology | ARCHITECTURE.md Part II |
+| CC Hierarchy | ARCHITECTURE.md Part III |
+| Hub/Spoke Geometry | ARCHITECTURE.md Part IV |
+| IMO Flow | ARCHITECTURE.md Part V |
+| Descent Gates | ARCHITECTURE.md Part VI |
 | PRD Constitution | templates/doctrine/PRD_CONSTITUTION.md |
 | ERD Constitution | templates/doctrine/ERD_CONSTITUTION.md |
 | Process Doctrine | templates/doctrine/PROCESS_DOCTRINE.md |
 | ERD Doctrine | templates/doctrine/ERD_DOCTRINE.md |
-| Canonical Doctrine | CANONICAL_ARCHITECTURE_DOCTRINE.md |
-| Hub/Spoke Doctrine | CANONICAL_ARCHITECTURE_DOCTRINE.md §3 |
+| **OSAM (Semantic Access Map)** | templates/semantic/OSAM.md |
+
+**Note**: CANONICAL_ARCHITECTURE_DOCTRINE.md, HUB_SPOKE_ARCHITECTURE.md, and ALTITUDE_DESCENT_MODEL.md are now redirects to ARCHITECTURE.md.

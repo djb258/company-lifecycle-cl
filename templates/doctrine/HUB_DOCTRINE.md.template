@@ -1,0 +1,531 @@
+# [HUB_NAME] Doctrine
+
+**Sovereign Hub Definition — Doctrine Locked**
+
+---
+
+## Preamble
+
+This document defines the **[HUB_NAME]** hub as the **sovereign functional authority** for [HUB_PURPOSE_STATEMENT] across the entire organizational ecosystem.
+
+[HUB_NAME] is not a workflow engine. [HUB_NAME] is not an execution surface. [HUB_NAME] is not an application layer.
+
+**[HUB_NAME] is a sovereign authority hub.**
+
+This doctrine is **frozen**. Modifications require formal governance review.
+
+---
+
+## 1. Canonical Data Flow
+
+### 1.1 Flow Diagram
+
+```
+Source Tables (READ-ONLY)
+        |
+        | COPY (never move)
+        v
+[STAGING_TABLE]
+        |
+        +-- ELIGIBLE -------> [IDENTITY_TABLE] ([PRIMARY_IDENTIFIER])
+        |                            |
+        |                            v
+        |                    [BRIDGE_TABLE] (source <-> sovereign)
+        |                            |
+        |                            v
+        |                    Downstream Consumers
+        |
+        +-- INELIGIBLE -----> [ERROR_TABLE]
+                                     |
+                                     +-- REPAIR -> RE-ENTRY (same stage)
+```
+
+### 1.2 Flow Rules (Invariants)
+
+| Rule | Description |
+|------|-------------|
+| **COPY-NEVER-MOVE** | Data is copied from source to staging, never moved |
+| **READ-ONLY-SOURCE** | Source tables are never mutated by [HUB_NAME] |
+| **ONE-WAY-FLOW** | Data flows: source -> staging -> identity -> bridge -> consumers |
+| **NO-BACKWARD-WRITES** | [HUB_NAME] never writes back to source tables |
+| **ERROR-REPAIR-REENTRY** | Errors route to error table; repair re-enters same stage |
+| **IDEMPOTENT-PROCESSING** | Deterministic processing ensures one sovereign ID per unique entity |
+| **BRIDGE-ONLY-JOIN** | Consumers join only through bridge table |
+
+### 1.3 Tables in Flow
+
+| Table | Purpose |
+|-------|---------|
+| `[TABLE_NAME]` | [TABLE_PURPOSE] |
+| `[TABLE_NAME]` | [TABLE_PURPOSE] |
+| `[TABLE_NAME]` | [TABLE_PURPOSE] |
+| `[TABLE_NAME]` | [TABLE_PURPOSE] |
+
+---
+
+## 2. Constitutional Authority
+
+### 2.1 Sovereign Declaration
+
+[HUB_NAME] is the **only system** authorized to:
+
+- **[SOVEREIGN_OPERATION]**
+- **[SOVEREIGN_OPERATION]**
+- **[SOVEREIGN_OPERATION]**
+- **[SOVEREIGN_OPERATION]**
+- **[SOVEREIGN_OPERATION]**
+
+No other system, hub, application, integration, or automation holds this authority.
+
+### 2.2 Identity Immutability
+
+Once a `[PRIMARY_IDENTIFIER]` is minted:
+
+- It **cannot** be changed
+- It **cannot** be reassigned
+- It **cannot** be reused after retirement
+- It **remains** the permanent anchor for all related data
+
+### 2.3 Single Source of Truth
+
+There is **exactly one** [HUB_NAME] hub per organizational universe.
+
+All systems must resolve [HUB_NAME] identity through this hub. There are no alternatives, fallbacks, or exceptions.
+
+---
+
+## 3. Parent / Child Hub Topology
+
+### 3.1 Hierarchy Declaration
+
+```
+                    +-----------------------------+
+                    |       [HUB_NAME]            |
+                    |       [PARENT_HUB]          |
+                    |       PARENT HUB             |
+                    |       [HUB_ID]              |
+                    +-------------+---------------+
+                                  |
+           +----------------------+----------------------+
+           |                      |                      |
+           v                      v                      v
+    +-------------+       +-------------+       +-------------+
+    | [CHILD_HUB_1] |     | [CHILD_HUB_2] |     | [CHILD_HUB_3] |
+    |   Sub-Hub   |       |   Sub-Hub   |       |   Sub-Hub   |
+    +-------------+       +-------------+       +-------------+
+           |                      |                      |
+           +----------------------+----------------------+
+                                  |
+                    +-------------+-------------+
+                    |    DOWNSTREAM CONSUMERS   |
+                    +---------------------------+
+                    | - [DOWNSTREAM_CONSUMER]   |
+                    | - [DOWNSTREAM_CONSUMER]   |
+                    | - [DOWNSTREAM_CONSUMER]   |
+                    | - All future systems      |
+                    +---------------------------+
+```
+
+### 3.2 Parent Hub ([HUB_NAME])
+
+[HUB_NAME] is the **parent**. [HUB_NAME]:
+
+- Owns [HUB_NAME] identity
+- Governs lifecycle state
+- Controls sub-hub activation
+- Maintains audit history
+- Has no parent hub above it (or: reports to [PARENT_HUB] if applicable)
+
+### 3.3 Child Sub-Hubs
+
+[CHILD_HUB_1], [CHILD_HUB_2], and [CHILD_HUB_3] are **children**. They:
+
+- **Attach only** via `[PRIMARY_IDENTIFIER]`
+- **Cannot exist** without an upstream [HUB_NAME] record
+- **Cannot promote** themselves or other hubs
+- **Cannot mint** identities within [HUB_NAME] domain
+- **Execute work** within their domain only
+
+### 3.4 Downstream Consumers
+
+Downstream systems are **consumers**. They:
+
+- Reference identity via `[PRIMARY_IDENTIFIER]`
+- Have **read-only** relationship with [HUB_NAME]
+- Cannot modify lifecycle state
+- Cannot create [HUB_NAME] records
+- Must accept [HUB_NAME] as authoritative
+
+---
+
+## 4. Lifecycle State Model
+
+### 4.1 Valid States
+
+| State | Description |
+|-------|-------------|
+| `[STATE_NAME]` | [STATE_DESCRIPTION] |
+| `[STATE_NAME]` | [STATE_DESCRIPTION] |
+| `[STATE_NAME]` | [STATE_DESCRIPTION] |
+| `[STATE_NAME]` | [STATE_DESCRIPTION] |
+
+### 4.2 Valid Transitions
+
+```
+    +------------+
+    |    MINT    |  ([PRIMARY_IDENTIFIER] created)
+    +-----+------+
+          |
+          v
+    +------------+
+    | [STATE_NAME] |
+    +-----+------+
+          | [TRANSITION_EVENT] (verified event)
+          v
+    +------------+
+    | [STATE_NAME] |
+    +-----+------+
+          | [TRANSITION_EVENT] (verified event)
+          v
+    +------------+
+    | [STATE_NAME] |
+    +-----+------+
+          | (optional)
+          v
+    +------------+
+    | [STATE_NAME] |
+    +------------+
+```
+
+### 4.3 Invalid Transitions (Prohibited)
+
+- Backward state regression without merge or retirement
+- Any state change without a verified event
+- Any state change by a non-[HUB_NAME] system
+- Skipping states in the defined sequence
+- Self-promotion by child sub-hubs
+
+---
+
+## 5. Promotion Semantics
+
+### 5.1 Event-Driven Only
+
+Lifecycle promotion is **event-driven**, not status-driven.
+
+- Promotions occur **only** when a verified event is received
+- Events must include: source, timestamp, actor, evidence
+- [HUB_NAME] validates event authenticity before promotion
+- No inference, automation, or assumption triggers promotion
+
+### 5.2 Promotion Gates
+
+| Transition | Required Event | Gate Conditions |
+|------------|----------------|-----------------|
+| [TRANSITION] | [REQUIRED_EVENT] | [GATE_CONDITIONS] |
+| [TRANSITION] | [REQUIRED_EVENT] | [GATE_CONDITIONS] |
+
+### 5.3 Sub-Hub Activation
+
+- Sub-hubs are **dormant** until [HUB_NAME] activates them
+- Activation occurs **only after** promotion gate is satisfied
+- [HUB_NAME] mints sub-hub UID upon activation
+- Sub-hub cannot self-activate
+
+---
+
+## 6. Merge Philosophy
+
+### 6.1 When Merge Occurs
+
+Merge is required when:
+
+- Duplicate records are discovered within [HUB_NAME] domain
+- Acquisition or consolidation creates redundant identities
+- Data quality issues reveal the same entity under different IDs
+
+### 6.2 Merge Authority
+
+**Only [HUB_NAME]** may execute a merge.
+
+No external system, automation, or user interface may merge identities without [HUB_NAME] processing the request.
+
+### 6.3 Merge Semantics
+
+```
+    +--------------+     +--------------+
+    |  entity_A    |     |  entity_B    |
+    |  (survivor)  |     |  (absorbed)  |
+    +------+-------+     +------+-------+
+           |                    |
+           |    MERGE EVENT     |
+           |<-------------------+
+           |
+           v
+    +--------------+
+    |  entity_A    |  <- Survivor retains identity
+    |  (merged)    |  <- Absorbed ID becomes alias
+    +--------------+
+```
+
+**Merge rules:**
+
+- One identity survives, one is absorbed
+- Absorbed ID becomes **alias only**
+- All child records re-point to survivor
+- Merge is **logged permanently**
+- Absorbed ID can **never** be reused
+
+### 6.4 Merge Audit
+
+Every merge records:
+
+- Survivor `[PRIMARY_IDENTIFIER]`
+- Absorbed `[PRIMARY_IDENTIFIER]`
+- Merge timestamp
+- Merge actor
+- Merge justification
+- All affected child records
+
+---
+
+## 7. Retirement Philosophy
+
+### 7.1 When Retirement Occurs
+
+Retirement is appropriate when:
+
+- Entity has ceased to exist
+- Entity is permanently disqualified
+- Entity requests removal (compliance)
+- Data quality reveals invalid record
+
+### 7.2 Retirement Authority
+
+**Only [HUB_NAME]** may retire an identity within its domain.
+
+### 7.3 Retirement Semantics
+
+```
+    +--------------+
+    |  entity_X    |
+    |   (active)   |
+    +------+-------+
+           |
+           |  RETIREMENT EVENT
+           |
+           v
+    +--------------+
+    |  entity_X    |  <- Identity preserved
+    |  (RETIRED)   |  <- State = RETIRED
+    +--------------+  <- No deletion
+```
+
+**Retirement rules:**
+
+- Identity is **preserved**, not deleted
+- State changes to `RETIRED`
+- All sub-hubs are **deactivated**
+- Downstream systems are **notified**
+- `[PRIMARY_IDENTIFIER]` can **never** be reused
+- Record remains for audit purposes
+
+### 7.4 Retirement Audit
+
+Every retirement records:
+
+- `[PRIMARY_IDENTIFIER]`
+- Retirement timestamp
+- Retirement actor
+- Retirement reason
+- Sub-hubs deactivated
+- Downstream notifications sent
+
+---
+
+## 8. External Identity Mapping
+
+### 8.1 External Systems
+
+External systems provide **candidate identities**, not authoritative identities.
+
+Sources include:
+
+- [EXTERNAL_SOURCE]
+- [EXTERNAL_SOURCE]
+- [EXTERNAL_SOURCE]
+- [EXTERNAL_SOURCE]
+
+### 8.2 Mapping Rules
+
+```
+    +-----------------+
+    | External Source  |
+    | ([EXTERNAL_SOURCE]: [EXTERNAL_ID]) |
+    +--------+--------+
+             |
+             |  INTAKE
+             v
+    +-----------------+
+    |   [HUB_NAME]    |
+    |   Evaluates     |
+    |   Links/Rejects |
+    +--------+--------+
+             |
+             v
+    +---------------------------------+
+    |         entity_X                |
+    |  [PRIMARY_IDENTIFIER]: [VALUE]  |
+    |  external_ids:                  |
+    |    - source: [EXTERNAL_SOURCE], id: [EXTERNAL_ID] |
+    |    - source: [EXTERNAL_SOURCE], id: [EXTERNAL_ID] |
+    +---------------------------------+
+```
+
+**Mapping rules:**
+
+- External IDs are **aliases only**
+- `[PRIMARY_IDENTIFIER]` is **always primary**
+- Multiple external IDs may map to one entity
+- One external ID maps to **at most one** entity
+- External systems **cannot** override [HUB_NAME] identity
+
+### 8.3 Intake Workflow
+
+1. External system submits candidate
+2. [HUB_NAME] evaluates against existing records
+3. [HUB_NAME] either:
+   - **Links** to existing entity (adds alias)
+   - **Mints** new entity (creates identity)
+   - **Rejects** candidate (invalid data)
+4. Decision is **logged permanently**
+
+---
+
+## 9. What [HUB_NAME] Owns (Exhaustive)
+
+[HUB_NAME] owns **and only owns**:
+
+| Attribute | Description |
+|-----------|-------------|
+| `[OWNED_ATTRIBUTE]` | [DESCRIPTION] |
+| `[OWNED_ATTRIBUTE]` | [DESCRIPTION] |
+| `[OWNED_ATTRIBUTE]` | [DESCRIPTION] |
+| `[OWNED_ATTRIBUTE]` | [DESCRIPTION] |
+| `[OWNED_ATTRIBUTE]` | [DESCRIPTION] |
+| `[OWNED_ATTRIBUTE]` | [DESCRIPTION] |
+
+**If a field is not listed above, it does not belong in [HUB_NAME].**
+
+---
+
+## 10. What [HUB_NAME] Does NOT Own
+
+[HUB_NAME] **must not** contain:
+
+| Data | Belongs To |
+|------|-----------|
+| [EXCLUDED_DATA] | [BELONGS_TO] |
+| [EXCLUDED_DATA] | [BELONGS_TO] |
+| [EXCLUDED_DATA] | [BELONGS_TO] |
+| [EXCLUDED_DATA] | [BELONGS_TO] |
+| [EXCLUDED_DATA] | [BELONGS_TO] |
+
+[HUB_NAME] never executes work.
+[HUB_NAME] never infers intent.
+[HUB_NAME] never "progresses" state without an event.
+
+---
+
+## 11. IMO Application to [HUB_NAME]
+
+[HUB_NAME] implements full **Input-Middle-Output (IMO)** internally.
+
+### Ingress (I)
+
+- Receives verified lifecycle events
+- Receives intake candidates
+- Validates schema only
+- No decisions
+- No state mutation
+
+### Middle (M)
+
+- Evaluates lifecycle rules
+- Validates promotion eligibility
+- Executes merge logic
+- Executes retirement logic
+- Issues sub-hub IDs
+- Updates lifecycle truth
+
+### Egress (O)
+
+- Emits lifecycle state
+- Emits active sub-hub pointers
+- Emits audit events
+- Notifies downstream consumers
+- Read-only outputs only
+
+---
+
+## 12. Ecosystem Integration Points
+
+### 12.1 [INTEGRATION_NAME]
+
+- **Relationship:** [RELATIONSHIP_TYPE]
+- **Access:** [ACCESS_DESCRIPTION]
+- **Constraint:** [CONSTRAINT_DESCRIPTION]
+- **Cannot:** [PROHIBITION_DESCRIPTION]
+
+### 12.2 [INTEGRATION_NAME]
+
+- **Relationship:** [RELATIONSHIP_TYPE]
+- **Access:** [ACCESS_DESCRIPTION]
+- **Constraint:** [CONSTRAINT_DESCRIPTION]
+- **Cannot:** [PROHIBITION_DESCRIPTION]
+
+### 12.3 [INTEGRATION_NAME]
+
+- **Relationship:** [RELATIONSHIP_TYPE]
+- **Access:** [ACCESS_DESCRIPTION]
+- **Constraint:** [CONSTRAINT_DESCRIPTION]
+- **Cannot:** [PROHIBITION_DESCRIPTION]
+
+---
+
+## 13. Altitude Lock
+
+[HUB_NAME] operates only at:
+
+| Altitude | Scope |
+|----------|-------|
+| **[HIGH_ALTITUDE]** | [HIGH_ALTITUDE_SCOPE] |
+| **[MID_ALTITUDE]** | [MID_ALTITUDE_SCOPE] |
+
+[HUB_NAME] **must not** descend to:
+
+| Altitude | Belongs To |
+|----------|-----------|
+| **[LOW_ALTITUDE]** | [LOW_ALTITUDE_OWNER] |
+| **[LOW_ALTITUDE]** | [LOW_ALTITUDE_OWNER] |
+
+---
+
+## 14. Final Declaration
+
+> **[HUB_NAME] is the sovereign authority for [HUB_PURPOSE_STATEMENT].**
+>
+> **All other hubs serve [HUB_NAME]. [HUB_NAME] serves no other hub.**
+>
+> **The `[PRIMARY_IDENTIFIER]` is the constitutional anchor for all [HUB_NAME] data.**
+>
+> **No system may create, infer, substitute, or override [HUB_NAME] identity.**
+>
+> **This doctrine is frozen.**
+
+---
+
+**Hub ID:** [HUB_ID]
+**Doctrine Version:** [VERSION]
+**Status:** Locked
+**Last Updated:** [YYYY-MM-DD]

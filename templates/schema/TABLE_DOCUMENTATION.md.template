@@ -1,0 +1,128 @@
+# [SCHEMA].[TABLE_NAME] — Schema Documentation
+
+> **Source of Truth:** [DATABASE_PLATFORM]
+> **Verification Mode:** Read-Only
+> **Verification Date:** [YYYY-MM-DD]
+> **Row Count:** [ROW_COUNT]
+
+---
+
+## 1. Table Overview
+
+| Field | Value |
+|-------|-------|
+| **Schema** | [SCHEMA] |
+| **Table** | [TABLE_NAME] |
+| **Status** | [STATUS — e.g., Doctrine-Locked / Active / Draft] |
+| **Total Columns** | [COLUMN_COUNT] |
+| **Total Rows** | [ROW_COUNT] |
+
+[TABLE_PURPOSE_DESCRIPTION — 1-2 sentences describing what this table represents and its role in the hub.]
+
+---
+
+## 2. Column Dictionary ([COLUMN_COUNT] Columns — Verified from [DATABASE_PLATFORM])
+
+### [COLUMN_GROUP_1 — e.g., Core Identity Columns]
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `[COLUMN_NAME]` | [TYPE] | [YES/NO] | [DEFAULT] | [DESCRIPTION] |
+
+### [COLUMN_GROUP_2 — e.g., Verification Columns]
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `[COLUMN_NAME]` | [TYPE] | [YES/NO] | [DEFAULT] | [DESCRIPTION] |
+
+### [COLUMN_GROUP_N — Add groups as needed]
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `[COLUMN_NAME]` | [TYPE] | [YES/NO] | [DEFAULT] | [DESCRIPTION] |
+
+---
+
+## 3. Constraints
+
+### Primary Key
+
+| Constraint | Column(s) |
+|------------|-----------|
+| `[PK_NAME]` | `[COLUMN]` |
+
+### Unique Constraints
+
+| Constraint | Column(s) | Purpose |
+|------------|-----------|---------|
+| `[UQ_NAME]` | `[COLUMNS]` | [PURPOSE] |
+
+### Check Constraints
+
+| Constraint | Expression | Purpose |
+|------------|------------|---------|
+| `[CK_NAME]` | `[EXPRESSION]` | [PURPOSE] |
+
+### Foreign Keys
+
+| Constraint | Column | References | Purpose |
+|------------|--------|------------|---------|
+| `[FK_NAME]` | `[COLUMN]` | `[SCHEMA].[TABLE]([COLUMN])` | [PURPOSE] |
+
+---
+
+## 4. Indexes
+
+| Index Name | Column(s) | Type | Purpose |
+|------------|-----------|------|---------|
+| `[INDEX_NAME]` | `[COLUMNS]` | [BTREE/HASH/GIN/etc.] | [PURPOSE] |
+
+---
+
+## 5. Data Distribution
+
+Key statistics for monitoring and capacity planning:
+
+| Metric | Value |
+|--------|-------|
+| Total Rows | [ROW_COUNT] |
+| [DISTRIBUTION_METRIC_1] | [VALUE] |
+| [DISTRIBUTION_METRIC_2] | [VALUE] |
+
+---
+
+## 6. Immutability Rules
+
+| Column | Mutability | Notes |
+|--------|-----------|-------|
+| `[COLUMN]` | Immutable | [REASON — e.g., Sovereign identifier, never changes] |
+| `[COLUMN]` | Write-Once | [REASON — e.g., Set once when stage reached, trigger-enforced] |
+| `[COLUMN]` | Correctable | [REASON — e.g., May be updated for data quality corrections] |
+
+---
+
+## 7. AI Usage Notes
+
+### Correct Patterns
+
+```sql
+-- [DESCRIPTION of correct query pattern]
+[SQL_EXAMPLE]
+```
+
+### Anti-Patterns (Do NOT)
+
+```sql
+-- [DESCRIPTION of what NOT to do]
+[SQL_ANTI_PATTERN]
+```
+
+---
+
+## Document Control
+
+| Field | Value |
+|-------|-------|
+| Created | [YYYY-MM-DD] |
+| Last Verified | [YYYY-MM-DD] |
+| Schema Version | [VERSION] |

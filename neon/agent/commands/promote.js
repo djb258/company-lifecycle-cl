@@ -1,6 +1,6 @@
 // Promotion Runner - Move companies between stages
 
-import { getClient, withTransaction } from '../lib/db.js';
+import { getClient, withTransaction } from '../db.js';
 
 export class PromotionRunner {
   async run(options) {

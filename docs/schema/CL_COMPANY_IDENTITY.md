@@ -2,8 +2,8 @@
 
 > **Source of Truth:** Neon PostgreSQL
 > **Verification Mode:** Read-Only
-> **Verification Date:** 2026-01-25
-> **Row Count:** 51,910
+> **Verification Date:** 2026-02-04
+> **Row Count:** 106,065
 
 ---
 
@@ -15,7 +15,7 @@
 | **Table** | company_identity |
 | **Status** | Doctrine-Locked |
 | **Total Columns** | 32 |
-| **Total Rows** | 51,910 |
+| **Total Rows** | 106,065 |
 
 The `cl.company_identity` table is the **sovereign identity registry** for companies within the Company Lifecycle (CL) system. Each row represents a formally admitted company that has passed through verification, eligibility assessment, and can progress through the sales funnel.
 
@@ -150,14 +150,22 @@ END IF;
 
 | Metric | Value |
 |--------|-------|
-| Total Records | 51,910 |
-| Final Outcome = PASS | 51,910 (100%) |
-| Identity Status = PASS | 51,148 (98.53%) |
-| Identity Status = FAIL | 762 (1.47%) |
-| Eligibility = ELIGIBLE | 51,910 (100%) |
-| Entity Role = PARENT_ANCHOR | 47,186 (90.90%) |
-| Entity Role = CHILD_OPERATING_UNIT | 4,724 (9.10%) |
+| Total Records | 106,065 |
+| Final Outcome = PASS | 106,065 (100%) |
+| Identity Status = PASS | ~105,303 (99.28%) |
+| Identity Status = FAIL | ~762 (0.72%) |
+| Eligibility = ELIGIBLE | 106,065 (100%) |
+| Entity Role = PARENT_ANCHOR | ~101,341 (95.55%) |
+| Entity Role = CHILD_OPERATING_UNIT | ~4,724 (4.45%) |
 | Outreach Attached | 0 (0%) |
+
+### Source System Breakdown
+
+| Source System | Count | % of Total |
+|---------------|-------|------------|
+| hunter_dol_enrichment | 54,155 | 51.06% |
+| clay_import | ~30,000 | ~28.29% |
+| CLAY_MULTI_* | ~21,910 | ~20.65% |
 
 ---
 
@@ -244,16 +252,16 @@ COMMENT ON COLUMN cl.company_identity.outreach_id IS
 |-------|-------|
 | **Source of Truth** | Neon PostgreSQL |
 | **Verification Mode** | Read-Only |
-| **Verification Date** | 2026-01-25 |
+| **Verification Date** | 2026-02-04 |
 | **Column Count** | 32 |
-| **Row Count** | 51,910 |
-| **Documentation Version** | 2.0 |
-| **Previous Version** | 1.0 (6 columns documented) |
+| **Row Count** | 106,065 |
+| **Documentation Version** | 2.1 |
+| **Previous Version** | 2.0 (51,910 rows) |
 
 ---
 
 > **VERIFICATION STAMP**
-> This document was generated from live Neon schema query on 2026-01-25.
-> All 32 columns verified against `information_schema.columns`.
+> Row count updated 2026-02-04 after Hunter DOL enrichment intake (+54,155 records).
+> Schema structure verified against `information_schema.columns` on 2026-01-25.
 > Constraints verified against `information_schema.table_constraints`.
 > Trigger verified against `information_schema.triggers`.

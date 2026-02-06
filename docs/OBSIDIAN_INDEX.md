@@ -22,6 +22,7 @@
 - [[ADR-008-lifecycle-pointer-registry]] - Write-Once Lifecycle Pointers
 
 ### Run Logs
+- [[RUN-2026-02-04-HUNTER-DOL-INTAKE]] - 54,155 companies from Hunter DOL enrichment
 - [[RUN-2026-01-14-MULTI-STATE-INGESTION]] - 2,350 companies across 8 states
 
 ### Product Requirements
@@ -51,10 +52,10 @@
 
 | Metric | Value |
 |--------|-------|
-| Active Companies | 51,910 |
+| Active Companies | 106,065 |
 | Archived (FAIL) | 22,263 |
-| Total Processed | 74,173 |
-| States Active | NC, DE, VA, MD, PA, OH, KY, WV |
+| Total Processed | 128,328 |
+| States Active | NC, DE, VA, MD, PA, OH, KY, WV, DC |
 | Doctrine Version | 1.5 |
 | Lifecycle Pointers | outreach_id, sales_process_id, client_id |
 
@@ -64,6 +65,7 @@
 
 | Stream | State | Adapter | Status |
 |--------|-------|---------|--------|
+| hunter_dol_enrichment | OH, PA, VA, MD, NC, KY, DC, WV | Direct SQL | Completed (54,155) |
 | SS-001 | NC | NCExcelSourceAdapter | Active |
 | SS-002 | DE | DECsvSourceAdapter | Active |
 | CLAY_MULTI_DE | DE | Batch Script | Completed |
@@ -100,7 +102,7 @@ linkedin_url
 
 ## Tags
 
-#company-lifecycle #cl #identity #sovereign #doctrine #gate-zero #multi-state #delaware #north-carolina
+#company-lifecycle #cl #identity #sovereign #doctrine #gate-zero #multi-state #delaware #north-carolina #hunter-dol #dc
 
 ---
 
@@ -123,6 +125,9 @@ linkedin_url
 
 | Date | Change | Reference |
 |------|--------|-----------|
+| 2026-02-04 | Hunter DOL enrichment intake (54,155 companies) | RUN-2026-02-04 |
+| 2026-02-04 | DC state added (via Hunter DOL) | RUN-2026-02-04 |
+| 2026-02-04 | Total active companies: 106,065 | ERD update |
 | 2026-01-22 | Lifecycle pointer registry (write-once) | ADR-008 |
 | 2026-01-22 | FAIL records archived (22,263) | archive-fail-final.js |
 | 2026-01-22 | CL cleanup to 51,910 PASS | Migration 008 |

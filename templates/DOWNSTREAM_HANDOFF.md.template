@@ -1,0 +1,239 @@
+# Downstream Sub-Hub Handoff Document
+
+**Source Hub:** [HUB_NAME]
+**Hub ID:** [HUB_ID]
+**Version:** [VERSION]
+**Date:** [YYYY-MM-DD]
+**Purpose:** Enable downstream sub-hubs to inherit [HUB_NAME] doctrine and continue the pattern
+
+---
+
+## How to Use This Document
+
+**Copy this entire file to your downstream repo.** It contains everything needed to:
+
+1. Understand [HUB_NAME]'s identity authority
+2. Consume sovereign IDs correctly
+3. Implement the same doctrine-lock pattern for your sub-hub
+4. Avoid common mistakes that break the system
+
+---
+
+## Part 1: [HUB_NAME] Overview
+
+### What [HUB_NAME] Does
+
+[HUB_NAME] is the **sovereign identity authority** for [DOMAIN_ENTITY_PLURAL] in the [ORGANIZATION_NAME] system.
+
+```
+SOURCE DATA ([SOURCE_FORMAT])
+    │
+    ▼
+┌─────────────────────────────────────┐
+│       [HUB_NAME]                    │
+│                                     │
+│  • Intake raw [DOMAIN_ENTITY] data  │
+│  • Verify existence                 │
+│  • Mint sovereign identity (UUID)   │
+│  • Enforce admission gate           │
+│                                     │
+└──────────────┬──────────────────────┘
+               │
+               │  [PRIMARY_IDENTIFIER] (UUID)
+               │  ← THIS IS THE ONLY THING
+               │    DOWNSTREAM SYSTEMS USE
+               ▼
+┌─────────────────────────────────────┐
+│        DOWNSTREAM SUB-HUBS          │
+│                                     │
+│  • [SUB_HUB_1]                      │
+│  • [SUB_HUB_2]                      │
+│  • [SUB_HUB_N]                      │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+### What [HUB_NAME] Produces
+
+| Output | Type | Description |
+|--------|------|-------------|
+| `[PRIMARY_IDENTIFIER]` | UUID | **Sovereign identity** — use this as FK |
+| `[OUTPUT_FIELD_1]` | [TYPE] | [DESCRIPTION] |
+| `[OUTPUT_FIELD_2]` | [TYPE] | [DESCRIPTION] |
+| `[OUTPUT_FIELD_N]` | [TYPE] | [DESCRIPTION] |
+
+### Database Connection
+
+```
+[CONNECTION_DETAILS — or reference to secrets provider]
+```
+
+---
+
+## Part 2: Rules for Downstream Sub-Hubs
+
+### MUST DO
+
+1. **Use `[PRIMARY_IDENTIFIER]` as your FK** — This is the ONLY valid reference
+2. **Wait for verification** — Only consume records where [VERIFICATION_CONDITION]
+3. **Read-only access to [HUB_NAME] tables** — Never INSERT/UPDATE/DELETE in `[SCHEMA].*`
+4. **Handle NULL anchors** — [NULL_HANDLING_GUIDANCE]
+5. **[ADDITIONAL_MUST_DO]** — [DESCRIPTION]
+
+### MUST NOT
+
+1. **Never create your own IDs** — [HUB_NAME] is the only identity authority
+2. **Never modify identity** — No re-minting, no updates to identity fields
+3. **Never bypass [HUB_NAME]** — All data flows through [HUB_NAME] first
+4. **Never back-propagate changes** — Data flows ONE WAY downstream
+5. **[ADDITIONAL_MUST_NOT]** — [DESCRIPTION]
+
+### Query Pattern
+
+```sql
+-- Get records for your sub-hub
+SELECT
+  [PRIMARY_IDENTIFIER] AS sovereign_id,
+  [SELECT_COLUMNS]
+FROM [SCHEMA].[PRIMARY_TABLE]
+WHERE [VERIFICATION_CONDITION]
+ORDER BY [ORDER_COLUMN];
+```
+
+---
+
+## Part 3: Doctrine Lock (The Pattern)
+
+[HUB_NAME] uses a **doctrine lock** pattern to ensure consistency. **Your sub-hub should implement the same pattern.**
+
+### The Pattern
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    BASE CLASS                               │
+│                                                             │
+│  • Declares required fields explicitly                      │
+│  • Enforces invariants in constructor                       │
+│  • Registers unique identifiers                             │
+│  • Freezes field allowlists                                 │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ extends
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 CONCRETE ADAPTER/HANDLER                    │
+│                                                             │
+│  • Declares hub_id, sub_hub_id, etc.                       │
+│  • Inherits all invariants automatically                    │
+│  • Cannot bypass parent checks                              │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ verified by
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  COMPILE-TIME GUARDS                        │
+│                                                             │
+│  • Execute at module load                                   │
+│  • Fail fast with process.exit(1)                          │
+│  • Prevent runtime violations                               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Key Principles
+
+1. **Base class** enforces invariants at construction
+2. **Concrete handlers** extend base and declare identifiers
+3. **Compile-time guards** verify at module load
+4. **Allowlists** are frozen to prevent scope creep
+5. **No manual audits** — the lock is self-enforcing
+
+---
+
+## Part 4: Sub-Hub Compliance Checklist
+
+Copy this checklist to your sub-hub repo:
+
+### [HUB_NAME] Integration
+
+- [ ] Uses `[PRIMARY_IDENTIFIER]` as FK
+- [ ] Validates record exists in [HUB_NAME] before operations
+- [ ] Only consumes records where [VERIFICATION_CONDITION]
+- [ ] Handles NULL fields appropriately
+- [ ] No writes to [SCHEMA].* tables
+
+### Doctrine Lock
+
+- [ ] Base class created with invariant enforcement
+- [ ] All handlers extend base class
+- [ ] Required fields frozen
+- [ ] Compile-time guards implemented
+- [ ] Guards execute at module load
+
+### Documentation
+
+- [ ] ADR created for sub-hub decisions
+- [ ] PRD created for sub-hub requirements
+- [ ] IMO documented (Ingress/Middle/Egress)
+- [ ] Checklist completed
+
+### Traceability
+
+- [ ] Parent hub documented: [HUB_ID]
+- [ ] FK documented: [PRIMARY_IDENTIFIER]
+- [ ] Lifecycle level documented
+
+---
+
+## Part 5: Lifecycle Order (System-Wide)
+
+```
+[REPLACE WITH ASCII DIAGRAM OF SYSTEM-WIDE LIFECYCLE LEVELS]
+
+Level 1: [HUB_NAME] — Identity minting and verification
+    │
+    │ GATE: [VERIFICATION_CONDITION]
+    ▼
+Level 2: [LEVEL_2_DESCRIPTION]
+    │
+    │ GATE: [LEVEL_2_GATE]
+    ▼
+Level 3: [LEVEL_3_DESCRIPTION]
+```
+
+**No sub-hub may skip levels. No sub-hub may back-propagate.**
+
+---
+
+## Part 6: Summary
+
+### [HUB_NAME] Gives You
+
+| What | How to Access |
+|------|---------------|
+| Sovereign ID | `[PRIMARY_IDENTIFIER]` |
+| [OUTPUT_1] | `[FIELD_NAME]` |
+| [OUTPUT_2] | `[FIELD_NAME]` |
+
+### You Give Downstream
+
+| What | Your Table |
+|------|-----------|
+| Your sub-hub's FK | Your `_id` column |
+| [YOUR_OUTPUT_1] | [YOUR_TABLE] |
+
+---
+
+## Contact
+
+| Question | Contact |
+|----------|---------|
+| [HUB_NAME] schema questions | [HUB_OWNER] |
+| Integration issues | Check this handoff first |
+| Doctrine questions | Review [ADR_REFERENCE] |
+
+---
+
+**This document is the contract. Follow it exactly.**

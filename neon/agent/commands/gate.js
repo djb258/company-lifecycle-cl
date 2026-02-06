@@ -1,6 +1,6 @@
 // Gate Checker - Verify eligibility for stage transitions
 
-import { getClient } from '../lib/db.js';
+import { getClient } from '../db.js';
 
 export class GateChecker {
   async run(options) {

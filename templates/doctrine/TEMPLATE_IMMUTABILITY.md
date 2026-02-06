@@ -23,9 +23,10 @@ The following artifacts are LOCKED and IMMUTABLE:
 
 | File | Status | Change Protocol |
 |------|--------|-----------------|
-| `CANONICAL_ARCHITECTURE_DOCTRINE.md` | LOCKED | ADR + Human Approval |
-| `HUB_SPOKE_ARCHITECTURE.md` | LOCKED | ADR + Human Approval |
-| `ALTITUDE_DESCENT_MODEL.md` | LOCKED | ADR + Human Approval |
+| `ARCHITECTURE.md` | LOCKED | ADR + Human Approval |
+| `CANONICAL_ARCHITECTURE_DOCTRINE.md` | REDIRECT | Points to ARCHITECTURE.md |
+| `HUB_SPOKE_ARCHITECTURE.md` | REDIRECT | Points to ARCHITECTURE.md Part IV |
+| `ALTITUDE_DESCENT_MODEL.md` | REDIRECT | Points to ARCHITECTURE.md Part VI |
 | `REPO_REFACTOR_PROTOCOL.md` | LOCKED | ADR + Human Approval |
 | `DBA_ENFORCEMENT_DOCTRINE.md` | LOCKED | ADR + Human Approval |
 | `TEMPLATE_IMMUTABILITY.md` | LOCKED | ADR + Human Approval |
@@ -158,9 +159,10 @@ templates/
 ├── README.md                              # Directory guide
 ├── SNAP_ON_TOOLBOX.yaml                   # Tool registry
 ├── doctrine/                              # LOCKED DOCTRINE
-│   ├── CANONICAL_ARCHITECTURE_DOCTRINE.md # Master doctrine
-│   ├── HUB_SPOKE_ARCHITECTURE.md          # Hub-spoke rules
-│   ├── ALTITUDE_DESCENT_MODEL.md          # Descent gates
+│   ├── ARCHITECTURE.md                    # Primary architecture doctrine (v2.0.0)
+│   ├── CANONICAL_ARCHITECTURE_DOCTRINE.md # REDIRECT → ARCHITECTURE.md
+│   ├── HUB_SPOKE_ARCHITECTURE.md          # REDIRECT → ARCHITECTURE.md Part IV
+│   ├── ALTITUDE_DESCENT_MODEL.md          # REDIRECT → ARCHITECTURE.md Part VI
 │   ├── REPO_REFACTOR_PROTOCOL.md          # Structure rules
 │   ├── DBA_ENFORCEMENT_DOCTRINE.md        # DBA rules
 │   └── TEMPLATE_IMMUTABILITY.md           # This file
@@ -178,7 +180,10 @@ templates/
 │   ├── PULL_REQUEST_TEMPLATE_HUB.md
 │   └── PULL_REQUEST_TEMPLATE_SPOKE.md
 ├── checklists/                            # LOCKED TEMPLATES
-│   └── HUB_COMPLIANCE.md
+│   ├── HUB_COMPLIANCE.md
+│   └── QUARTERLY_HYGIENE_AUDIT.md
+├── audit/                                 # LOCKED TEMPLATES
+│   └── CONSTITUTIONAL_AUDIT_ATTESTATION.md
 └── integrations/                          # LOCKED TEMPLATES
     ├── COMPOSIO.md
     ├── DOPPLER.md
@@ -213,8 +218,58 @@ Before any operation, verify:
 | `AI_MODIFICATION` | AI modified locked file | CRITICAL |
 | `APPROVAL_MISSING` | Change without human approval | CRITICAL |
 | `REINTERPRETATION` | Rule meaning altered | CRITICAL |
+| `COMPLIANCE_GATE_BYPASS` | Marked COMPLIANT with HIGH/CRITICAL violations | CRITICAL |
 
 **ALL violations are CRITICAL. There are no warnings.**
+
+---
+
+## COMPLIANCE GATE (IMMUTABLE)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      ZERO-TOLERANCE ENFORCEMENT RULE                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  You CANNOT mark an audit as COMPLIANT if:                                    ║
+║                                                                               ║
+║    1. ANY CRITICAL violations exist                                           ║
+║    2. ANY HIGH violations exist                                               ║
+║                                                                               ║
+║  HIGH violations are NOT "fix later" items.                                   ║
+║  HIGH violations BLOCK compliance.                                            ║
+║                                                                               ║
+║  This is an IMMUTABLE RULE. No exceptions.                                    ║
+║  This rule CANNOT be modified by AI agents.                                   ║
+║  This rule CANNOT be bypassed with justification.                             ║
+║                                                                               ║
+║  The ONLY path forward is to FIX the violation.                               ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Compliance Gate Violation Response
+
+If an AI agent marks COMPLIANT with open HIGH/CRITICAL violations:
+
+```
+COMPLIANCE GATE VIOLATION
+
+Audit: [audit document]
+Declared Status: COMPLIANT
+Actual Status: NON-COMPLIANT
+
+Violations Found:
+- CRITICAL: [count]
+- HIGH: [count]
+
+This audit is INVALID and NON-AUTHORITATIVE.
+Violations must be fixed before compliance can be declared.
+
+Action: AUDIT REJECTED
+```
+
+**This rule is IMMUTABLE and applies to ALL audits in ALL repositories.**
 
 ---
 
@@ -235,8 +290,9 @@ Before any operation, verify:
 | Field | Value |
 |-------|-------|
 | Created | 2026-01-11 |
-| Last Modified | 2026-01-11 |
-| Version | 1.0.0 |
+| Last Modified | 2026-01-29 |
+| Version | 1.1.0 |
 | Status | LOCKED |
 | Authority | CONSTITUTIONAL |
 | Change Protocol | HUMAN APPROVAL REQUIRED |
+| Change Log | v1.1.0: Added COMPLIANCE GATE immutable rule |
