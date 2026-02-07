@@ -2,7 +2,7 @@
 
 > **Source of Truth:** Neon PostgreSQL
 > **Last Updated:** 2026-02-04
-> **Schema Statistics:** 21 tables | 265 columns | 44 constraints | 3 FKs | 106,065 active records
+> **Schema Statistics:** 21 tables (cl) + 5 tables (lcs) | 275+ columns | 44 constraints | 3 FKs | 106,086 active records
 
 ---
 
@@ -32,6 +32,11 @@
 | Document | Views | Description |
 |----------|-------|-------------|
 | [CL_VIEWS.md](CL_VIEWS.md) | `v_company_identity_eligible`, `v_company_lifecycle_status`, `v_company_promotable`, `v_identity_gate_summary` | Query helpers |
+
+### System Tables (LCS — Lifecycle Communication Spine)
+| Document | Tables / Views | Description |
+|----------|----------------|-------------|
+| [LCS_DATA_MODEL.md](../../src/sys/lcs/doctrine/LCS_DATA_MODEL.md) | `lcs.event`, `lcs.err0`, `lcs.adapter_registry`, `lcs.frame_registry`, `lcs.signal_registry`, `lcs.v_latest_by_company`, `lcs.v_latest_by_entity` | Communication event ledger (DRAFT v0.1.0) |
 
 ### ERD
 | Document | Description |
@@ -125,7 +130,7 @@ ORDER BY ic.overall_confidence_score NULLS FIRST;
 | Field | Value |
 |-------|-------|
 | Created | 2026-01-25 |
-| Updated | 2026-02-04 |
+| Updated | 2026-02-07 |
 | Status | Active |
 | Maintainer | System |
-| Last Intake | Hunter DOL Enrichment (+54,155 records) |
+| Last Intake | Manual Outreach Batch (+21 records, 2026-02-07) |

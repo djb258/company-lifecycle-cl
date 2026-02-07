@@ -14,14 +14,14 @@
 | **Schema** | cl |
 | **Table** | company_identity |
 | **Status** | Doctrine-Locked |
-| **Total Columns** | 32 |
+| **Total Columns** | 33 |
 | **Total Rows** | 106,065 |
 
 The `cl.company_identity` table is the **sovereign identity registry** for companies within the Company Lifecycle (CL) system. Each row represents a formally admitted company that has passed through verification, eligibility assessment, and can progress through the sales funnel.
 
 ---
 
-## 2. Column Dictionary (32 Columns — Verified from Neon)
+## 2. Column Dictionary (33 Columns — Verified from Neon)
 
 ### Core Identity Columns
 
@@ -66,6 +66,12 @@ The `cl.company_identity` table is the **sovereign identity registry** for compa
 | `final_outcome` | text | YES | - | PASS or FAIL |
 | `final_reason` | text | YES | - | Explanation for outcome |
 
+### State & Source Columns
+
+| Column | Type | Nullable | Default | Description |
+|--------|------|----------|---------|-------------|
+| `state_code` | char(2) | YES | - | US state code (2-char uppercase), propagated from candidate at minting. Constraint: `^[A-Z]{2}$` |
+
 ### Entity Hierarchy Columns
 
 | Column | Type | Nullable | Default | Description |
@@ -102,6 +108,7 @@ The `cl.company_identity` table is the **sovereign identity registry** for compa
 | `cl_identity_admission_gate` | `company_domain IS NOT NULL OR linkedin_company_url IS NOT NULL` | At least one identity anchor required |
 | `cl_identity_status_check` | `identity_status IN ('PENDING', 'PASS', 'FAIL')` | Valid status values |
 | `company_identity_final_outcome_check` | `final_outcome IN ('PASS', 'FAIL')` | Valid outcome values |
+| `identity_valid_state_code` | `state_code IS NULL OR state_code ~ '^[A-Z]{2}$'` | Valid US state code format |
 
 ---
 
@@ -119,6 +126,7 @@ The `cl.company_identity` table is the **sovereign identity registry** for compa
 | `idx_company_identity_outreach_id` | outreach_id | NO | Outreach lookups |
 | `idx_company_identity_sales_process_id` | sales_process_id | NO | Sales lookups |
 | `idx_company_identity_client_id` | client_id | NO | Client lookups |
+| `idx_identity_state_code` | state_code | NO | State-based queries |
 
 ---
 
@@ -235,7 +243,7 @@ WHERE final_outcome = 'PASS'
 
 ```sql
 COMMENT ON TABLE cl.company_identity IS
-'Sovereign identity registry for Company Lifecycle. 32 columns tracking identity, verification, eligibility, and funnel progression. Write-once pattern for lifecycle pointers.';
+'Sovereign identity registry for Company Lifecycle. 33 columns tracking identity, verification, eligibility, state, and funnel progression. Write-once pattern for lifecycle pointers.';
 
 COMMENT ON COLUMN cl.company_identity.company_unique_id IS
 'Sovereign, immutable UUID. Auto-generated. NEVER reuse.';
@@ -252,16 +260,18 @@ COMMENT ON COLUMN cl.company_identity.outreach_id IS
 |-------|-------|
 | **Source of Truth** | Neon PostgreSQL |
 | **Verification Mode** | Read-Only |
-| **Verification Date** | 2026-02-04 |
-| **Column Count** | 32 |
-| **Row Count** | 106,065 |
-| **Documentation Version** | 2.1 |
-| **Previous Version** | 2.0 (51,910 rows) |
+| **Verification Date** | 2026-02-07 |
+| **Column Count** | 33 |
+| **Row Count** | 106,086 |
+| **Documentation Version** | 2.2 |
+| **Previous Version** | 2.1 (106,065 rows, 32 columns) |
 
 ---
 
 > **VERIFICATION STAMP**
+> state_code column added 2026-02-07 (migration 003, applied to production).
+> Manual outreach batch minted 21 companies 2026-02-07 (BATCH-OUTREACH-2026-02-07).
 > Row count updated 2026-02-04 after Hunter DOL enrichment intake (+54,155 records).
-> Schema structure verified against `information_schema.columns` on 2026-01-25.
+> Schema structure verified against `information_schema.columns` on 2026-02-07.
 > Constraints verified against `information_schema.table_constraints`.
 > Trigger verified against `information_schema.triggers`.

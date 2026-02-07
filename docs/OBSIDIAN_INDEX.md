@@ -10,6 +10,9 @@
 - [[CL_DOCTRINE]] - Core doctrine
 - [[COMPANY_LIFECYCLE_LOCK]] - Intake invariants (LOCKED)
 - [[heir.doctrine.yaml]] - Machine-readable doctrine
+- [[LCS_OVERVIEW]] - Lifecycle Communication Spine architecture
+- [[LCS_DATA_MODEL]] - LCS table inventory (5 tables + 2 views)
+- [[LCS_ID_MODEL]] - Dual-ID enforcement (communication_id + process_id)
 
 ### Architecture Decisions
 - [[ADR-001-lifecycle-state-machine]] - CL as Sovereign Authority
@@ -22,6 +25,7 @@
 - [[ADR-008-lifecycle-pointer-registry]] - Write-Once Lifecycle Pointers
 
 ### Run Logs
+- [[RUN-2026-02-07-BATCH-OUTREACH-MANUAL-MINTING]] - 21 companies for outreach pipeline
 - [[RUN-2026-02-04-HUNTER-DOL-INTAKE]] - 54,155 companies from Hunter DOL enrichment
 - [[RUN-2026-01-14-MULTI-STATE-INGESTION]] - 2,350 companies across 8 states
 
@@ -52,11 +56,11 @@
 
 | Metric | Value |
 |--------|-------|
-| Active Companies | 106,065 |
+| Active Companies | 106,086 |
 | Archived (FAIL) | 22,263 |
-| Total Processed | 128,328 |
-| States Active | NC, DE, VA, MD, PA, OH, KY, WV, DC |
-| Doctrine Version | 1.5 |
+| Total Processed | 128,349 |
+| States Active | NC, DE, VA, MD, PA, OH, KY, WV, DC, WI, TX, ND, IA, MO, IL, KS, NE, OK |
+| Doctrine Version | 2.0.0 |
 | Lifecycle Pointers | outreach_id, sales_process_id, client_id |
 
 ---
@@ -65,6 +69,7 @@
 
 | Stream | State | Adapter | Status |
 |--------|-------|---------|--------|
+| MANUAL_OUTREACH_2026 | WI, TX, ND, IA, MO, IL, KS, NE, OK | Pipeline (orchestrator.js) | Completed (21) |
 | hunter_dol_enrichment | OH, PA, VA, MD, NC, KY, DC, WV | Direct SQL | Completed (54,155) |
 | SS-001 | NC | NCExcelSourceAdapter | Active |
 | SS-002 | DE | DECsvSourceAdapter | Active |
@@ -102,7 +107,7 @@ linkedin_url
 
 ## Tags
 
-#company-lifecycle #cl #identity #sovereign #doctrine #gate-zero #multi-state #delaware #north-carolina #hunter-dol #dc
+#company-lifecycle #cl #identity #sovereign #doctrine #gate-zero #multi-state #delaware #north-carolina #hunter-dol #dc #lcs #outreach
 
 ---
 
@@ -114,6 +119,8 @@ linkedin_url
 | PRDs | `docs/prd/` |
 | Schemas | `docs/schema/` |
 | Doctrine | `docs/doctrine/` |
+| LCS Doctrine | `src/sys/lcs/doctrine/` |
+| LCS Contracts | `src/sys/lcs/contracts/` |
 | Handoffs | `docs/handoff/` |
 | Checklists | `docs/checklists/` |
 | IMO | `docs/imo/` |
@@ -125,6 +132,11 @@ linkedin_url
 
 | Date | Change | Reference |
 |------|--------|-----------|
+| 2026-02-07 | Manual outreach batch (21 companies, 9 new states) | RUN-2026-02-07 |
+| 2026-02-06 | LCS scaffold created (src/sys/lcs/) | LCS_OVERVIEW |
+| 2026-02-06 | CTB compliance refactor (lib/ dirs eliminated) | CLAUDE.md |
+| 2026-02-06 | Templates synced from imo-creator (v2.0.0) | CLAUDE.md |
+| 2026-02-06 | CLAUDE.md rewritten as child hub identity | CLAUDE.md |
 | 2026-02-04 | Hunter DOL enrichment intake (54,155 companies) | RUN-2026-02-04 |
 | 2026-02-04 | DC state added (via Hunter DOL) | RUN-2026-02-04 |
 | 2026-02-04 | Total active companies: 106,065 | ERD update |

@@ -3,7 +3,7 @@
 > **Source of Truth:** Neon PostgreSQL
 > **Verification Mode:** Read-Only
 > **Verification Date:** 2026-02-04
-> **Tables:** 25 | **Columns:** 280+ | **Active Records:** 106,065
+> **Tables:** 25 (cl) + 5 (lcs) | **Columns:** 290+ | **Active Records:** 106,086
 
 **Updated: 2026-02-04**
 
@@ -48,6 +48,7 @@ erDiagram
         text company_domain
         text linkedin_company_url
         text source_system
+        char state_code
         text final_outcome
         text entity_role
         text eligibility_status
@@ -190,6 +191,7 @@ erDiagram
 | `hunter_dol_enrichment` | 54,155 | 51.1% | Hunter.io DOL Form 5500 enrichment (2026-02-04) |
 | `clay_import` | ~30,000 | 28.3% | Clay import (legacy) |
 | `CLAY_MULTI_*` | ~21,910 | 20.6% | Multi-state Clay batches |
+| `MANUAL_OUTREACH_2026` | 21 | <0.1% | Manual outreach batch (2026-02-07) |
 
 ## Foreign Keys
 
@@ -226,7 +228,7 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 
 ## Table Details
 
-### cl.company_identity (106,065 rows) - MASTER
+### cl.company_identity (106,086 rows) - MASTER
 | Column | Type | Nullable | Notes |
 |--------|------|----------|-------|
 | company_unique_id | uuid | NO | PK |
@@ -235,6 +237,7 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 | company_domain | text | YES | |
 | linkedin_company_url | text | YES | |
 | source_system | text | NO | |
+| state_code | char(2) | YES | US state code (propagated from candidate) |
 | final_outcome | text | YES | PASS only |
 | final_reason | text | YES | ELIGIBLE_VERIFIED |
 | entity_role | text | YES | PARENT_ANCHOR / CHILD_OPERATING_UNIT |
@@ -296,6 +299,24 @@ All archive tables mirror their source tables with additional columns:
 | identity_confidence_archive | 19,850 |
 | domain_hierarchy_archive | 1,878 |
 | cl_errors_archive | 16,103 |
+
+---
+
+## LCS Schema (Lifecycle Communication Spine)
+
+> **Location:** `src/sys/lcs/` | **Status:** DRAFT (v0.1.0) | **Full docs:** `src/sys/lcs/doctrine/`
+
+| Table / View | Type | Purpose |
+|-------------|------|---------|
+| `lcs.event` | Table (CET) | Canonical event table — append-only communication ledger |
+| `lcs.err0` | Table | Error capture for failed communication events |
+| `lcs.adapter_registry` | Table (Registry) | Known delivery adapters (email, LinkedIn, phone) |
+| `lcs.frame_registry` | Table (Registry) | Known message frames per lifecycle phase |
+| `lcs.signal_registry` | Table (Registry) | Known signal sets per lifecycle phase |
+| `lcs.v_latest_by_company` | Mat. View | Latest communication event per sovereign company |
+| `lcs.v_latest_by_entity` | Mat. View | Latest communication event per entity (slot/person) |
+
+**Join key to CL:** `lcs.event.sovereign_company_id` → `cl.company_identity.company_unique_id` (by value, no FK)
 
 ---
 
