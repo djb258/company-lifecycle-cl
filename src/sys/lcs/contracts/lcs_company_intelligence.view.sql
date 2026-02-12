@@ -11,117 +11,152 @@
 -- Doctrine: LCS reads sub-hub data. LCS never writes to sub-hub tables.
 --   This matview is a read-only snapshot. Sub-hubs remain sovereign.
 --
--- IMPORTANT: Cross-schema table/column references below are PLACEHOLDER REFERENCES.
---   The sub-hub schemas (people, dol, blog, sitemap, coverage) are defined in
---   separate repositories and do not exist in this repo. All [[VERIFY]] markers
---   must be resolved against the actual sub-hub schemas before deployment.
+-- RECONCILED against production Neon schemas (2026-02-12).
+-- Source verification: barton-outreach-core/hubs/*/SCHEMA.md
+-- People: people.people_master + people.company_slot
+-- DOL: outreach.dol (via outreach.outreach)
+-- Blog: outreach.blog (via outreach.outreach)
+-- Sitemap: company.company_source_urls (lateral aggregate)
+-- Agent: NULL placeholder (coverage hub mapping pending)
 
 CREATE MATERIALIZED VIEW lcs.v_company_intelligence AS
 SELECT
-    -- Company identity (from cl.company_identity — VERIFIED in this repo)
-    ci.company_unique_id    AS sovereign_company_id,  -- cl PK mapped to LCS naming convention
+    -- Company identity (from cl.company_identity)
+    ci.company_unique_id    AS sovereign_company_id,
     ci.company_name,
-    -- [[VERIFY: agent_number does not exist on cl.company_identity — must come from coverage.agent_assignment or be added to CL]]
-    NULL::TEXT               AS agent_number,          -- placeholder until coverage model is available
 
-    -- People sub-hub: CEO slot [[VERIFY: actual table is people.entity with columns as shown]]
-    p_ceo.entity_id          AS ceo_entity_id,         -- [[VERIFY: people.entity.entity_id]]
-    p_ceo.full_name           AS ceo_name,              -- [[VERIFY: people.entity.full_name]]
-    p_ceo.email               AS ceo_email,             -- [[VERIFY: people.entity.email]]
-    p_ceo.linkedin_url        AS ceo_linkedin_url,      -- [[VERIFY: people.entity.linkedin_url]]
-    p_ceo.data_fetched_at     AS ceo_data_fetched_at,   -- [[VERIFY: people.entity.data_fetched_at]]
+    -- Agent assignment
+    -- TODO: Join to coverage.v_service_agent_coverage_zips when agent→company mapping is materialized
+    NULL::TEXT               AS agent_number,
 
-    -- People sub-hub: CFO slot [[VERIFY: same table, different slot_type]]
-    p_cfo.entity_id          AS cfo_entity_id,
-    p_cfo.full_name           AS cfo_name,
-    p_cfo.email               AS cfo_email,
-    p_cfo.linkedin_url        AS cfo_linkedin_url,
+    -- ═══ People sub-hub: CEO slot ═══
+    pm_ceo.unique_id         AS ceo_entity_id,
+    pm_ceo.full_name         AS ceo_name,
+    pm_ceo.email             AS ceo_email,
+    pm_ceo.linkedin_url      AS ceo_linkedin_url,
+    pm_ceo.last_verified_at  AS ceo_data_fetched_at,
 
-    -- People sub-hub: HR slot [[VERIFY: same table, different slot_type]]
-    p_hr.entity_id           AS hr_entity_id,
-    p_hr.full_name            AS hr_name,
-    p_hr.email                AS hr_email,
-    p_hr.linkedin_url         AS hr_linkedin_url,
+    -- ═══ People sub-hub: CFO slot ═══
+    pm_cfo.unique_id         AS cfo_entity_id,
+    pm_cfo.full_name         AS cfo_name,
+    pm_cfo.email             AS cfo_email,
+    pm_cfo.linkedin_url      AS cfo_linkedin_url,
 
-    -- DOL sub-hub [[VERIFY: actual table name, column names]]
-    dol.plan_year_end,                                  -- [[VERIFY: dol.filing.plan_year_end]]
-    dol.total_participants,                              -- [[VERIFY: dol.filing.total_participants]]
-    dol.total_plan_cost,                                 -- [[VERIFY: dol.filing.total_plan_cost]]
-    dol.carrier_name,                                    -- [[VERIFY: dol.filing.carrier_name]]
-    (dol.plan_year_end - CURRENT_DATE) AS days_to_renewal,
+    -- ═══ People sub-hub: HR slot ═══
+    pm_hr.unique_id          AS hr_entity_id,
+    pm_hr.full_name          AS hr_name,
+    pm_hr.email              AS hr_email,
+    pm_hr.linkedin_url       AS hr_linkedin_url,
 
-    -- Blog sub-hub [[VERIFY: actual table name, column names]]
-    blog.latest_post_title,                              -- [[VERIFY: blog.company_summary.latest_post_title]]
-    blog.latest_post_date,                               -- [[VERIFY: blog.company_summary.latest_post_date]]
-    blog.post_count,                                     -- [[VERIFY: blog.company_summary.post_count]]
-
-    -- Sitemap sub-hub [[VERIFY: actual table name, column names]]
-    site.page_count,                                     -- [[VERIFY: sitemap.company_summary.page_count]]
-    site.has_careers_page,                                -- [[VERIFY: sitemap.company_summary.has_careers_page]]
-    site.location_count,                                  -- [[VERIFY: sitemap.company_summary.location_count]]
-
-    -- Computed intelligence tier (deterministic)
+    -- ═══ DOL sub-hub ═══
+    od.renewal_month,
+    od.outreach_start_month,
+    od.filing_present,
+    od.carrier               AS carrier_name,
+    od.broker_or_advisor,
+    od.funding_type,
     CASE
-        WHEN p_ceo.email IS NOT NULL
-             AND dol.plan_year_end IS NOT NULL
-             AND blog.post_count > 0
-             AND site.page_count IS NOT NULL
-        THEN 1  -- Full intelligence: all 4 sub-hubs have data
-        WHEN p_ceo.email IS NOT NULL
-             AND dol.plan_year_end IS NOT NULL
-             AND (blog.post_count > 0 OR site.page_count IS NOT NULL)
-        THEN 2  -- Strong: People + DOL + 1 other
-        WHEN p_ceo.email IS NOT NULL
-             AND dol.plan_year_end IS NOT NULL
-        THEN 3  -- Core: People + DOL only
-        WHEN p_ceo.email IS NOT NULL
-        THEN 4  -- Minimal: People only (has contact, no DOL)
-        ELSE 5  -- Bare: No CEO contact found
-    END AS intelligence_tier,
+      WHEN od.renewal_month IS NOT NULL THEN
+        (MAKE_DATE(
+          CASE WHEN od.renewal_month >= EXTRACT(MONTH FROM CURRENT_DATE)::int
+            THEN EXTRACT(YEAR FROM CURRENT_DATE)::int
+            ELSE EXTRACT(YEAR FROM CURRENT_DATE)::int + 1
+          END,
+          od.renewal_month,
+          1
+        ) - CURRENT_DATE)
+      ELSE NULL
+    END                      AS days_to_renewal,
+
+    -- ═══ Blog sub-hub ═══
+    ob.context_summary       AS blog_summary,
+    ob.source_type           AS blog_source_type,
+    ob.source_url            AS blog_source_url,
+    ob.context_timestamp     AS blog_context_date,
+
+    -- ═══ Sitemap sub-hub ═══
+    site.page_count,
+    site.has_careers_page,
+    site.source_type_count,
+
+    -- ═══ Intelligence tier (deterministic) ═══
+    CASE
+      WHEN pm_ceo.email IS NOT NULL
+           AND od.filing_present = true
+           AND ob.context_summary IS NOT NULL
+           AND site.page_count > 0
+      THEN 1  -- Full: all 4 sub-hubs
+      WHEN pm_ceo.email IS NOT NULL
+           AND od.filing_present = true
+           AND (ob.context_summary IS NOT NULL OR site.page_count > 0)
+      THEN 2  -- Strong: People + DOL + 1 other
+      WHEN pm_ceo.email IS NOT NULL
+           AND od.filing_present = true
+      THEN 3  -- Core: People + DOL
+      WHEN pm_ceo.email IS NOT NULL
+      THEN 4  -- Minimal: People only
+      ELSE 5  -- Bare: No CEO contact
+    END                      AS intelligence_tier,
+
+    -- ═══ Freshness timestamps (for context assembler) ═══
+    pm_ceo.last_verified_at  AS people_data_fetched_at,
+    od.updated_at            AS dol_data_fetched_at,
+    ob.created_at            AS blog_data_fetched_at,
+    NULL::TIMESTAMPTZ        AS sitemap_data_fetched_at,
 
     -- Snapshot timestamp
-    NOW() AS snapshot_at
+    NOW()                    AS snapshot_at
 
 FROM cl.company_identity ci
 
--- People: CEO [[VERIFY: people.entity table, slot_type column, is_active column]]
-LEFT JOIN people.entity p_ceo
-    ON p_ceo.sovereign_company_id = ci.company_unique_id
-    AND p_ceo.slot_type = 'CEO'
-    AND p_ceo.is_active = true
+-- People: CEO (people.company_slot → people.people_master)
+LEFT JOIN people.company_slot cs_ceo
+    ON cs_ceo.company_unique_id = ci.company_unique_id::text
+    AND cs_ceo.slot_type = 'CEO'
+    AND cs_ceo.is_filled = true
+LEFT JOIN people.people_master pm_ceo
+    ON pm_ceo.unique_id = cs_ceo.person_unique_id
 
--- People: CFO [[VERIFY: same table]]
-LEFT JOIN people.entity p_cfo
-    ON p_cfo.sovereign_company_id = ci.company_unique_id
-    AND p_cfo.slot_type = 'CFO'
-    AND p_cfo.is_active = true
+-- People: CFO
+LEFT JOIN people.company_slot cs_cfo
+    ON cs_cfo.company_unique_id = ci.company_unique_id::text
+    AND cs_cfo.slot_type = 'CFO'
+    AND cs_cfo.is_filled = true
+LEFT JOIN people.people_master pm_cfo
+    ON pm_cfo.unique_id = cs_cfo.person_unique_id
 
--- People: HR [[VERIFY: same table]]
-LEFT JOIN people.entity p_hr
-    ON p_hr.sovereign_company_id = ci.company_unique_id
-    AND p_hr.slot_type = 'HR'
-    AND p_hr.is_active = true
+-- People: HR
+LEFT JOIN people.company_slot cs_hr
+    ON cs_hr.company_unique_id = ci.company_unique_id::text
+    AND cs_hr.slot_type = 'HR'
+    AND cs_hr.is_filled = true
+LEFT JOIN people.people_master pm_hr
+    ON pm_hr.unique_id = cs_hr.person_unique_id
 
--- DOL [[VERIFY: dol.filing table, is_latest column, sovereign_company_id join column]]
-LEFT JOIN dol.filing dol
-    ON dol.sovereign_company_id = ci.company_unique_id
-    AND dol.is_latest = true
+-- DOL + Blog (via outreach.outreach)
+LEFT JOIN outreach.outreach oo
+    ON oo.sovereign_id = ci.company_unique_id
+LEFT JOIN outreach.dol od
+    ON od.outreach_id = oo.outreach_id
+LEFT JOIN outreach.blog ob
+    ON ob.outreach_id = oo.outreach_id
 
--- Blog [[VERIFY: blog.company_summary table, sovereign_company_id join column]]
-LEFT JOIN blog.company_summary blog
-    ON blog.sovereign_company_id = ci.company_unique_id
+-- Sitemap (lateral aggregate from company.company_source_urls)
+LEFT JOIN LATERAL (
+  SELECT
+    COUNT(*) AS page_count,
+    bool_or(source_type = 'careers_page') AS has_careers_page,
+    COUNT(DISTINCT source_type) AS source_type_count
+  FROM company.company_source_urls csu
+  WHERE csu.company_unique_id = ci.company_unique_id::text
+) site ON true
 
--- Sitemap [[VERIFY: sitemap.company_summary table, sovereign_company_id join column]]
-LEFT JOIN sitemap.company_summary site
-    ON site.sovereign_company_id = ci.company_unique_id
-
--- [[VERIFY: cl.company_identity does not have a lifecycle_stage column.
---   The prompt references WHERE ci.lifecycle_stage != 'DEAD' but this column
---   does not exist. CL uses identity_status (PENDING/PASS/FAIL) and
---   final_outcome (PASS/FAIL). Adjust filter when column mapping is confirmed.]]
 WHERE ci.final_outcome = 'PASS';
 
+-- ═══════════════════════════════════════════════════════════════════
 -- Indexes for runtime reads
+-- ═══════════════════════════════════════════════════════════════════
+
 CREATE UNIQUE INDEX idx_lcs_intelligence_company
     ON lcs.v_company_intelligence (sovereign_company_id);
 

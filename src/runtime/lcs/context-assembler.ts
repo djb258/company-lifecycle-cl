@@ -161,7 +161,7 @@ export async function assembleFreshnessContext(
     .from('v_company_intelligence')
     // @ts-expect-error — lcs schema requires PostgREST config
     .schema('lcs')
-    .select('intelligence_tier, ceo_data_fetched_at')
+    .select('intelligence_tier, people_data_fetched_at, dol_data_fetched_at, blog_data_fetched_at, sitemap_data_fetched_at')
     .eq('sovereign_company_id', sovereignCompanyId)
     .single();
 
@@ -174,22 +174,22 @@ export async function assembleFreshnessContext(
   const subHubFreshness: SubHubFreshness[] = [
     {
       sub_hub: 'PEOPLE',
-      data_fetched_at: (intel?.ceo_data_fetched_at as string) ?? null,
+      data_fetched_at: (intel?.people_data_fetched_at as string) ?? null,
       freshness_window_days: peopleFreshnessWindow,
     },
     {
       sub_hub: 'DOL',
-      data_fetched_at: null, // DOL freshness not tracked in current matview
+      data_fetched_at: (intel?.dol_data_fetched_at as string) ?? null,
       freshness_window_days: dolFreshnessWindow,
     },
     {
       sub_hub: 'BLOG',
-      data_fetched_at: null, // Blog freshness not tracked in current matview
+      data_fetched_at: (intel?.blog_data_fetched_at as string) ?? null,
       freshness_window_days: blogFreshnessWindow,
     },
     {
       sub_hub: 'SITEMAP',
-      data_fetched_at: null, // Sitemap freshness not tracked in current matview
+      data_fetched_at: (intel?.sitemap_data_fetched_at as string) ?? null,
       freshness_window_days: sitemapFreshnessWindow,
     },
   ];
