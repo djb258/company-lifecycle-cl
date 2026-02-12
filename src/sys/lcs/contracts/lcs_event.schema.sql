@@ -142,7 +142,7 @@ CREATE TRIGGER trg_lcs_event_immutable_comm_id
 COMMENT ON TABLE lcs.event IS 'LCS Canonical Event Table — append-only ledger of all communication events, partitioned monthly on created_at';
 COMMENT ON COLUMN lcs.event.communication_id IS 'Message artifact ID (ULID) — WHY this event exists. Format: LCS-{PHASE}-{YYYYMMDD}-{ULID}. UNIQUE + IMMUTABLE.';
 COMMENT ON COLUMN lcs.event.message_run_id IS 'Delivery attempt ID — WHO sent it, WHICH channel, WHICH attempt. Format: RUN-{COMM_ID}-{CHANNEL}-{ATTEMPT}. NOT unique (retries share one composition).';
-COMMENT ON COLUMN lcs.event.event_type IS 'Pipeline event classification — replaces v0.1 status column. 17 canonical event types.';
+COMMENT ON COLUMN lcs.event.event_type IS 'Pipeline event classification — replaces v0.1 status column. 20 canonical event types.';
 COMMENT ON COLUMN lcs.event.delivery_status IS 'Delivery outcome tracking: PENDING → SENT → DELIVERED/OPENED/CLICKED/REPLIED or BOUNCED/FAILED';
 COMMENT ON COLUMN lcs.event.lane IS 'Communication lane: MAIN (hammer sequences), LANE_A/LANE_B (A/B tests), NEWSLETTER';
 COMMENT ON COLUMN lcs.event.intelligence_tier IS 'Intelligence tier 1-5 from v_company_intelligence snapshot at composition time';
