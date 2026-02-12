@@ -107,6 +107,190 @@ doctrine:
         - "pass-4-collision-detection.js"
         - "pass-5-firmographic-coherence.js"
 
+  # ═══════════════════════════════════════════════════════════════
+  # SUBHUB-CL-LCS — Lifecycle Communication Spine
+  # ═══════════════════════════════════════════════════════════════
+  lcs:
+    subhub_id: "SUBHUB-CL-LCS"
+    name: "Lifecycle Communication Spine"
+    version: "2.2.0"
+    status: "ACTIVE"
+    altitude: "20k"
+    ctb_path: "sys/lcs"
+    schema: "lcs"
+    description: |
+      Canonical event ledger and communication orchestration engine
+      for all lifecycle phases. 9-step IMO pipeline: Signal → Collect →
+      Frame → Mint → Audience → Adapter → Log → Error.
+
+    # Schema ownership — lcs schema is exclusively owned by this sub-hub
+    schema_ownership:
+      schema_name: "lcs"
+      tables:
+        - "lcs.event"
+        - "lcs.err0"
+        - "lcs.signal_queue"
+        - "lcs.signal_registry"
+        - "lcs.frame_registry"
+        - "lcs.adapter_registry"
+      views:
+        - "lcs.v_latest_by_entity"
+        - "lcs.v_latest_by_company"
+        - "lcs.v_company_intelligence"
+
+    # Dual-ID model
+    id_model:
+      communication_id:
+        format: "LCS-{PHASE}-{YYYYMMDD}-{ULID}"
+        strategy: "ULID"
+        minted_by: "src/app/lcs/id_minter.ts"
+        immutable: true
+      message_run_id:
+        format: "RUN-{COMM_ID}-{CHANNEL}-{ATTEMPT}"
+        strategy: "structured"
+        minted_by: "src/app/lcs/id_minter.ts"
+        immutable: true
+
+    # ORBT 3-strike error protocol
+    orbt_protocol:
+      version: "1.0.0"
+      table: "lcs.err0"
+      classification: "APPEND-ONLY"
+      strikes:
+        - strike: 1
+          action: "AUTO_RETRY"
+          description: "Same channel, automatic retry"
+        - strike: 2
+          action: "ALT_CHANNEL"
+          description: "Try alternate delivery channel if eligible"
+        - strike: 3
+          action: "HUMAN_ESCALATION"
+          description: "Route to human — system gives up"
+      columns:
+        - "orbt_strike_number"
+        - "orbt_action_taken"
+        - "orbt_alt_channel_eligible"
+        - "orbt_alt_channel_reason"
+
+    # Infrastructure gates (src/sys/lcs/gates/)
+    gates:
+      capacity_gate:
+        path: "src/sys/lcs/gates/capacity-gate.ts"
+        checks:
+          - "founder_calendar_available"
+          - "adapter_health_status"
+          - "adapter_daily_cap"
+          - "agent_territory_cap"
+      suppression_engine:
+        path: "src/sys/lcs/gates/suppression-engine.ts"
+        state_machine: ["ACTIVE", "COOLED", "PARKED", "SUPPRESSED"]
+        checks:
+          - "never_contact"
+          - "unsubscribed"
+          - "hard_bounced"
+          - "complained"
+          - "frequency_cap"
+          - "company_weekly_throttle"
+      freshness_gate:
+        path: "src/sys/lcs/gates/freshness-gate.ts"
+        checks:
+          - "people_stale_hard_block"
+          - "other_subhub_stale_tier_downgrade"
+          - "frame_required_fields_satisfaction"
+
+    # Spokes — 6 ingress, 3 egress
+    spokes:
+      ingress:
+        - spoke_id: "SPOKE-CL-I-010"
+          name: "Outreach Signal Ingress"
+          contract: "src/sys/lcs/contracts/spoke_i010_outreach_signal.ts"
+        - spoke_id: "SPOKE-CL-I-011"
+          name: "Sales Signal Ingress"
+          contract: "src/sys/lcs/contracts/spoke_i011_sales_signal.ts"
+        - spoke_id: "SPOKE-CL-I-012"
+          name: "Client Signal Ingress"
+          contract: "src/sys/lcs/contracts/spoke_i012_client_signal.ts"
+        - spoke_id: "SPOKE-CL-I-013"
+          name: "Calendly Webhook Ingress"
+          contract: "src/sys/lcs/contracts/spoke_i013_calendly_webhook.ts"
+        - spoke_id: "SPOKE-CL-I-014"
+          name: "Reply Ingestion"
+          contract: "src/sys/lcs/contracts/spoke_i014_reply_ingestion.ts"
+        - spoke_id: "SPOKE-CL-I-015"
+          name: "AFLAC Data Adapter"
+          contract: "src/sys/lcs/contracts/spoke_i015_aflac_data.ts"
+          status: "PENDING"
+      egress:
+        - spoke_id: "SPOKE-CL-O-010"
+          name: "Mailgun Adapter"
+          contract: "src/sys/lcs/contracts/spoke_o010_mailgun.ts"
+        - spoke_id: "SPOKE-CL-O-011"
+          name: "HeyReach Adapter"
+          contract: "src/sys/lcs/contracts/spoke_o011_heyreach.ts"
+        - spoke_id: "SPOKE-CL-O-012"
+          name: "Sales Handoff"
+          contract: "src/sys/lcs/contracts/spoke_o012_sales_handoff.ts"
+
+    # Registries
+    registries:
+      signal_registry:
+        table: "lcs.signal_registry"
+        pk: "signal_set_hash"
+        mutability: "CONFIG (INSERT/UPDATE, no DELETE — soft-deactivate via is_active)"
+      frame_registry:
+        table: "lcs.frame_registry"
+        pk: "frame_id"
+        mutability: "CONFIG (INSERT/UPDATE, no DELETE — soft-deactivate via is_active)"
+      adapter_registry:
+        table: "lcs.adapter_registry"
+        pk: "adapter_type"
+        mutability: "CONFIG (INSERT/UPDATE, no DELETE — soft-deactivate via is_active)"
+
+    # Materialized view refresh schedule
+    matview_refresh:
+      v_company_intelligence:
+        schedule: "Nightly 2:00 AM"
+        method: "REFRESH MATERIALIZED VIEW CONCURRENTLY"
+      v_latest_by_entity:
+        schedule: "Nightly 2:30 AM"
+        method: "REFRESH MATERIALIZED VIEW CONCURRENTLY"
+      v_latest_by_company:
+        schedule: "Nightly 2:30 AM"
+        method: "REFRESH MATERIALIZED VIEW CONCURRENTLY"
+
+    # IMO flow for LCS pipeline
+    imo:
+      ingress:
+        - name: "Signal Spokes (I-010 thru I-015)"
+          type: "spoke"
+          description: "Outreach, Sales, Client signals, Calendly, Reply, AFLAC"
+      middle:
+        - name: "Capacity Gate"
+          type: "gate"
+          path: "src/sys/lcs/gates/capacity-gate.ts"
+        - name: "Suppression Engine"
+          type: "gate"
+          path: "src/sys/lcs/gates/suppression-engine.ts"
+        - name: "Freshness Gate"
+          type: "gate"
+          path: "src/sys/lcs/gates/freshness-gate.ts"
+        - name: "LCS Pipeline (9-step)"
+          type: "orchestrator"
+          path: "src/app/lcs/"
+        - name: "ID Minter"
+          type: "service"
+          path: "src/app/lcs/id_minter.ts"
+      egress:
+        - name: "Mailgun Adapter (O-010)"
+          type: "spoke"
+        - name: "HeyReach Adapter (O-011)"
+          type: "spoke"
+        - name: "Sales Handoff (O-012)"
+          type: "spoke"
+        - name: "CET (lcs.event)"
+          type: "event"
+          description: "Append-only canonical event table"
+
 deliverables:
   repos:
     - name: "company-lifecycle-cl"

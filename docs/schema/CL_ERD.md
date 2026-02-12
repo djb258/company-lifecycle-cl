@@ -1,9 +1,9 @@
 # Company Lifecycle (CL) — Entity Relationship Diagram
 
-**Schema:** `cl`
+**Schemas:** `cl`, `lcs`
 **Status:** Doctrine-Locked
-**Version:** 1.0
-**Last Updated:** 2026-01-01
+**Version:** 2.0
+**Last Updated:** 2026-02-12
 
 ---
 
@@ -358,6 +358,269 @@ Downstream systems MUST NOT:
 
 ---
 
-**ERD Version:** 1.1
+## 11. LCS Schema (SUBHUB-CL-LCS) — v2.2.0
+
+### 11.1 LCS Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           LCS CANONICAL DATA FLOW                           │
+│                                                                             │
+│   Sub-Hub Pressure Signals                                                  │
+│   (people/dol/blog.pressure_signals)  ◄── READ-ONLY, LCS NEVER WRITES      │
+│            │                                                                │
+│            │ BRIDGE (bridge_pressure_signals — pg_cron 15 min)              │
+│            ▼                                                                │
+│   ┌────────────────────────────┐                                           │
+│   │  LCS Signal Queue          │                                           │
+│   │  (lcs.signal_queue)        │ ◄── PENDING → COMPLETED/FAILED/SKIPPED   │
+│   └────────────┬───────────────┘                                           │
+│                │                                                            │
+│                │ Cron Runner reads PENDING                                  │
+│                ▼                                                            │
+│   ┌────────────────────────────┐                                           │
+│   │  9-Step IMO Pipeline       │                                           │
+│   │  Signal → Collect → Frame  │                                           │
+│   │  → Mint → Audience →       │                                           │
+│   │  Adapter → Log → Error     │                                           │
+│   └────────────┬───────────────┘                                           │
+│                │                                                            │
+│         ┌──────┴──────┐                                                     │
+│         │             │                                                     │
+│      SUCCESS       FAILURE                                                  │
+│         │             │                                                     │
+│         ▼             ▼                                                     │
+│   ┌──────────┐  ┌──────────────┐                                           │
+│   │  CET     │  │   ERR0       │                                           │
+│   │(lcs.event│  │ (lcs.err0)   │ ◄── ORBT 3-strike protocol               │
+│   │ APPEND   │  │  APPEND-ONLY │                                           │
+│   │  ONLY)   │  └──────────────┘                                           │
+│   └────┬─────┘                                                              │
+│        │                                                                    │
+│        │ Nightly matview refresh                                            │
+│        ▼                                                                    │
+│   ┌────────────────────────────────────────────────────────────────┐       │
+│   │               MATERIALIZED VIEWS (read-only)                    │       │
+│   ├────────────────────────────────────────────────────────────────┤       │
+│   │  v_latest_by_entity     │ Latest event per entity              │       │
+│   │  v_latest_by_company    │ Latest event per company             │       │
+│   │  v_company_intelligence │ Cross-sub-hub intelligence snapshot  │       │
+│   └─────────────────────────────────────────────────────────────────┘      │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 11.2 LCS Entity Relationship Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              LCS SCHEMA (lcs.*)                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                         lcs.event (CET)                           │
+   │  (Canonical Event Table — APPEND-ONLY, partitioned monthly)       │
+   ├───────────────────────────────────────────────────────────────────┤
+   │  PK  communication_id     TEXT        ← ULID, immutable          │
+   │  PK  created_at           TIMESTAMPTZ ← partition key             │
+   │      message_run_id       TEXT        ← delivery attempt ID       │
+   │      sovereign_company_id UUID        ← from cl.company_identity  │
+   │      entity_type          TEXT        ← 'slot' | 'person'        │
+   │      entity_id            UUID        ← upstream entity           │
+   │      signal_set_hash      TEXT        → lcs.signal_registry       │
+   │      frame_id             TEXT        → lcs.frame_registry        │
+   │      adapter_type         TEXT        → lcs.adapter_registry      │
+   │      channel              TEXT        ← MG | HR | SH             │
+   │      delivery_status      TEXT        ← PENDING→DELIVERED/FAILED  │
+   │      lifecycle_phase      TEXT        ← OUTREACH|SALES|CLIENT    │
+   │      event_type           TEXT        ← 20 canonical types        │
+   │      lane                 TEXT        ← MAIN|LANE_A|LANE_B|NEWS  │
+   │      agent_number         TEXT        ← territory agent           │
+   │      step_number          INT         ← 0-9 pipeline step        │
+   │      step_name            TEXT        ← human-readable step       │
+   │      payload              JSONB       ← compiled message (nullable)│
+   │      adapter_response     JSONB       ← raw response (nullable)   │
+   │      intelligence_tier    INT         ← 1-5 from matview          │
+   │      sender_identity      TEXT        ← sender persona            │
+   │                                                                    │
+   │  PARTITIONED BY RANGE (created_at)                                │
+   │  Trigger: trg_lcs_event_immutable_comm_id                         │
+   └───────────────────────────────────────────────────────────────────┘
+          │ 1:N (by value)
+          ▼
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                         lcs.err0                                  │
+   │  (Error Table — APPEND-ONLY, ORBT 3-strike protocol)             │
+   ├───────────────────────────────────────────────────────────────────┤
+   │  PK  error_id              UUID       ← auto-generated           │
+   │      message_run_id        TEXT       ← links to delivery attempt │
+   │      communication_id      TEXT       ← nullable (pre-CET fail)  │
+   │      sovereign_company_id  TEXT       ← nullable cross-ref       │
+   │      failure_type          TEXT       ← 11 canonical types        │
+   │      failure_message       TEXT       ← error description         │
+   │      lifecycle_phase       TEXT       ← nullable                  │
+   │      adapter_type          TEXT       ← which adapter failed      │
+   │      orbt_strike_number    INT        ← 1, 2, or 3              │
+   │      orbt_action_taken     TEXT       ← AUTO_RETRY|ALT_CHANNEL|  │
+   │                                         HUMAN_ESCALATION          │
+   │      orbt_alt_channel_eligible BOOLEAN                            │
+   │      orbt_alt_channel_reason   TEXT                               │
+   │      created_at            TIMESTAMPTZ                            │
+   └───────────────────────────────────────────────────────────────────┘
+
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                      lcs.signal_queue                             │
+   │  (Signal Queue — MUTABLE, bridged from sub-hub pressure_signals) │
+   ├───────────────────────────────────────────────────────────────────┤
+   │  PK  id                    UUID       ← auto-generated           │
+   │      signal_set_hash       TEXT       → lcs.signal_registry       │
+   │      signal_category       TEXT       ← signal classification     │
+   │      sovereign_company_id  UUID       ← target company           │
+   │      lifecycle_phase       TEXT       ← OUTREACH|SALES|CLIENT    │
+   │      preferred_channel     TEXT       ← nullable routing hint     │
+   │      preferred_lane        TEXT       ← nullable routing hint     │
+   │      agent_number          TEXT       ← nullable routing hint     │
+   │      signal_data           JSONB      ← from pressure_signals     │
+   │      source_hub            TEXT       ← PEOPLE|DOL|BLOG|MANUAL   │
+   │      source_signal_id      UUID       ← traceability (nullable)  │
+   │      status                TEXT       ← PENDING→COMPLETED/FAILED │
+   │      priority              INT        ← 0=low, 1=normal, 2=high  │
+   │      created_at            TIMESTAMPTZ                            │
+   │      processed_at          TIMESTAMPTZ ← nullable                 │
+   │                                                                    │
+   │  UNIQUE (source_hub, source_signal_id)                            │
+   │    WHERE source_signal_id IS NOT NULL AND status = 'PENDING'      │
+   └───────────────────────────────────────────────────────────────────┘
+
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                    lcs.signal_registry                            │
+   │  (Signal Registry — CONFIG, soft-deactivate only)                │
+   ├───────────────────────────────────────────────────────────────────┤
+   │  PK  signal_set_hash       TEXT       ← deterministic hash       │
+   │      signal_name           TEXT       ← human-readable (UNIQUE)  │
+   │      lifecycle_phase       TEXT       ← OUTREACH|SALES|CLIENT    │
+   │      signal_category       TEXT       ← 9 canonical categories   │
+   │      description           TEXT       ← nullable                  │
+   │      data_fetched_at       TIMESTAMPTZ ← last fetch timestamp     │
+   │      data_expires_at       TIMESTAMPTZ ← computed expiry          │
+   │      freshness_window      INTERVAL   ← default 30 days          │
+   │      signal_validity_score NUMERIC    ← 0.00-1.00                │
+   │      validity_threshold    NUMERIC    ← default 0.50             │
+   │      is_active             BOOLEAN    ← soft-deactivate          │
+   │      created_at            TIMESTAMPTZ                            │
+   │      updated_at            TIMESTAMPTZ                            │
+   └───────────────────────────────────────────────────────────────────┘
+
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                    lcs.frame_registry                             │
+   │  (Frame Registry — CONFIG, soft-deactivate only)                 │
+   ├───────────────────────────────────────────────────────────────────┤
+   │  PK  frame_id              TEXT       ← unique frame identifier  │
+   │      frame_name            TEXT       ← human-readable (UNIQUE)  │
+   │      lifecycle_phase       TEXT       ← OUTREACH|SALES|CLIENT    │
+   │      frame_type            TEXT       ← 7 canonical types         │
+   │      tier                  INT        ← intelligence tier 1-5    │
+   │      required_fields       JSONB      ← fields from matview      │
+   │      fallback_frame        TEXT       ← self-ref to frame_id     │
+   │      channel               TEXT       ← MG | HR (nullable)       │
+   │      step_in_sequence      INT        ← nullable for non-seq     │
+   │      description           TEXT       ← nullable                  │
+   │      is_active             BOOLEAN    ← soft-deactivate          │
+   │      created_at            TIMESTAMPTZ                            │
+   │      updated_at            TIMESTAMPTZ                            │
+   └───────────────────────────────────────────────────────────────────┘
+
+   ┌───────────────────────────────────────────────────────────────────┐
+   │                   lcs.adapter_registry                            │
+   │  (Adapter Registry — CONFIG, soft-deactivate only)               │
+   ├───────────────────────────────────────────────────────────────────┤
+   │  PK  adapter_type          TEXT       ← unique adapter ID        │
+   │      adapter_name          TEXT       ← human-readable (UNIQUE)  │
+   │      channel               TEXT       ← MG | HR | SH            │
+   │      direction             TEXT       ← outbound | inbound       │
+   │      description           TEXT       ← nullable                  │
+   │      domain_rotation_config JSONB     ← MG only (nullable)       │
+   │      health_status         TEXT       ← HEALTHY|DEGRADED|PAUSED  │
+   │      daily_cap             INT        ← nullable max sends/day   │
+   │      sent_today            INT        ← counter, reset daily     │
+   │      bounce_rate_24h       NUMERIC    ← rolling 24h bounce       │
+   │      complaint_rate_24h    NUMERIC    ← rolling 24h complaint    │
+   │      auto_pause_rules      JSONB      ← threshold config         │
+   │      is_active             BOOLEAN    ← soft-deactivate          │
+   │      created_at            TIMESTAMPTZ                            │
+   │      updated_at            TIMESTAMPTZ                            │
+   └───────────────────────────────────────────────────────────────────┘
+```
+
+### 11.3 LCS Table Ownership
+
+| Table | Schema | Owner | Classification | Purpose |
+|-------|--------|-------|----------------|---------|
+| `event` | lcs | LCS | APPEND-ONLY | Canonical Event Table (CET) — all communication events |
+| `err0` | lcs | LCS | APPEND-ONLY | Error log with ORBT 3-strike protocol |
+| `signal_queue` | lcs | LCS | QUEUE (mutable) | Bridged pressure signals awaiting pipeline processing |
+| `signal_registry` | lcs | LCS | REGISTRY (config) | Signal set catalog with freshness tracking |
+| `frame_registry` | lcs | LCS | REGISTRY (config) | Message frame catalog with tier requirements |
+| `adapter_registry` | lcs | LCS | REGISTRY (config) | Delivery adapter catalog with health monitoring |
+| `v_latest_by_entity` | lcs | LCS | READ-ONLY MATVIEW | Latest event per entity (refreshed nightly 2:30 AM) |
+| `v_latest_by_company` | lcs | LCS | READ-ONLY MATVIEW | Latest event per company (refreshed nightly 2:30 AM) |
+| `v_company_intelligence` | lcs | LCS | READ-ONLY MATVIEW | Cross-sub-hub intelligence snapshot (refreshed nightly 2:00 AM) |
+
+### 11.4 LCS Join Surface
+
+```
+cl.company_identity (spine)
+    │
+    │ sovereign_company_id (by value, not FK)
+    │
+    ├──── lcs.event                   1:N   All communication events
+    │         │
+    │         ├── lcs.err0            1:N   Errors for a delivery (via message_run_id)
+    │         ├── lcs.signal_registry N:1   Signal config (via signal_set_hash)
+    │         ├── lcs.frame_registry  N:1   Frame config (via frame_id)
+    │         └── lcs.adapter_registry N:1  Adapter config (via adapter_type)
+    │
+    ├──── lcs.signal_queue            1:N   Queued pressure signals
+    │         │
+    │         └── lcs.signal_registry N:1   Signal config (via signal_set_hash)
+    │
+    └──── Materialized Views (denormalized read surfaces)
+              ├── lcs.v_latest_by_entity      DISTINCT ON (entity_type, entity_id)
+              ├── lcs.v_latest_by_company      DISTINCT ON (sovereign_company_id)
+              └── lcs.v_company_intelligence   Cross-sub-hub join snapshot
+```
+
+### 11.5 LCS Key Relationships
+
+**Dual-ID Model (CET)**:
+- `communication_id` = WHY this event exists (ULID, immutable, format: `LCS-{PHASE}-{YYYYMMDD}-{ULID}`)
+- `message_run_id` = WHO sent it, WHICH channel, WHICH attempt (format: `RUN-{COMM_ID}-{CHANNEL}-{ATTEMPT}`)
+
+**ORBT Protocol (err0)**:
+- Strike 1: `AUTO_RETRY` — same channel, automatic retry
+- Strike 2: `ALT_CHANNEL` — try alternate delivery channel if eligible
+- Strike 3: `HUMAN_ESCALATION` — route to human, system gives up
+
+**By-Value Joins (no FK enforcement)**:
+- LCS tables carry `sovereign_company_id` by value from `cl.company_identity`
+- Registry lookups are by-value (`signal_set_hash`, `frame_id`, `adapter_type`)
+- `err0` links to `event` via `message_run_id` by value
+
+### 11.6 LCS Data Flow Rules
+
+| Rule | Description |
+|------|-------------|
+| **APPEND-ONLY-CET** | lcs.event is append-only. No UPDATE (except immutability trigger), no DELETE |
+| **APPEND-ONLY-ERR0** | lcs.err0 is append-only. Never blocks CET writes |
+| **READ-ONLY-SUBHUBS** | LCS reads sub-hub data (people, dol, blog). LCS never writes to sub-hub tables |
+| **SIGNAL-BRIDGE-ONLY** | Pressure signals enter LCS only through bridge_pressure_signals() into signal_queue |
+| **BY-VALUE-JOINS** | All cross-table references are by value, not FK — enabling independent schema evolution |
+| **IDEMPOTENT-BRIDGE** | Signal queue dedup: UNIQUE(source_hub, source_signal_id) WHERE status = 'PENDING' |
+| **MONTHLY-PARTITION** | CET is partitioned by RANGE on created_at, one partition per month |
+
+---
+
+**ERD Version:** 2.0
 **Doctrine Status:** Locked
 **ADR Reference:** ADR-003
+**LCS Version:** v2.2.0
