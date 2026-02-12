@@ -713,8 +713,14 @@ LEFT JOIN people.people_master pm_hr
 -- DOL + Blog (via outreach.outreach)
 LEFT JOIN outreach.outreach oo
     ON oo.sovereign_id = ci.company_unique_id
-LEFT JOIN outreach.dol od
-    ON od.outreach_id = oo.outreach_id
+-- DOL: pick most recent filing per outreach_id (multiple filing years exist)
+LEFT JOIN LATERAL (
+  SELECT d.*
+  FROM outreach.dol d
+  WHERE d.outreach_id = oo.outreach_id
+  ORDER BY d.updated_at DESC NULLS LAST
+  LIMIT 1
+) od ON true
 LEFT JOIN outreach.blog ob
     ON ob.outreach_id = oo.outreach_id
 
@@ -788,12 +794,29 @@ COMMENT ON FUNCTION lcs.refresh_lcs_matview(TEXT) IS 'Refresh a named LCS matvie
 -- Section 5: Grants (PostgREST exposure)
 -- ═══════════════════════════════════════════════════════════════
 
-GRANT USAGE ON SCHEMA lcs TO service_role, anon, authenticated;
-GRANT SELECT ON ALL TABLES IN SCHEMA lcs TO service_role;
-GRANT INSERT, UPDATE ON lcs.event TO service_role;
-GRANT INSERT, UPDATE ON lcs.err0 TO service_role;
-GRANT INSERT, UPDATE, DELETE ON lcs.signal_queue TO service_role;
-GRANT UPDATE ON lcs.adapter_registry TO service_role;
-GRANT EXECUTE ON FUNCTION lcs.refresh_lcs_matview(TEXT) TO service_role;
+-- GRANTs are conditional — Supabase roles may not exist on bare Neon.
+-- If running on Supabase-connected Neon, these roles will exist.
+-- On bare Neon, grants are skipped gracefully.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    GRANT USAGE ON SCHEMA lcs TO service_role, anon, authenticated;
+    GRANT SELECT ON ALL TABLES IN SCHEMA lcs TO service_role;
+    GRANT INSERT, UPDATE ON lcs.event TO service_role;
+    GRANT INSERT, UPDATE ON lcs.err0 TO service_role;
+    GRANT INSERT, UPDATE, DELETE ON lcs.signal_queue TO service_role;
+    GRANT UPDATE ON lcs.adapter_registry TO service_role;
+    GRANT EXECUTE ON FUNCTION lcs.refresh_lcs_matview(TEXT) TO service_role;
+    RAISE NOTICE 'Supabase roles found — GRANTs applied.';
+  ELSE
+    -- Grant to hub_reader for read access (Neon native role)
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'hub_reader') THEN
+      GRANT USAGE ON SCHEMA lcs TO hub_reader;
+      GRANT SELECT ON ALL TABLES IN SCHEMA lcs TO hub_reader;
+    END IF;
+    RAISE NOTICE 'Supabase roles not found — skipped PostgREST GRANTs. Run GRANTs manually after Supabase connection.';
+  END IF;
+END
+$$;
 
 COMMIT;

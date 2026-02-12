@@ -17,6 +17,9 @@ RETURNS TABLE (
     signals_inserted INT,
     signals_skipped INT
 ) AS $$
+-- Prefer table column names over PL/pgSQL variable names
+-- (resolves ambiguity between RETURNS TABLE columns and ON CONFLICT targets)
+#variable_conflict use_column
 DECLARE
     v_people_found INT := 0;
     v_people_inserted INT := 0;

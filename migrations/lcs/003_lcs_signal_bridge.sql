@@ -27,6 +27,9 @@ RETURNS TABLE (
     signals_inserted INT,
     signals_skipped INT
 ) AS $$
+-- Prefer table column names over PL/pgSQL variable names
+-- (resolves ambiguity between RETURNS TABLE columns and ON CONFLICT targets)
+#variable_conflict use_column
 DECLARE
     v_people_found INT := 0;
     v_people_inserted INT := 0;
@@ -234,7 +237,13 @@ COMMENT ON FUNCTION lcs.bridge_pressure_signals() IS
     'Read-only on sub-hubs. Idempotent (dedup on source_hub + source_signal_id). '
     'Called by pg_cron every 15 minutes.';
 
--- Grant execute to service role
-GRANT EXECUTE ON FUNCTION lcs.bridge_pressure_signals() TO service_role;
+-- Grant execute to service role (conditional — may not exist on bare Neon)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    GRANT EXECUTE ON FUNCTION lcs.bridge_pressure_signals() TO service_role;
+  END IF;
+END
+$$;
 
 COMMIT;

@@ -136,8 +136,14 @@ LEFT JOIN people.people_master pm_hr
 -- DOL + Blog (via outreach.outreach)
 LEFT JOIN outreach.outreach oo
     ON oo.sovereign_id = ci.company_unique_id
-LEFT JOIN outreach.dol od
-    ON od.outreach_id = oo.outreach_id
+-- DOL: pick most recent filing per outreach_id (multiple filing years exist)
+LEFT JOIN LATERAL (
+  SELECT d.*
+  FROM outreach.dol d
+  WHERE d.outreach_id = oo.outreach_id
+  ORDER BY d.updated_at DESC NULLS LAST
+  LIMIT 1
+) od ON true
 LEFT JOIN outreach.blog ob
     ON ob.outreach_id = oo.outreach_id
 
