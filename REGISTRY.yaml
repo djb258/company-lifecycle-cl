@@ -6,7 +6,7 @@
 # ===============================================================================
 
 version: "1.0.0"
-last_updated: "2026-01-29"
+last_updated: "2026-02-12"
 
 # ===============================================================================
 # HUB IDENTITY (CC-02)
@@ -53,6 +53,13 @@ subhubs:
     description: "State-agnostic company candidate ingestion and verification"
     path: "pipeline/"
 
+  - subhub_id: "SUBHUB-CL-LCS"
+    name: "Lifecycle Communication Spine"
+    description: "Canonical event ledger and communication orchestration engine for all lifecycle phases"
+    path: "src/sys/lcs/"
+    version: "2.2.0"
+    status: "ACTIVE"
+
 # ===============================================================================
 # SPOKES (CC-03 Interfaces)
 # ===============================================================================
@@ -66,10 +73,64 @@ spokes:
       name: "State CSV Adapter"
       contract: "pipeline/adapters/state_csv_adapter.js"
 
+    # ═══════════════════════════════════════════════════════════════════
+    # LCS SPOKES
+    # ═══════════════════════════════════════════════════════════════════
+
+    - spoke_id: "SPOKE-CL-I-010"
+      name: "Outreach Signal Ingress"
+      description: "Sequence triggers, prospect readiness signals from Outreach sub-hub"
+      contract: "src/sys/lcs/contracts/spoke_i010_outreach_signal.ts"
+
+    - spoke_id: "SPOKE-CL-I-011"
+      name: "Sales Signal Ingress"
+      description: "Meeting follow-up triggers, deal support signals from Sales sub-hub"
+      contract: "src/sys/lcs/contracts/spoke_i011_sales_signal.ts"
+
+    - spoke_id: "SPOKE-CL-I-012"
+      name: "Client Signal Ingress"
+      description: "Employee comms, benefit triggers from Client sub-hub"
+      contract: "src/sys/lcs/contracts/spoke_i012_client_signal.ts"
+
+    - spoke_id: "SPOKE-CL-I-013"
+      name: "Calendly Webhook Ingress"
+      description: "MEETING_BOOKED events from Calendly"
+      contract: "src/sys/lcs/contracts/spoke_i013_calendly_webhook.ts"
+
+    - spoke_id: "SPOKE-CL-I-014"
+      name: "Reply Ingestion"
+      description: "Prospect replies and engagement signals from Instantly/HeyReach polling"
+      contract: "src/sys/lcs/contracts/spoke_i014_reply_ingestion.ts"
+
+    - spoke_id: "SPOKE-CL-I-015"
+      name: "AFLAC Data Adapter"
+      description: "Policy data, renewal dates, products from AFLAC database"
+      contract: "src/sys/lcs/contracts/spoke_i015_aflac_data.ts"
+      status: "PENDING"
+
   egress:
     - spoke_id: "SPOKE-CL-O-001"
       name: "Outreach Promotable View"
       contract: "v_company_promotable"
+
+    # ═══════════════════════════════════════════════════════════════════
+    # LCS EGRESS SPOKES
+    # ═══════════════════════════════════════════════════════════════════
+
+    - spoke_id: "SPOKE-CL-O-010"
+      name: "Mailgun Adapter"
+      description: "Compiled email payload → Mailgun API → delivery status"
+      contract: "src/sys/lcs/contracts/spoke_o010_mailgun.ts"
+
+    - spoke_id: "SPOKE-CL-O-011"
+      name: "HeyReach Adapter"
+      description: "LinkedIn payload → HeyReach API → delivery status"
+      contract: "src/sys/lcs/contracts/spoke_o011_heyreach.ts"
+
+    - spoke_id: "SPOKE-CL-O-012"
+      name: "Sales Handoff"
+      description: "MEETING_BOOKED → Sales hub → sales_process_id mint"
+      contract: "src/sys/lcs/contracts/spoke_o012_sales_handoff.ts"
 
 # ===============================================================================
 # DOCUMENT CONTROL
@@ -77,5 +138,5 @@ spokes:
 
 document_control:
   created: "2026-01-29"
-  last_modified: "2026-01-29"
+  last_modified: "2026-02-12"
   status: "ACTIVE"
