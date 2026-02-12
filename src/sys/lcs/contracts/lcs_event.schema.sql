@@ -45,7 +45,7 @@ CREATE TABLE lcs.event (
 
     -- Agent and pipeline step
     agent_number        TEXT            NOT NULL,   -- territory agent
-    step_number         INT             NOT NULL,   -- which of the 9 pipeline steps (1-9)
+    step_number         INT             NOT NULL,   -- pipeline step: 0=gate block, 1-7=pipeline, 8=webhook, 9=reserved
     step_name           TEXT            NOT NULL,   -- human-readable step name
 
     -- Payloads (nullable — only populated on relevant steps)
@@ -67,6 +67,7 @@ CREATE TABLE lcs.event (
         'SIGNAL_RECEIVED', 'INTELLIGENCE_COLLECTED', 'FRAME_MATCHED',
         'ID_MINTED', 'AUDIENCE_RESOLVED', 'ADAPTER_CALLED',
         'DELIVERY_SENT', 'DELIVERY_SUCCESS', 'DELIVERY_FAILED', 'DELIVERY_BOUNCED',
+        'DELIVERY_COMPLAINED', 'OPENED', 'CLICKED',
         'ERROR_LOGGED', 'SIGNAL_DROPPED', 'COMPOSITION_BLOCKED',
         'RECIPIENT_THROTTLED', 'COMPANY_THROTTLED', 'DATA_STALE', 'FRAME_INELIGIBLE'
     )),
@@ -77,7 +78,7 @@ CREATE TABLE lcs.event (
     CONSTRAINT chk_channel CHECK (channel IN ('MG', 'HR', 'SH')),
     CONSTRAINT chk_communication_id_format CHECK (communication_id ~ '^LCS-(OUT|SAL|CLI)-\d{8}-[A-Z0-9]{10,}$'),
     CONSTRAINT chk_message_run_id_format CHECK (message_run_id ~ '^RUN-LCS-(OUT|SAL|CLI)-\d{8}-[A-Z0-9]{10,}-(MG|HR|SH)-\d{3}$'),
-    CONSTRAINT chk_step_number CHECK (step_number BETWEEN 1 AND 9)
+    CONSTRAINT chk_step_number CHECK (step_number BETWEEN 0 AND 9)
 ) PARTITION BY RANGE (created_at);
 
 -- ═══════════════════════════════════════════════════════════════════

@@ -16,9 +16,9 @@ import { supabase } from '@/data/integrations/supabase/client';
  *   - delivered → DELIVERY_SUCCESS
  *   - bounced (permanent) → DELIVERY_BOUNCED
  *   - failed (temporary) → DELIVERY_FAILED
- *   - complained → COMPOSITION_BLOCKED (triggers suppression)
- *   - opened → DELIVERY_SUCCESS (engagement signal)
- *   - clicked → DELIVERY_SUCCESS (engagement signal)
+ *   - complained → DELIVERY_COMPLAINED (triggers suppression)
+ *   - opened → OPENED
+ *   - clicked → CLICKED
  */
 
 interface MailgunWebhookEvent {
@@ -46,9 +46,9 @@ const EVENT_MAP: Record<string, { event_type: EventType; delivery_status: Delive
   delivered:    { event_type: 'DELIVERY_SUCCESS',    delivery_status: 'DELIVERED' },
   bounced:      { event_type: 'DELIVERY_BOUNCED',    delivery_status: 'BOUNCED' },
   failed:       { event_type: 'DELIVERY_FAILED',     delivery_status: 'FAILED' },
-  complained:   { event_type: 'COMPOSITION_BLOCKED', delivery_status: 'FAILED' },
-  opened:       { event_type: 'DELIVERY_SUCCESS',    delivery_status: 'OPENED' },
-  clicked:      { event_type: 'DELIVERY_SUCCESS',    delivery_status: 'CLICKED' },
+  complained:   { event_type: 'DELIVERY_COMPLAINED', delivery_status: 'FAILED' },
+  opened:       { event_type: 'OPENED',              delivery_status: 'OPENED' },
+  clicked:      { event_type: 'CLICKED',             delivery_status: 'CLICKED' },
 };
 
 /**
