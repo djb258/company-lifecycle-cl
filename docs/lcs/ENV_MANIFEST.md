@@ -34,8 +34,6 @@ Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/ supaba
 
 ## Where to Set
 
-## Where to Set
-
 All variables are managed through **Doppler** under the **imo-creator** project. No `.env` files. CL pulls from the imo-creator Doppler config.
 
 | Context | Method |

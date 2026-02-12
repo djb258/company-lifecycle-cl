@@ -137,18 +137,22 @@ doctrine:
         - "lcs.v_latest_by_entity"
         - "lcs.v_latest_by_company"
         - "lcs.v_company_intelligence"
+      functions:
+        - "lcs.refresh_lcs_matview(TEXT)"
+        - "lcs.bridge_pressure_signals()"
+        - "lcs.prevent_comm_id_update()"  # trigger function
 
     # Dual-ID model
     id_model:
       communication_id:
         format: "LCS-{PHASE}-{YYYYMMDD}-{ULID}"
         strategy: "ULID"
-        minted_by: "src/app/lcs/id_minter.ts"
+        minted_by: "src/app/lcs/id-minter.ts"
         immutable: true
       message_run_id:
         format: "RUN-{COMM_ID}-{CHANNEL}-{ATTEMPT}"
         strategy: "structured"
-        minted_by: "src/app/lcs/id_minter.ts"
+        minted_by: "src/app/lcs/id-minter.ts"
         immutable: true
 
     # ORBT 3-strike error protocol
@@ -279,7 +283,7 @@ doctrine:
           path: "src/app/lcs/"
         - name: "ID Minter"
           type: "service"
-          path: "src/app/lcs/id_minter.ts"
+          path: "src/app/lcs/id-minter.ts"
       egress:
         - name: "Mailgun Adapter (O-010)"
           type: "spoke"
