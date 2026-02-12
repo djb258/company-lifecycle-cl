@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import { logCetEvent } from '@/app/lcs';
 import type { LcsEventInsert, EventType, DeliveryStatus } from '@/data/lcs';
 import { supabase } from '@/data/integrations/supabase/client';
@@ -153,10 +154,9 @@ export function validateMailgunSignature(
   const signingKey = process.env.MAILGUN_WEBHOOK_SIGNING_KEY ?? '';
   if (!signingKey) return false;
 
-  // HMAC-SHA256 validation
-  // In Node/Deno: use crypto.createHmac('sha256', signingKey).update(timestamp + token).digest('hex')
-  // For Supabase Edge Functions (Deno): use Web Crypto API
-  // Stubbed here — implementation depends on runtime
-  // TODO: Implement HMAC validation for production
-  return true;
+  const computed = createHmac('sha256', signingKey)
+    .update(timestamp + token)
+    .digest('hex');
+
+  return computed === signature;
 }
