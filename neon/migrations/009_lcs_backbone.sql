@@ -416,7 +416,7 @@ BEGIN
    WHERE sovereign_company_id = v_signal.sovereign_company_id
      AND communication_class = v_signal.communication_class
      AND status IN ('APPROVED', 'SENT')
-     AND created_at > NOW() - INTERVAL '7 days';
+     AND created_at >= NOW() - INTERVAL '7 days';
 
   IF v_recent_count > 0 THEN
     UPDATE cl.lcs_signal_queue
