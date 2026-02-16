@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# === Security & OS artifacts ===
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+Thumbs.db
+desktop.ini
