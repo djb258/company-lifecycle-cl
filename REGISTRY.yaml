@@ -68,7 +68,7 @@ spokes:
   ingress:
     - spoke_id: "SPOKE-CL-I-001"
       name: "NC Excel Adapter"
-      contract: "pipeline/adapters/nc_excel_adapter.js"
+      contract: "pipeline/adapters/source_nc_excel.js"
     - spoke_id: "SPOKE-CL-I-002"
       name: "State CSV Adapter"
       contract: "pipeline/adapters/state_csv_adapter.js"
@@ -81,26 +81,31 @@ spokes:
       name: "Outreach Signal Ingress"
       description: "Sequence triggers, prospect readiness signals from Outreach sub-hub"
       contract: "src/sys/lcs/contracts/spoke_i010_outreach_signal.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-I-011"
       name: "Sales Signal Ingress"
       description: "Meeting follow-up triggers, deal support signals from Sales sub-hub"
       contract: "src/sys/lcs/contracts/spoke_i011_sales_signal.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-I-012"
       name: "Client Signal Ingress"
       description: "Employee comms, benefit triggers from Client sub-hub"
       contract: "src/sys/lcs/contracts/spoke_i012_client_signal.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-I-013"
       name: "Calendly Webhook Ingress"
       description: "MEETING_BOOKED events from Calendly"
       contract: "src/sys/lcs/contracts/spoke_i013_calendly_webhook.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-I-014"
       name: "Reply Ingestion"
       description: "Prospect replies and engagement signals from Instantly/HeyReach polling"
       contract: "src/sys/lcs/contracts/spoke_i014_reply_ingestion.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-I-015"
       name: "AFLAC Data Adapter"
@@ -121,16 +126,19 @@ spokes:
       name: "Mailgun Adapter"
       description: "Compiled email payload → Mailgun API → delivery status"
       contract: "src/sys/lcs/contracts/spoke_o010_mailgun.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-O-011"
       name: "HeyReach Adapter"
       description: "LinkedIn payload → HeyReach API → delivery status"
       contract: "src/sys/lcs/contracts/spoke_o011_heyreach.ts"
+      status: "PLANNED"
 
     - spoke_id: "SPOKE-CL-O-012"
       name: "Sales Handoff"
       description: "MEETING_BOOKED → Sales hub → sales_process_id mint"
       contract: "src/sys/lcs/contracts/spoke_o012_sales_handoff.ts"
+      status: "PLANNED"
 
 # ===============================================================================
 # DOCUMENT CONTROL
