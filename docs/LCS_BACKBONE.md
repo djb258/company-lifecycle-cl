@@ -1,8 +1,8 @@
 # LCS Backbone
 
 **Authority**: HUB-CL-001, SUBHUB-CL-LCS
-**Migrations**: `neon/migrations/009_lcs_backbone.sql`, `010_lcs_cadence_expansion.sql`
-**Worker**: `src/runtime/lcs/lcs-queue-worker.ts`
+**Migrations**: `009_lcs_backbone.sql`, `010_lcs_cadence_expansion.sql`, `011_lcs_execution_control.sql`
+**Workers**: `lcs-queue-worker.ts` (signal processing), `lcs-adapter-stub.ts` (execution stub)
 
 ## What Was Built
 
@@ -104,7 +104,50 @@ One signal produces 3 ledger rows:
 
 All share the same `cadence_instance_id`.
 
-## Running the Worker
+## Execution Layer (Phase 3)
+
+**Migration**: `011_lcs_execution_control.sql`
+**Adapter Stub**: `src/runtime/lcs/lcs-adapter-stub.ts`
+
+### Ledger status lifecycle
+
+```
+APPROVED  →  SENT      (adapter confirmed delivery)
+APPROVED  →  FAILED    (permanent failure, no more retries)
+```
+
+### Column definitions
+
+| Column | Meaning |
+|--------|---------|
+| `status = 'APPROVED'` | Governance complete, awaiting execution |
+| `status = 'SENT'` | Execution confirmed |
+| `status = 'FAILED'` | Permanent failure |
+| `scheduled_for` | Earliest eligible execution time |
+| `execution_attempts` | Retry counter (incremented each attempt) |
+| `last_attempt_at` | Timestamp of most recent attempt |
+| `sent_at` | Timestamp when SENT status was set |
+
+### Adapter contract
+
+Adapters (real or stub) must:
+- Only act on rows matching: `status = 'APPROVED' AND scheduled_for <= now()`
+- Use `FOR UPDATE SKIP LOCKED` to prevent double-send across concurrent workers
+- Increment `execution_attempts` and set `last_attempt_at` on every attempt
+- Set `sent_at` only on successful transition to SENT
+- Never re-process SENT rows
+
+### Running the adapter stub
+
+```bash
+# Marks due APPROVED rows as SENT (no external calls)
+npx tsx src/runtime/lcs/lcs-adapter-stub.ts
+
+# Custom batch size
+LCS_ADAPTER_BATCH_SIZE=50 npx tsx src/runtime/lcs/lcs-adapter-stub.ts
+```
+
+## Running the Queue Worker
 
 ```bash
 # Set connection string
@@ -117,10 +160,12 @@ npx tsx src/runtime/lcs/lcs-queue-worker.ts
 LCS_BATCH_SIZE=25 npx tsx src/runtime/lcs/lcs-queue-worker.ts
 ```
 
-## Running the Migration
+## Running Migrations
 
 ```bash
 psql $DATABASE_URL -f neon/migrations/009_lcs_backbone.sql
+psql $DATABASE_URL -f neon/migrations/010_lcs_cadence_expansion.sql
+psql $DATABASE_URL -f neon/migrations/011_lcs_execution_control.sql
 ```
 
 ## Test Scenarios
@@ -178,7 +223,21 @@ VALUES ('<test_company_id>', 'OUTREACH_BASELINE', 'OUTREACH', 'OUTREACH');
 -- step 3: scheduled_for ~ now() + 12 days
 ```
 
-### 4. Missing Company (signal for nonexistent company -> ERROR)
+### 4. Adapter Stub Execution (APPROVED -> SENT)
+
+```sql
+-- After running queue worker (scenarios 1 or 3), ledger rows are APPROVED.
+-- Verify rows are due:
+SELECT ledger_id, message_id, scheduled_for, status
+  FROM cl.lcs_communication_ledger
+ WHERE status = 'APPROVED' AND scheduled_for <= NOW();
+
+-- Run adapter stub, expect:
+-- Each due row transitions: status=SENT, execution_attempts=1, sent_at=now()
+-- Future-scheduled rows (step 2, step 3) remain APPROVED until their scheduled_for passes.
+```
+
+### 5. Missing Company (signal for nonexistent company -> ERROR)
 
 ```sql
 -- Insert signal with fake company ID
