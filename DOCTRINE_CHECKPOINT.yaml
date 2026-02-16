@@ -21,7 +21,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # When was this checkpoint last filled?
-last_verified: "2026-02-16T14:30:00Z"
+last_verified: "2026-02-16T16:00:00Z"
 
 # Who verified it?
 verified_by: "claude-code"
@@ -57,7 +57,7 @@ checkpoint:
 
   # CONST -> VAR: What constant is being transformed into what variable?
   # If not a new feature: set to "n/a"
-  transformation: "signal_queue -> communication_ledger (QUEUED -> APPROVED/BLOCKED)"
+  transformation: "signal_queue -> N ledger rows via cadence expansion (QUEUED -> APPROVED*N/BLOCKED)"
 
   # Does validate-schema-completeness.sh pass?
   # If registry_impact is "yes", this MUST be "yes" before commit.

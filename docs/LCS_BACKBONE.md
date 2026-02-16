@@ -1,7 +1,7 @@
-# LCS Backbone (Phase 1)
+# LCS Backbone
 
 **Authority**: HUB-CL-001, SUBHUB-CL-LCS
-**Migration**: `neon/migrations/009_lcs_backbone.sql`
+**Migrations**: `neon/migrations/009_lcs_backbone.sql`, `010_lcs_cadence_expansion.sql`
 **Worker**: `src/runtime/lcs/lcs-queue-worker.ts`
 
 ## What Was Built
@@ -43,10 +43,10 @@ Fail-closed pipeline:
 4. Validate communication_id in registry (exists, active, class matches, stage allowed)
 5. Suppression check
 6. 7-day one-active guard (same communication_class)
-7. Mint message_id: `{communication_id}__{signal_id}`
-8. Insert ledger row (APPROVED)
+7. Resolve cadence from `lcs_cadence_registry` (default: single-step `{0}`)
+8. Expand cadence into N ledger rows with `scheduled_for` per step
 9. Mark signal PROCESSED
-10. Return `{decision, ledger_id, message_id, reason}`
+10. Return `{decision, cadence_instance_id, ledger_ids, message_ids, reason}`
 
 ### Seed Data
 
@@ -59,6 +59,50 @@ Communication registry ships with 5 rows:
 | SALES_FOLLOWUP | SALES | {SALES} |
 | CLIENT_EXECUTIVE_MONTHLY | CLIENT | {CLIENT} |
 | CLIENT_EMPLOYEE_NOTICE | CLIENT | {CLIENT} |
+
+## Cadence Expansion (Phase 2)
+
+**Migration**: `010_lcs_cadence_expansion.sql`
+
+### How it works
+
+When a QUEUED signal passes all validations, `lcs_attempt_send()` expands it into N scheduled ledger rows based on the cadence registry:
+
+1. Lookup active cadence for the `proposed_communication_id` in `lcs_cadence_registry`
+2. If no cadence exists, default to single-step immediate: `{0}`
+3. Mint a `cadence_instance_id` (UUID) grouping all rows from this signal
+4. For each offset in `step_offsets_days`, insert a ledger row with:
+   - `step_number` = 1-indexed position in the array
+   - `scheduled_for` = `now() + (offset_days * interval '1 day')`
+   - `message_id` = `{communication_id}__{signal_id}__{step_number}`
+
+### ID semantics
+
+| ID | Scope | Example |
+|----|-------|---------|
+| `communication_id` | The communication type (from registry) | `OUTREACH_BASELINE` |
+| `cadence_instance_id` | Groups all steps from one signal expansion | UUID |
+| `message_id` | Unique per step per signal | `OUTREACH_BASELINE__<signal_uuid>__1` |
+
+### `scheduled_for` semantics
+
+- `scheduled_for` is the **earliest eligible send time** for that ledger row.
+- Future adapters will only act on rows matching: `status = 'APPROVED' AND scheduled_for <= now()`
+- LCS pre-authorizes the entire cadence at signal processing time (Option A). All steps are written immediately with future `scheduled_for` timestamps.
+
+### Example: 3-step cadence
+
+Cadence registry row: `step_offsets_days = {0, 5, 12}`
+
+One signal produces 3 ledger rows:
+
+| step_number | scheduled_for | message_id |
+|-------------|---------------|------------|
+| 1 | now() | `OUTREACH_BASELINE__<sid>__1` |
+| 2 | now() + 5 days | `OUTREACH_BASELINE__<sid>__2` |
+| 3 | now() + 12 days | `OUTREACH_BASELINE__<sid>__3` |
+
+All share the same `cadence_instance_id`.
 
 ## Running the Worker
 
@@ -115,7 +159,26 @@ VALUES ('<test_company_id>', 'OUTREACH_BASELINE', 'OUTREACH', 'OUTREACH');
 -- decision = BLOCKED, reason = SUPPRESSED
 ```
 
-### 3. Missing Company (signal for nonexistent company -> ERROR)
+### 3. Cadence Expansion (3-step cadence -> 3 ledger rows)
+
+```sql
+-- Create a cadence for OUTREACH_BASELINE
+INSERT INTO cl.lcs_cadence_registry (cadence_id, communication_id, cadence_kind, step_offsets_days)
+VALUES ('CAD_OUTREACH_3STEP', 'OUTREACH_BASELINE', 'BASELINE', '{0,5,12}');
+
+-- Insert signal
+INSERT INTO cl.lcs_signal_queue (sovereign_company_id, proposed_communication_id, communication_class, source_hub)
+VALUES ('<test_company_id>', 'OUTREACH_BASELINE', 'OUTREACH', 'OUTREACH');
+
+-- Run worker, expect:
+-- signal -> PROCESSED
+-- 3 ledger rows, all APPROVED, same cadence_instance_id
+-- step 1: scheduled_for ~ now()
+-- step 2: scheduled_for ~ now() + 5 days
+-- step 3: scheduled_for ~ now() + 12 days
+```
+
+### 4. Missing Company (signal for nonexistent company -> ERROR)
 
 ```sql
 -- Insert signal with fake company ID
