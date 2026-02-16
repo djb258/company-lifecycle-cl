@@ -21,7 +21,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # When was this checkpoint last filled?
-last_verified: "2026-02-16T00:00:00Z"
+last_verified: "2026-02-16T14:30:00Z"
 
 # Who verified it?
 verified_by: "claude-code"
@@ -41,7 +41,7 @@ checkpoint:
   # Where does processing logic live? (MUST be hub, never spoke)
   # If spoke: set to "n/a" — spokes carry data only
   # If hub: e.g. "src/data/hub/" or "src/app/services/"
-  logic_placement: "n/a"
+  logic_placement: "src/runtime/lcs/"
 
   # Does this require an ADR? (yes if: new tool, new integration, architecture change)
   # Valid: yes | no
@@ -53,11 +53,11 @@ checkpoint:
 
   # Which error table catches failures? (each sub-hub has its own)
   # If no data processing: set to "n/a"
-  error_table_identified: "n/a"
+  error_table_identified: "cl.lcs_errors"
 
   # CONST -> VAR: What constant is being transformed into what variable?
   # If not a new feature: set to "n/a"
-  transformation: "n/a"
+  transformation: "signal_queue -> communication_ledger (QUEUED -> APPROVED/BLOCKED)"
 
   # Does validate-schema-completeness.sh pass?
   # If registry_impact is "yes", this MUST be "yes" before commit.
