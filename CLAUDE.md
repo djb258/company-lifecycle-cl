@@ -86,12 +86,15 @@ Before suggesting ANY tool, library, or vendor:
 
 ```
 src/
-├── sys/    → System infrastructure (main.tsx entry point)
-├── data/   → Supabase client, generated types
-├── app/    → Hooks, business logic
-├── ai/     → AI components (empty)
-└── ui/     → Pages, components, styles
+├── sys/      → System infrastructure (main.tsx entry point)
+├── data/     → Supabase client, generated types
+├── app/      → Hooks, business logic
+├── runtime/  → LCS runtime services (cron, webhooks, signal bridge)
+├── ai/       → AI components (empty)
+└── ui/       → Pages, components, styles
 ```
+
+> **Note**: `runtime/` branch is operational but pending formal CTB altitude registration via ADR.
 
 ### Key Database Tables
 
