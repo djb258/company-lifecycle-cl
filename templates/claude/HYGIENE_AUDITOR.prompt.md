@@ -73,6 +73,31 @@ You are performing a periodic hygiene audit for:
 4. **Explicitly DO NOT delete anything.**
    This is a reporting-only phase.
 
+5. **Run staleness detection** to identify governance artifacts that have drifted behind code changes:
+
+   ```bash
+   ./scripts/detect-staleness.sh --verbose
+   ```
+
+   The staleness script checks 7 artifact types:
+
+   | Artifact | Compared Against | Threshold | Severity |
+   |----------|-----------------|-----------|----------|
+   | PRD | src/ changes | 30 days | HIGH |
+   | ERD / SCHEMA.md | column_registry.yml changes | 14 days | HIGH |
+   | OSAM | src/data/ changes | 30 days | HIGH |
+   | Column Registry | SQL file changes | 7 days | CRITICAL |
+   | Data Dictionary | column_registry.yml date | Immediate | MEDIUM |
+   | Doctrine Checkpoint | src/ changes + age | 7 days | MEDIUM |
+   | Doctrine Version | Parent imo-creator version | Behind = stale | HIGH |
+
+   **Key rules:**
+   - MISSING artifacts are NOT staleness (caught by structure checks above)
+   - CRITICAL/HIGH staleness blocks the audit — same as other violations
+   - MEDIUM staleness is documented but does not block
+
+   Report each stale artifact in the findings table with severity and recommended action.
+
 ---
 
 ## PART 2 — NEON HYGIENE AUDIT (READ-ONLY)
@@ -201,13 +226,64 @@ If doctrine violations are detected:
 
 ---
 
+## COMPLIANCE GATE (MANDATORY)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      ZERO-TOLERANCE ENFORCEMENT RULE                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  You CANNOT mark an audit as PASS if:                                         ║
+║                                                                               ║
+║    1. ANY CRITICAL violations exist                                           ║
+║    2. ANY HIGH violations exist                                               ║
+║                                                                               ║
+║  HIGH violations are NOT "fix later" items.                                   ║
+║  HIGH violations BLOCK the audit.                                             ║
+║                                                                               ║
+║  AUDIT VERDICT RULES:                                                         ║
+║    → CRITICAL or HIGH violations = BLOCKED (cannot proceed)                   ║
+║    → MEDIUM violations only = PASS WITH WARNINGS                              ║
+║    → No violations = PASS                                                     ║
+║                                                                               ║
+║  NEVER mark PASS with open HIGH/CRITICAL violations.                          ║
+║  This is a HARD RULE. No exceptions.                                          ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Violation Severity Levels
+
+| Severity | Audit Verdict | Action Required |
+|----------|---------------|-----------------|
+| **CRITICAL** | BLOCKED | Must fix before proceeding |
+| **HIGH** | BLOCKED | Must fix before marking PASS |
+| **MEDIUM** | PASS WITH WARNINGS | Document in report |
+| **LOW** | PASS | Optional to document |
+
+### Common Mistake (DO NOT DO THIS)
+
+```
+❌ WRONG: "5 HIGH violations found. AUDIT VERDICT: PASS"
+   This is INVALID. HIGH violations block the audit.
+
+✅ RIGHT: "5 HIGH violations found. AUDIT VERDICT: BLOCKED"
+   Violations must be resolved before re-audit.
+
+✅ RIGHT: "0 HIGH/CRITICAL violations. 3 MEDIUM. AUDIT VERDICT: PASS WITH WARNINGS"
+   Medium violations are documented but don't block.
+```
+
+---
+
 ## Document Control
 
 | Field | Value |
 |-------|-------|
 | Created | 2026-01-25 |
-| Last Modified | 2026-01-25 |
-| Version | 1.0.0 |
+| Last Modified | 2026-01-29 |
+| Version | 1.1.0 |
 | Status | LOCKED |
 | Authority | CONSTITUTIONAL |
 | Schedule | Weekly / Monthly |
+| Change Log | v1.1.0: Added COMPLIANCE GATE zero-tolerance enforcement |
