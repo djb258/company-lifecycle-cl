@@ -37,7 +37,7 @@
 -
 
 ## CTB Compliance Checklist
-- [ ] CTB enforcement passes: `bash global-config/scripts/ctb_verify.sh`
+- [ ] CTB enforcement passes: `bash templates/scripts/ctb_verify.sh`
 - [ ] No hardcoded secrets (all secrets use Doppler)
 - [ ] No `.env` files committed
 - [ ] Tests pass (if applicable): `npm run test`

@@ -56,7 +56,7 @@ This repository follows the **Hub & Spoke Architecture** defined in `templates/d
 ## File Organization (CTB)
 
 ```
-40k (Doctrine):     templates/doctrine/, global-config/
+40k (Doctrine):     templates/doctrine/, templates/config/
                     ↓
 40k (System):       supabase/, src/lib/supabase/, src/integrations/
                     ↓
@@ -91,4 +91,4 @@ This repository follows the **Hub & Spoke Architecture** defined in `templates/d
 - Hub PRD: `docs/prd/PRD-COMPANY-LIFECYCLE.md`
 - Architecture Doctrine: `templates/doctrine/HUB_SPOKE_ARCHITECTURE.md`
 - Altitude Model: `templates/doctrine/ALTITUDE_DESCENT_MODEL.md`
-- CTB Branch Map: `global-config/ctb.branchmap.yaml`
+- CTB Branch Map: `templates/config/ctb.branchmap.yaml`
