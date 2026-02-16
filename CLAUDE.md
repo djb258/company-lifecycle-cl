@@ -116,6 +116,17 @@ Source Adapters → Intake Service → Lifecycle Worker → Identity Table
 - **Adapters**: NC Excel (`source_nc_excel.js`), DE CSV (`source_de_csv.js`)
 - **All adapters extend**: `StateCsvSourceAdapter` (invariant enforcement)
 
+### Migration Directories
+
+Two migration locations exist by design (consolidation pending — see ADR backlog):
+
+| Directory | Scope | Contents |
+|-----------|-------|----------|
+| `neon/migrations/` | CL core schema | Identity tables, errors, domain hierarchy, lifecycle pointers (001–008) |
+| `migrations/` | Cross-cutting + LCS | Identity gate (001), LCS schema + seed + bridge + cron (`migrations/lcs/`) |
+
+Do **not** move or merge migration files without a dedicated ADR.
+
 ### Hard Invariant
 
 ```
