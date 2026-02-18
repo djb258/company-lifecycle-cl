@@ -258,12 +258,20 @@ class LifecycleWorker {
     const linkedin_url = raw.linkedin_url || null;
 
     // === ADMISSION GATE ===
-    // Doctrine: At least domain OR LinkedIn required
+    // Primary path: company_domain OR linkedin_url
+    // Alternative path: DOL 5500 sourced data — EIN is federal proof of company existence
+    //   If you filed a 5500 with the DOL, you are a real company. Period.
     if (!company_domain && !linkedin_url) {
-      return {
-        passed: false,
-        error: 'ADMISSION_GATE_FAILED: Missing both company_domain and linkedin_url',
-      };
+      const ein = raw.ein || null;
+      const isDolSource = candidate.source_system && candidate.source_system.includes('DOL');
+
+      if (!(isDolSource && ein)) {
+        return {
+          passed: false,
+          error: 'ADMISSION_GATE_FAILED: Missing both company_domain and linkedin_url (non-DOL source or no EIN)',
+        };
+      }
+      // DOL + EIN: federally verified company — domain/LinkedIn not required
     }
 
     // === COMPANY NAME VALIDATION ===
