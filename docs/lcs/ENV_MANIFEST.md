@@ -1,4 +1,4 @@
-# LCS Environment Variable Manifest v2.2.0
+# LCS Environment Variable Manifest v2.3.0
 
 Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/ supabase/`
 
@@ -13,7 +13,7 @@ Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/ supaba
 | `SUPABASE_URL` | Edge Functions (Deno) | Supabase project URL | `https://xxx.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Edge Functions (Deno) | Supabase service role key | `eyJhbGci...` |
 | `MAILGUN_API_KEY` | `app/lcs/adapters/mailgun-adapter.ts` | Mailgun API key | `key-xxxx...` |
-| `MAILGUN_WEBHOOK_SIGNING_KEY` | `runtime/lcs/webhook-handler.ts`, Edge Functions | Mailgun webhook HMAC signing key | `key-xxxx...` |
+| `MAILGUN_WEBHOOK_SIGNING_KEY` | `lcs-mailgun-webhook`, `lcs-inbound-reply` Edge Functions | Mailgun webhook HMAC signing key / inbound reply auth secret | `key-xxxx...` |
 | `HEYREACH_API_KEY` | `app/lcs/adapters/heyreach-adapter.ts` | HeyReach API bearer token | `hr_xxxx...` |
 | `HEYREACH_WEBHOOK_SECRET` | `supabase/functions/lcs-heyreach-webhook/index.ts` | HeyReach webhook auth secret | `secret_xxxx...` |
 
@@ -34,11 +34,19 @@ Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/ supaba
 
 ## Where to Set
 
-All variables are managed through **Doppler** under the **imo-creator** project. No `.env` files. CL pulls from the imo-creator Doppler config.
+All variables are managed through **Doppler** under the **company-lifecycle-cl** project. No `.env` files. CL pulls from the Doppler config.
 
 | Context | Method |
 |---|---|
-| Vite (client-side) | Doppler injects `VITE_*` vars at build time (from imo-creator) |
-| Edge Functions (Deno) | `supabase secrets set` (synced from imo-creator Doppler) |
-| Server-side (Node/ts-node) | `doppler run --project imo-creator --` prefix |
-| pg_cron (SQL context) | `current_setting('app.settings.xxx')` via Supabase dashboard |
+| Vite (client-side) | Doppler injects `VITE_*` vars at build time |
+| Edge Functions (Deno) | `supabase secrets set` (synced from Doppler) |
+| Server-side (Node/ts-node) | `doppler run --project company-lifecycle-cl --` prefix |
+| pg_cron (SQL context) | `current_setting('app.settings.xxx')` via dashboard |
+
+## Edge Functions
+
+| Function | Trigger | Auth Method |
+|---|---|---|
+| `lcs-heyreach-webhook` | HeyReach webhook POST | `HEYREACH_WEBHOOK_SECRET` header |
+| `lcs-mailgun-webhook` | Mailgun delivery webhook POST | HMAC-SHA256 via `MAILGUN_WEBHOOK_SIGNING_KEY` |
+| `lcs-inbound-reply` | Cloudflare Email Routing POST (via Worker) | `MAILGUN_WEBHOOK_SIGNING_KEY` via `x-webhook-secret` header |
