@@ -1,24 +1,19 @@
-import { supabase } from '@/data/integrations/supabase/client';
+import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 import type { PipelineState, StepResult } from '../types';
 import type { FrameType } from '@/data/lcs';
 
 /**
  * Step 3: Match Frame — select the best frame from frame_registry at the current tier.
- *
- * What triggers this? Successful Step 2 + passed freshness gate.
- * How do we get it? Query lcs.frame_registry filtered by phase, tier, and active status.
  */
 export async function matchFrame(state: PipelineState): Promise<StepResult> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await lcsClient
       .from('frame_registry')
       .select('*')
-      // @ts-expect-error — lcs schema requires PostgREST config; see deployment notes
-      .schema('lcs')
       .eq('lifecycle_phase', state.signal.lifecycle_phase)
       .eq('is_active', true)
       .lte('tier', state.intelligence_tier ?? 5)
-      .order('tier', { ascending: true })  // prefer highest-intelligence frame
+      .order('tier', { ascending: true })
       .limit(1);
 
     if (error || !data || data.length === 0) {

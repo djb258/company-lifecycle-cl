@@ -7,20 +7,10 @@ import {
   assembleSuppressionContext,
   assembleFreshnessContext
 } from './context-assembler';
-import { supabase } from '@/data/integrations/supabase/client';
+import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 
 /**
  * LCS Cron Runner — scheduled pipeline executor.
- *
- * What triggers this? Supabase cron schedule (e.g., every 5 minutes during business hours).
- * How do we get it? Supabase Edge Function with pg_cron trigger.
- *
- * Process:
- *   1. Query for pending signals (from a signal queue table or webhook ingestion)
- *   2. For each signal: assemble gate contexts, resolve adapter, run pipeline
- *   3. Log batch results
- *
- * v1: Processes signals from a simple queue. Future: event-driven with pg_notify.
  */
 
 interface CronResult {
@@ -32,12 +22,6 @@ interface CronResult {
   errors: Array<{ signal_set_hash: string; reason: string }>;
 }
 
-/**
- * Main cron entry point — process all pending signals.
- *
- * @param batchSize — Max signals to process per run (default: 50)
- * @param defaultChannel — Default delivery channel if signal doesn't specify (default: 'MG')
- */
 export async function runLcsCron(
   batchSize: number = 50,
   defaultChannel: Channel = 'MG'
@@ -51,14 +35,8 @@ export async function runLcsCron(
     errors: [],
   };
 
-  // ─── 1. Fetch pending signals ──────────────────────────
-  // v1: Query a signal_queue table for unprocessed signals.
-  // The signal_queue is populated by ingress webhooks/crons.
-  // For now, we define the query shape — the actual table is a deployment concern.
-  const { data: pendingSignals, error: fetchError } = await supabase
+  const { data: pendingSignals, error: fetchError } = await lcsClient
     .from('signal_queue')
-    // @ts-expect-error — lcs schema requires PostgREST config
-    .schema('lcs')
     .select('*')
     .eq('status', 'PENDING')
     .order('created_at', { ascending: true })
@@ -76,10 +54,8 @@ export async function runLcsCron(
     return result;
   }
 
-  // ─── 2. Process each signal ────────────────────────────
   for (const raw of pendingSignals) {
     try {
-      // Parse signal from queue row
       const signal: SignalInput = {
         spoke_id: (raw.spoke_id as string) ?? 'SPOKE-CL-I-010',
         signal_set_hash: raw.signal_set_hash as string,
@@ -92,10 +68,8 @@ export async function runLcsCron(
         signal_data: (raw.signal_data as Record<string, unknown>) ?? {},
       };
 
-      // Determine channel
       const channel: Channel = signal.preferred_channel ?? defaultChannel;
 
-      // Resolve adapter
       const adapter = resolveAdapter(channel);
       if (!adapter) {
         result.skipped++;
@@ -107,24 +81,19 @@ export async function runLcsCron(
         continue;
       }
 
-      // Assemble gate contexts
       const agentNumber = signal.agent_number ?? 'UNASSIGNED';
       const [capacityCtx, freshnessCtx] = await Promise.all([
         assembleCapacityContext(agentNumber, channel),
         assembleFreshnessContext(signal.sovereign_company_id),
       ]);
 
-      // Suppression context needs entity_id — we use a placeholder for now.
-      // The real entity_id is resolved inside the pipeline at Step 5.
-      // For pre-pipeline suppression check, use company-level data.
       const suppressionCtx = await assembleSuppressionContext(
-        '00000000-0000-0000-0000-000000000000', // placeholder entity
+        '00000000-0000-0000-0000-000000000000',
         signal.sovereign_company_id,
         signal.lifecycle_phase,
         channel
       );
 
-      // Run pipeline
       const pipelineResult = await runPipeline(signal, adapter, {
         capacity: capacityCtx,
         suppression: suppressionCtx,
@@ -158,15 +127,9 @@ export async function runLcsCron(
   return result;
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Internal Helper
-// ═══════════════════════════════════════════════════════════════
-
 async function markSignalProcessed(id: string, status: string): Promise<void> {
-  await supabase
+  await lcsClient
     .from('signal_queue')
-    // @ts-expect-error — lcs schema requires PostgREST config
-    .schema('lcs')
     .update({ status, processed_at: new Date().toISOString() })
     .eq('id', id);
 }

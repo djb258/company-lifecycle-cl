@@ -1,4 +1,4 @@
-import { supabase } from '@/data/integrations/supabase/client';
+import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 import type { LcsEventInsert } from '@/data/lcs';
 
 /**
@@ -12,11 +12,9 @@ import type { LcsEventInsert } from '@/data/lcs';
  */
 export async function logCetEvent(event: LcsEventInsert): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error } = await supabase
+    const { error } = await lcsClient
       .from('event')
-      .insert(event)
-      // @ts-expect-error — lcs schema requires PostgREST config; see deployment notes
-      .schema('lcs');
+      .insert(event as Record<string, unknown>);
 
     if (error) {
       console.error('[CET Logger] Insert failed:', error.message);

@@ -1,4 +1,4 @@
-import { supabase } from '@/data/integrations/supabase/client';
+import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 import type { LcsErr0Insert, OrbtAction } from '@/data/lcs';
 
 /**
@@ -8,10 +8,6 @@ import type { LcsErr0Insert, OrbtAction } from '@/data/lcs';
  *   Strike 1 → AUTO_RETRY (same channel, immediate retry)
  *   Strike 2 → ALT_CHANNEL (try alternate channel if eligible)
  *   Strike 3 → HUMAN_ESCALATION (flag for manual review)
- *
- * What triggers this? Pipeline Step 9 (error-handler) or any step that catches an exception.
- * How do we get it? Pipeline state provides the error context. Strike count comes from
- *   querying existing ERR0 entries for this communication_id.
  */
 
 /**
@@ -22,7 +18,7 @@ export function getOrbtAction(strikeNumber: number): OrbtAction {
     case 1: return 'AUTO_RETRY';
     case 2: return 'ALT_CHANNEL';
     case 3: return 'HUMAN_ESCALATION';
-    default: return 'HUMAN_ESCALATION'; // 3+ always escalates
+    default: return 'HUMAN_ESCALATION';
   }
 }
 
@@ -32,29 +28,26 @@ export function getOrbtAction(strikeNumber: number): OrbtAction {
  */
 export async function getNextStrikeNumber(communicationId: string): Promise<number> {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await lcsClient
       .from('err0')
       .select('orbt_strike_number')
-      // @ts-expect-error — lcs schema requires PostgREST config; see deployment notes
-      .schema('lcs')
       .eq('communication_id', communicationId)
       .not('orbt_strike_number', 'is', null)
       .order('orbt_strike_number', { ascending: false })
       .limit(1);
 
     if (error || !data || data.length === 0) {
-      return 1; // First strike
+      return 1;
     }
 
     return Math.min((data[0].orbt_strike_number as number) + 1, 3);
   } catch {
-    return 1; // Default to first strike on query failure
+    return 1;
   }
 }
 
 /**
  * Check if an alternate channel is eligible for ORBT Strike 2.
- * Simple rule: if current channel is MG, alt is HR. If HR, alt is MG. SH has no alt.
  */
 export function checkAltChannelEligible(currentChannel: string): {
   eligible: boolean;
@@ -74,11 +67,9 @@ export function checkAltChannelEligible(currentChannel: string): {
  */
 export async function logErr0(error: LcsErr0Insert): Promise<{ success: boolean; error?: string }> {
   try {
-    const { error: dbError } = await supabase
+    const { error: dbError } = await lcsClient
       .from('err0')
-      .insert(error)
-      // @ts-expect-error — lcs schema requires PostgREST config; see deployment notes
-      .schema('lcs');
+      .insert(error as Record<string, unknown>);
 
     if (dbError) {
       console.error('[ERR0 Logger] Insert failed:', dbError.message);
