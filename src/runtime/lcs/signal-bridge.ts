@@ -1,14 +1,8 @@
 /**
  * Signal Bridge Runner — TypeScript wrapper for lcs.bridge_pressure_signals().
- *
- * What triggers this? Supabase cron or manual invocation.
- * How do we get it? Calls the SQL function via Supabase RPC.
- *
- * This is a thin spoke — it calls the SQL function and logs results.
- * All bridge logic lives in the SQL function (Prompt 12, Part A).
  */
 
-import { supabase } from '@/data/integrations/supabase/client';
+import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 
 interface BridgeResult {
   source_hub: string;
@@ -18,7 +12,7 @@ interface BridgeResult {
 }
 
 export async function runSignalBridge(): Promise<BridgeResult[]> {
-  const { data, error } = await supabase
+  const { data, error } = await lcsClient
     .rpc('bridge_pressure_signals');
 
   if (error) {

@@ -1,38 +1,23 @@
 import { createHmac } from 'crypto';
 import { logCetEvent } from '@/app/lcs';
 import type { LcsEventInsert, EventType, DeliveryStatus } from '@/data/lcs';
-import { supabase } from '@/data/integrations/supabase/client';
+import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 
 /**
  * Webhook Handler — processes inbound delivery events from adapters.
- *
- * What triggers this? Mailgun webhook POST to our Supabase Edge Function endpoint.
- * How do we get it? Mailgun sends delivery events to a configured webhook URL.
- *
- * This is the FEEDBACK LOOP in the bicycle wheel:
- *   Output (adapter sends) → External (Mailgun delivers) → Input (webhook receives)
- *   → Hub (CET logs the status update)
- *
- * Supported Mailgun events:
- *   - delivered → DELIVERY_SUCCESS
- *   - bounced (permanent) → DELIVERY_BOUNCED
- *   - failed (temporary) → DELIVERY_FAILED
- *   - complained → DELIVERY_COMPLAINED (triggers suppression)
- *   - opened → OPENED
- *   - clicked → CLICKED
  */
 
 interface MailgunWebhookEvent {
-  event: string;                      // 'delivered' | 'failed' | 'bounced' | 'complained' | 'unsubscribed' | 'opened' | 'clicked'
-  timestamp: number;                  // Unix timestamp
-  'message-id'?: string;             // Mailgun message ID (matches adapter_message_id)
+  event: string;
+  timestamp: number;
+  'message-id'?: string;
   recipient?: string;
   'user-variables'?: {
     communication_id?: string;
     message_run_id?: string;
   };
-  severity?: string;                  // for 'failed': 'temporary' | 'permanent'
-  reason?: string;                    // bounce/failure reason
+  severity?: string;
+  reason?: string;
 }
 
 interface WebhookResult {
@@ -40,9 +25,6 @@ interface WebhookResult {
   errors: string[];
 }
 
-// ─── Event mapping ───────────────────────────────────────
-// Maps Mailgun event names to CET event_type + delivery_status.
-// event_type values must exist in the EventType enum.
 const EVENT_MAP: Record<string, { event_type: EventType; delivery_status: DeliveryStatus }> = {
   delivered:    { event_type: 'DELIVERY_SUCCESS',    delivery_status: 'DELIVERED' },
   bounced:      { event_type: 'DELIVERY_BOUNCED',    delivery_status: 'BOUNCED' },
@@ -52,9 +34,6 @@ const EVENT_MAP: Record<string, { event_type: EventType; delivery_status: Delive
   clicked:      { event_type: 'CLICKED',             delivery_status: 'CLICKED' },
 };
 
-/**
- * Process a batch of Mailgun webhook events.
- */
 export async function handleMailgunWebhook(
   events: MailgunWebhookEvent[]
 ): Promise<WebhookResult> {
@@ -63,10 +42,7 @@ export async function handleMailgunWebhook(
   for (const event of events) {
     try {
       const mapping = EVENT_MAP[event.event];
-      if (!mapping) {
-        // Unrecognized event type — skip silently (Mailgun sends many event types)
-        continue;
-      }
+      if (!mapping) continue;
 
       const userVars = event['user-variables'] ?? {};
       const communicationId = userVars.communication_id;
@@ -77,11 +53,8 @@ export async function handleMailgunWebhook(
         continue;
       }
 
-      // Look up the original CET event to get company/entity context
-      const { data: originalEvent } = await supabase
+      const { data: originalEvent } = await lcsClient
         .from('event')
-        // @ts-expect-error — lcs schema requires PostgREST config
-        .schema('lcs')
         .select('sovereign_company_id, entity_type, entity_id, lifecycle_phase, lane, agent_number, frame_id, signal_set_hash, channel, sender_identity, intelligence_tier')
         .eq('communication_id', communicationId)
         .limit(1)
@@ -92,7 +65,6 @@ export async function handleMailgunWebhook(
         continue;
       }
 
-      // Log the webhook event as a new CET row
       const cetEvent: LcsEventInsert = {
         communication_id: communicationId,
         message_run_id: messageRunId,
@@ -108,7 +80,7 @@ export async function handleMailgunWebhook(
         event_type: mapping.event_type,
         lane: originalEvent.lane as LcsEventInsert['lane'],
         agent_number: originalEvent.agent_number as string,
-        step_number: 8,               // Webhook events are "Step 8" — async feedback
+        step_number: 8,
         step_name: 'Webhook Feedback',
         payload: {
           mailgun_event: event.event,
@@ -119,18 +91,14 @@ export async function handleMailgunWebhook(
           reason: event.reason ?? null,
         },
         adapter_response: null,
-        intelligence_tier: (originalEvent.intelligence_tier as number) ?? null,
+        intelligence_tier: (originalEvent.intelligence_tier as number as LcsEventInsert['intelligence_tier']) ?? null,
         sender_identity: (originalEvent.sender_identity as string) ?? null,
       };
 
       await logCetEvent(cetEvent);
       result.processed++;
 
-      // Handle suppression-triggering events
       if (event.event === 'complained' || event.event === 'unsubscribed') {
-        // Future: update suppression state table
-        // For v1, the CET event itself serves as the suppression record.
-        // The suppression engine reads these when building context.
         console.log(`[Webhook] Suppression event: ${event.event} for ${event.recipient}`);
       }
 
@@ -142,10 +110,6 @@ export async function handleMailgunWebhook(
   return result;
 }
 
-/**
- * Validate Mailgun webhook signature.
- * Mailgun signs webhooks with HMAC-SHA256 using the webhook signing key.
- */
 export function validateMailgunSignature(
   timestamp: string,
   token: string,
