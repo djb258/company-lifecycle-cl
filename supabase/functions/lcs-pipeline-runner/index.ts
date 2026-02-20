@@ -34,6 +34,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { compileMessage } from './message-compiler.ts';
+import { assignDomain, recordDomainSend } from './domain-rotator.ts';
 
 // =====================================================================
 // TYPES -- Inlined from src/data/lcs/types/ and src/app/lcs/
@@ -211,6 +212,7 @@ interface PipelineState {
   adapter_response: AdapterResponse | null;
   delivery_status: DeliveryStatus | null;
   gate_results: GateResult[];
+  domain_pool_id: string | null;
   failed: boolean;
   failure_step: number | null;
   failure_reason: string | null;
@@ -787,7 +789,7 @@ async function mintIds(state: PipelineState): Promise<StepResult> {
 
 // --- Step 5: Resolve Audience (from 05-resolve-audience.ts) ---
 
-async function resolveAudience(state: PipelineState): Promise<StepResult> {
+async function resolveAudience(state: PipelineState, supabase: SupabaseClient): Promise<StepResult> {
   const intel = state.intelligence as Record<string, unknown> | null;
 
   let entityId: string | null = null;
@@ -822,11 +824,23 @@ async function resolveAudience(state: PipelineState): Promise<StepResult> {
   state.entity_id = entityId;
   state.recipient_email = email;
   state.recipient_linkedin_url = linkedinUrl;
-  state.sender_identity = `${state.signal.lifecycle_phase.toLowerCase()}-sender`;
-  state.sender_email = null;
-  state.sender_domain = null;
 
-  return { step_number: 5, step_name: 'Resolve Audience', event_type: 'AUDIENCE_RESOLVED', success: true, state, payload: { entity_id: entityId, entity_type: entityType, recipient_email: email } };
+  // --- Domain Assignment (deterministic rotation) ---
+  const domainResult = await assignDomain(supabase, state.communication_id!, state.signal.sovereign_company_id);
+
+  if (!domainResult.success || !domainResult.assignment) {
+    state.failed = true;
+    state.failure_step = 5;
+    state.failure_reason = domainResult.error ?? 'Domain rotation failed — no eligible domain';
+    return { step_number: 5, step_name: 'Resolve Audience', event_type: 'COMPOSITION_BLOCKED', success: false, state };
+  }
+
+  state.sender_domain = domainResult.assignment.subdomain;
+  state.sender_email = domainResult.assignment.sender_email;
+  state.sender_identity = domainResult.assignment.sender_name;
+  state.domain_pool_id = domainResult.assignment.domain_pool_id;
+
+  return { step_number: 5, step_name: 'Resolve Audience', event_type: 'AUDIENCE_RESOLVED', success: true, state, payload: { entity_id: entityId, entity_type: entityType, recipient_email: email, sender_domain: state.sender_domain } };
 }
 
 // --- Step 6: Call Adapter (from 06-call-adapter.ts) ---
@@ -1047,6 +1061,7 @@ async function runPipeline(
     adapter_response: null,
     delivery_status: null,
     gate_results: [],
+    domain_pool_id: null,
     failed: false,
     failure_step: null,
     failure_reason: null,
@@ -1128,8 +1143,8 @@ async function runPipeline(
     return buildResult(state, 4);
   }
 
-  // STEP 5: Resolve Audience
-  const step5 = await resolveAudience(state);
+  // STEP 5: Resolve Audience + Domain Assignment
+  const step5 = await resolveAudience(state, supabase);
   await logStep(supabase, step5, state);
   if (!step5.success) return buildResult(state, 5);
 
@@ -1139,6 +1154,11 @@ async function runPipeline(
   if (!step6.success) {
     await handleError(supabase, state);
     return buildResult(state, 6);
+  }
+
+  // Post-send: record domain send (increment sent_today)
+  if (step6.success && state.domain_pool_id) {
+    await recordDomainSend(supabase, state.domain_pool_id);
   }
 
   // STEP 7: Log Delivery

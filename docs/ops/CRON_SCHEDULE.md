@@ -1,7 +1,7 @@
-# LCS Pipeline Runner — Cron Schedule
+# LCS Cron Schedule
 
 > **Authority:** HUB-CL-001, SUBHUB-CL-LCS
-> **Edge Function:** `supabase/functions/lcs-pipeline-runner`
+> **Edge Functions:** `lcs-pipeline-runner`, `lcs-domain-reset`
 
 ---
 
@@ -62,6 +62,27 @@ curl -X POST https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/lcs-pipelin
 ## Kill Switch
 
 Set `FOUNDER_CALENDAR_AVAILABLE=false` in Supabase Edge Function environment to block all sends globally. The capacity gate checks this flag on every invocation.
+
+---
+
+## Job 2: Domain Reset
+
+Resets `sent_today` counter on all sending domains at midnight ET.
+
+```
+Job Name:    lcs-domain-reset
+Schedule:    0 5 * * *
+Method:      POST
+URL:         https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/lcs-domain-reset
+Headers:     Authorization: Bearer <SUPABASE_ANON_KEY>
+Description: Resets sent_today counter for all domains at midnight ET
+```
+
+**UTC timing:**
+- `0 5 * * *` = midnight ET during EST (Nov–Mar)
+- `0 4 * * *` = midnight ET during EDT (Mar–Nov)
+
+This runs daily (including weekends) to ensure counters are fresh for Monday morning.
 
 ---
 
