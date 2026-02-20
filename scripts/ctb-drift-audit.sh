@@ -181,12 +181,12 @@ fi
 # ───────────────────────────────────────────────────────────────────
 violation() {
     echo -e "  ${RED}[VIOLATION]${NC} $1"
-    ((VIOLATIONS++))
+    VIOLATIONS=$((VIOLATIONS + 1))
 }
 
 warning() {
     echo -e "  ${YELLOW}[WARNING]${NC} $1"
-    ((WARNINGS++))
+    WARNINGS=$((WARNINGS + 1))
 }
 
 run_sql() {
@@ -349,7 +349,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ] && [ -n "$DB_TABLES" ]; then
             else
                 violation "ROGUE_TABLE: $db_table exists in DB but NOT in ctb.table_registry"
             fi
-            ((ROGUE_COUNT++))
+            ROGUE_COUNT=$((ROGUE_COUNT + 1))
         fi
     done <<< "$DB_TABLES"
 
@@ -372,7 +372,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ] && [ -n "$REGISTRY_TABLES" ]; then
         [ -z "$reg_table" ] && continue
         if ! echo "$DB_TABLES" | grep -qx "$reg_table"; then
             warning "PHANTOM_TABLE: $reg_table in ctb.table_registry but NOT in DB"
-            ((PHANTOM_COUNT++))
+            PHANTOM_COUNT=$((PHANTOM_COUNT + 1))
         fi
     done <<< "$REGISTRY_TABLES"
 
@@ -408,7 +408,7 @@ if [ ${#YAML_TABLES[@]} -gt 0 ] && [ -n "$DB_TABLES" ]; then
         done
         if [ "$FOUND" = false ]; then
             warning "ORPHAN_TABLE: $db_table in DB but NOT in column_registry.yml"
-            ((ORPHAN_COUNT++))
+            ORPHAN_COUNT=$((ORPHAN_COUNT + 1))
         fi
     done <<< "$DB_TABLES"
 
@@ -445,7 +445,7 @@ if [ ${#YAML_TABLES[@]} -gt 0 ] && [ -n "$DB_TABLES" ]; then
 
         if [ "$FOUND" = false ]; then
             warning "GHOST_TABLE: $yaml_table in column_registry.yml but NOT in DB"
-            ((GHOST_COUNT++))
+            GHOST_COUNT=$((GHOST_COUNT + 1))
         fi
     done
 
@@ -480,7 +480,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ] && [ ${#YAML_TABLES[@]} -gt 0 ]; then
         done
         if [ "$FOUND" = false ]; then
             warning "REGISTRY_DESYNC: $reg_table in ctb.table_registry but NOT in column_registry.yml"
-            ((DESYNC_COUNT++))
+            DESYNC_COUNT=$((DESYNC_COUNT + 1))
         fi
     done <<< "$REGISTRY_TABLES"
 
@@ -500,7 +500,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ] && [ ${#YAML_TABLES[@]} -gt 0 ]; then
 
         if [ "$FOUND" = false ]; then
             warning "REGISTRY_DESYNC: $yaml_table in column_registry.yml but NOT in ctb.table_registry"
-            ((DESYNC_COUNT++))
+            DESYNC_COUNT=$((DESYNC_COUNT + 1))
         fi
     done
 
@@ -610,7 +610,7 @@ $COL_NAME"
                     else
                         warning "COLUMN_DRIFT: $ENTRY exists in DB but NOT in column_registry.yml"
                     fi
-                    ((COLUMN_DRIFT_COUNT++))
+                    COLUMN_DRIFT_COUNT=$((COLUMN_DRIFT_COUNT + 1))
                 done <<< "$EXTRA_COLS"
             fi
 
@@ -620,7 +620,7 @@ $COL_NAME"
                 while IFS= read -r col; do
                     [ -z "$col" ] && continue
                     warning "COLUMN_DRIFT: $yaml_table.$col in column_registry.yml but NOT in DB"
-                    ((COLUMN_DRIFT_COUNT++))
+                    COLUMN_DRIFT_COUNT=$((COLUMN_DRIFT_COUNT + 1))
                 done <<< "$MISSING_COLS"
             fi
         fi
@@ -673,7 +673,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
 
             if [ "$HAS_TRIGGER" != "t" ]; then
                 violation "IMMUTABILITY_MISSING: $gov_table has no immutability trigger (§8)"
-                ((IMMUTABILITY_MISSING_COUNT++))
+                IMMUTABILITY_MISSING_COUNT=$((IMMUTABILITY_MISSING_COUNT + 1))
             fi
         done <<< "$GOVERNED_TABLES"
 
@@ -729,7 +729,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
 
                 if [ "$HAS_COL" != "t" ]; then
                     violation "RAW_COLUMNS_MISSING: $stg_table missing required column '$req_col' (§8.2)"
-                    ((RAW_COLUMNS_MISSING_COUNT++))
+                    RAW_COLUMNS_MISSING_COUNT=$((RAW_COLUMNS_MISSING_COUNT + 1))
                 fi
             done
         done <<< "$STAGING_TABLES"
@@ -785,7 +785,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
 
             if [ "$HAS_VIEW" != "t" ]; then
                 warning "RAW_VIEW_MISSING: $stg_table has no companion view ${STG_SCHEMA}.${EXPECTED_VIEW} (§8.4)"
-                ((RAW_VIEW_MISSING_COUNT++))
+                RAW_VIEW_MISSING_COUNT=$((RAW_VIEW_MISSING_COUNT + 1))
             fi
         done <<< "$STAGING_TABLES"
 
@@ -846,7 +846,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
                     else
                         violation "JSON_IN_RAW: $raw_table.$jcol — JSON column in RAW table. JSON allowed only in vendor_claude_* tables (§9.3)"
                     fi
-                    ((JSON_IN_RAW_COUNT++))
+                    JSON_IN_RAW_COUNT=$((JSON_IN_RAW_COUNT + 1))
                 done <<< "$JSON_COLS"
             fi
         done <<< "$RAW_NON_VENDOR"
@@ -908,7 +908,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
                     else
                         violation "JSON_IN_DOWNSTREAM: $DS_TABLE.$jcol ($DS_TYPE) — JSON column not allowed in $DS_TYPE tables (§9.4)"
                     fi
-                    ((JSON_IN_DOWNSTREAM_COUNT++))
+                    JSON_IN_DOWNSTREAM_COUNT=$((JSON_IN_DOWNSTREAM_COUNT + 1))
                 done <<< "$JSON_COLS"
             fi
         done <<< "$DOWNSTREAM_TABLES"
@@ -965,7 +965,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
                 else
                     violation "BRIDGE_NO_VERSION: ctb.$bridge_fn missing BRIDGE_VERSION constant (§9.2)"
                 fi
-                ((BRIDGE_NO_VERSION_COUNT++))
+                BRIDGE_NO_VERSION_COUNT=$((BRIDGE_NO_VERSION_COUNT + 1))
             fi
         done <<< "$BRIDGE_FUNCTIONS"
 
@@ -1016,7 +1016,7 @@ if [ "$CTB_REGISTRY_EXISTS" = "t" ]; then
                 else
                     violation "VENDOR_REF_VIOLATION: Promotion path $promo — data must flow through bridge → RAW → _active (§9.4)"
                 fi
-                ((VENDOR_REF_COUNT++))
+                VENDOR_REF_COUNT=$((VENDOR_REF_COUNT + 1))
             done <<< "$VENDOR_PROMOS"
 
             if [ "$VENDOR_REF_COUNT" -eq 0 ]; then
@@ -1073,7 +1073,7 @@ if [ "$HAS_VALIDATE_FN" = "t" ]; then
                 else
                     violation "SUPERUSER_CONNECTION: $CHECK_NAME — $CHECK_DETAIL (§10)"
                 fi
-                ((SUPERUSER_CONNECTION_COUNT++))
+                SUPERUSER_CONNECTION_COUNT=$((SUPERUSER_CONNECTION_COUNT + 1))
             fi
         done <<< "$ROLE_CHECKS"
 

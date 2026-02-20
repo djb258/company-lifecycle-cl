@@ -29,19 +29,19 @@ OUTPUT_FILE="docs/BOOTSTRAP_AUDIT.md"
 
 violation() {
     echo -e "  ${RED}[FAIL]${NC} $1"
-    ((VIOLATIONS++))
+    VIOLATIONS=$((VIOLATIONS + 1))
     RESULTS+=("| FAIL | $1 |")
 }
 
 warning() {
     echo -e "  ${YELLOW}[WARN]${NC} $1"
-    ((WARNINGS++))
+    WARNINGS=$((WARNINGS + 1))
     RESULTS+=("| WARN | $1 |")
 }
 
 pass() {
     echo -e "  ${GREEN}[PASS]${NC} $1"
-    ((PASSES++))
+    PASSES=$((PASSES + 1))
     RESULTS+=("| PASS | $1 |")
 }
 

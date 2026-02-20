@@ -26,12 +26,12 @@ TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || date)
 
 violation() {
     echo -e "  ${RED}[VIOLATION]${NC} $1"
-    ((VIOLATIONS++))
+    VIOLATIONS=$((VIOLATIONS + 1))
 }
 
 warning() {
     echo -e "  ${YELLOW}[WARNING]${NC} $1"
-    ((WARNINGS++))
+    WARNINGS=$((WARNINGS + 1))
 }
 
 pass() {

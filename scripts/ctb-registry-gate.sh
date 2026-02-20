@@ -70,12 +70,12 @@ echo ""
 # ───────────────────────────────────────────────────────────────────
 violation() {
     echo -e "${RED}[VIOLATION]${NC} $1"
-    ((VIOLATIONS++))
+    VIOLATIONS=$((VIOLATIONS + 1))
 }
 
 warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
-    ((WARNINGS++))
+    WARNINGS=$((WARNINGS + 1))
 }
 
 is_placeholder() {
@@ -200,7 +200,7 @@ if [ -n "$MIGRATIONS_DIR" ] && [ ${#TABLES_IN_MIGRATIONS[@]} -gt 0 ]; then
 
         if [ "$FOUND" = false ]; then
             violation "ORPHANED_TABLE: $m_table exists in migrations but NOT in column_registry.yml"
-            ((ORPHANED++))
+            ORPHANED=$((ORPHANED + 1))
         fi
     done
 
@@ -237,7 +237,7 @@ if [ -n "$MIGRATIONS_DIR" ] && [ ${#TABLES_IN_REGISTRY[@]} -gt 0 ]; then
 
         if [ "$FOUND" = false ]; then
             warning "PHANTOM_TABLE: $r_table in column_registry.yml but no migration found"
-            ((PHANTOMS++))
+            PHANTOMS=$((PHANTOMS + 1))
         fi
     done
 
@@ -275,9 +275,9 @@ if [ "$SUBHUB_COUNT" != "0" ] && [ "$SUBHUB_COUNT" != "null" ]; then
                 LEAF_UPPER=$(echo "$LEAF" | tr '[:lower:]' '[:upper:]')
 
                 case "$LEAF_UPPER" in
-                    CANONICAL) ((CANONICAL_COUNT++)) ;;
-                    ERROR)     ((ERROR_COUNT++)) ;;
-                    STAGING|MV|REGISTRY) ((SUPPORTING_COUNT++)) ;;
+                    CANONICAL) CANONICAL_COUNT=$((CANONICAL_COUNT + 1)) ;;
+                    ERROR)     ERROR_COUNT=$((ERROR_COUNT + 1)) ;;
+                    STAGING|MV|REGISTRY) SUPPORTING_COUNT=$((SUPPORTING_COUNT + 1)) ;;
                     NULL|"") ;; # placeholder, skip
                     *)
                         warning "Sub-hub $SUBHUB_NAME ($SUBHUB_ID): Unrecognized leaf_type '$LEAF'"

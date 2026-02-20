@@ -75,7 +75,7 @@ if [ -n "$MISSING_FROM_MANIFEST" ]; then
     while IFS= read -r file; do
         echo -e "  ${RED}[VIOLATION]${NC} MANIFEST_DRIFT: $file"
         echo "              File exists on disk but is not listed in manifest"
-        ((VIOLATIONS++))
+        VIOLATIONS=$((VIOLATIONS + 1))
     done <<< "$MISSING_FROM_MANIFEST"
 else
     echo -e "  ${GREEN}[OK]${NC} All disk files are in manifest"
@@ -94,7 +94,7 @@ if [ -n "$MISSING_FROM_DISK" ]; then
     while IFS= read -r file; do
         echo -e "  ${RED}[VIOLATION]${NC} MANIFEST_GHOST: $file"
         echo "              Listed in manifest but does not exist on disk"
-        ((VIOLATIONS++))
+        VIOLATIONS=$((VIOLATIONS + 1))
     done <<< "$MISSING_FROM_DISK"
 else
     echo -e "  ${GREEN}[OK]${NC} All manifest entries exist on disk"
@@ -110,7 +110,7 @@ echo "─── Count verification ───────────────
 if [ "$DECLARED_COUNT" != "$MANIFEST_COUNT" ]; then
     echo -e "  ${RED}[VIOLATION]${NC} COUNT_MISMATCH: total_file_count ($DECLARED_COUNT) != manifest entries ($MANIFEST_COUNT)"
     echo "              Update total_file_count in manifest header"
-    ((VIOLATIONS++))
+    VIOLATIONS=$((VIOLATIONS + 1))
 else
     echo -e "  ${GREEN}[OK]${NC} total_file_count matches manifest entries ($MANIFEST_COUNT)"
 fi
@@ -118,7 +118,7 @@ fi
 if [ "$MANIFEST_COUNT" != "$DISK_COUNT" ]; then
     echo -e "  ${RED}[VIOLATION]${NC} SYNC_MISMATCH: manifest entries ($MANIFEST_COUNT) != files on disk ($DISK_COUNT)"
     echo "              Manifest and disk are out of sync"
-    ((VIOLATIONS++))
+    VIOLATIONS=$((VIOLATIONS + 1))
 else
     echo -e "  ${GREEN}[OK]${NC} Manifest entries match files on disk ($DISK_COUNT)"
 fi
@@ -136,7 +136,7 @@ if [ -n "$EMPTY_DIRS" ]; then
     while IFS= read -r dir; do
         echo -e "  ${YELLOW}[WARNING]${NC} EMPTY_DIR: $dir"
         echo "              Empty directory — add content or delete"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     done <<< "$EMPTY_DIRS"
 else
     echo -e "  ${GREEN}[OK]${NC} No empty directories"

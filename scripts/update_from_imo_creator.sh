@@ -201,7 +201,7 @@ else
             *.sh|.git/hooks/*) chmod +x "$DST" 2>/dev/null || true ;;
         esac
 
-        ((SYNCED_COUNT++))
+        SYNCED_COUNT=$((SYNCED_COUNT + 1))
         echo -e "  ${GREEN}[SYNC]${NC} $DST"
     done
 fi
@@ -230,7 +230,7 @@ else
         fi
 
         if [ -f "$DST" ]; then
-            ((SKIPPED_COUNT++))
+            SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
             echo -e "  ${CYAN}[EXISTS]${NC} $DST (preserved)"
         else
             DST_DIR=$(dirname "$DST")
@@ -239,7 +239,7 @@ else
             fi
 
             cp "$SRC_FULL" "$DST"
-            ((CREATED_COUNT++))
+            CREATED_COUNT=$((CREATED_COUNT + 1))
             NEW_FILES+=("$DST")
             echo -e "  ${GREEN}[CREATE]${NC} $DST"
         fi
@@ -283,7 +283,7 @@ CRITICAL_FILES=("DOCTRINE.md" "CC_OPERATIONAL_DIGEST.md")
 for cf in "${CRITICAL_FILES[@]}"; do
     if [ ! -f "$cf" ]; then
         echo -e "  ${RED}[MISSING]${NC} Critical file: $cf"
-        ((CRITICAL_MISSING++))
+        CRITICAL_MISSING=$((CRITICAL_MISSING + 1))
     fi
 done
 

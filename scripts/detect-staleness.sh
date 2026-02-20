@@ -159,9 +159,9 @@ record_finding() {
     FINDINGS+=("${severity}|${artifact}|${detail}|${days_stale}")
 
     case "$severity" in
-        CRITICAL) ((CRITICAL_COUNT++)) ;;
-        HIGH)     ((HIGH_COUNT++)) ;;
-        MEDIUM)   ((MEDIUM_COUNT++)) ;;
+        CRITICAL) CRITICAL_COUNT=$((CRITICAL_COUNT + 1)) ;;
+        HIGH)     HIGH_COUNT=$((HIGH_COUNT + 1)) ;;
+        MEDIUM)   MEDIUM_COUNT=$((MEDIUM_COUNT + 1)) ;;
     esac
 }
 
