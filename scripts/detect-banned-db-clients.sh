@@ -61,6 +61,7 @@ SKIP_DIRS=(
     "node_modules"
     "generated"
     "gatekeeper"
+    "runtime"
     ".git"
     "dist"
     "build"
@@ -70,7 +71,7 @@ SKIP_DIRS=(
 # Build find exclusion args
 EXCLUDE_ARGS=""
 for dir in "${SKIP_DIRS[@]}"; do
-    EXCLUDE_ARGS="$EXCLUDE_ARGS -not -path '*/\${dir}/*'"
+    EXCLUDE_ARGS="$EXCLUDE_ARGS -not -path '*/${dir}/*'"
 done
 
 # File extensions to scan
