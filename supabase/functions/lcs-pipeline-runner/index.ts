@@ -33,6 +33,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { compileMessage } from './message-compiler.ts';
 
 // =====================================================================
 // TYPES -- Inlined from src/data/lcs/types/ and src/app/lcs/
@@ -836,6 +837,21 @@ async function callAdapter(state: PipelineState, adapter: LcsAdapter): Promise<S
     state.channel = channel;
     state.adapter_type = adapter.channel;
 
+    // --- Message Compilation (before adapter dispatch) ---
+    const compiled = compileMessage(
+      state.frame_id!,
+      state.frame_type!,
+      state.intelligence,
+      state.sender_identity!
+    );
+
+    if (!compiled.success || !compiled.message) {
+      state.failed = true;
+      state.failure_step = 6;
+      state.failure_reason = compiled.error ?? 'Message compilation failed';
+      return { step_number: 6, step_name: 'Call Adapter', event_type: 'COMPOSITION_BLOCKED', success: false, state };
+    }
+
     const attempt = 1;
     state.message_run_id = mintMessageRunId(state.communication_id!, channel, attempt);
 
@@ -845,20 +861,24 @@ async function callAdapter(state: PipelineState, adapter: LcsAdapter): Promise<S
       channel,
       recipient_email: state.recipient_email,
       recipient_linkedin_url: state.recipient_linkedin_url,
-      subject: null,
-      body_html: null,
-      body_text: null,
+      subject: compiled.message.subject,
+      body_html: compiled.message.body_html,
+      body_text: compiled.message.body_text,
       sender_identity: state.sender_identity!,
       sender_email: state.sender_email,
       sender_domain: state.sender_domain,
-      metadata: { frame_id: state.frame_id, signal_set_hash: state.signal.signal_set_hash },
+      metadata: {
+        frame_id: state.frame_id,
+        signal_set_hash: state.signal.signal_set_hash,
+        message_snapshot: compiled.message.snapshot,
+      },
     };
 
     const response = await adapter.send(payload);
     state.adapter_response = response;
     state.delivery_status = response.delivery_status;
 
-    return { step_number: 6, step_name: 'Call Adapter', event_type: 'ADAPTER_CALLED', success: true, state, payload: { adapter_response: response.raw_response } };
+    return { step_number: 6, step_name: 'Call Adapter', event_type: 'ADAPTER_CALLED', success: true, state, payload: { adapter_response: response.raw_response, message_snapshot: compiled.message.snapshot } };
   } catch (err) {
     state.failed = true;
     state.failure_step = 6;
