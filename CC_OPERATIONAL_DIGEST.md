@@ -504,8 +504,8 @@ No step may proceed without the prior step being valid.
 
 | Field | Value |
 |-------|-------|
-| Created | 2026-02-16 |
-| Last Modified | 2026-02-16 |
+| Created | [YYYY-MM-DD] |
+| Last Modified | [YYYY-MM-DD] |
 | Digest Version | 1.0.0 |
 | Source Versions | ARCHITECTURE.md v2.1.0, TOOLS.md v1.1.0, OSAM.md v1.1.0 |
 | Status | GENERATED |

@@ -21,7 +21,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # When was this checkpoint last filled?
-last_verified: "2026-02-16T18:00:00Z"
+last_verified: "2026-02-20T14:00:00Z"
 
 # Who verified it?
 verified_by: "claude-code"
@@ -57,7 +57,7 @@ checkpoint:
 
   # CONST -> VAR: What constant is being transformed into what variable?
   # If not a new feature: set to "n/a"
-  transformation: "movement inputs -> CID via cl.mint_communication_id()"
+  transformation: "imo-creator v3.3.0 templates -> CL child governance layer"
 
   # Does validate-schema-completeness.sh pass?
   # If registry_impact is "yes", this MUST be "yes" before commit.

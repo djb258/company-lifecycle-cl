@@ -92,12 +92,12 @@ list_contains() {
 
 violation() {
     echo -e "${RED}[VIOLATION]${NC} $1"
-    VIOLATIONS=$((VIOLATIONS + 1))
+    ((VIOLATIONS++))
 }
 
 warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
-    WARNINGS=$((WARNINGS + 1))
+    ((WARNINGS++))
 }
 
 # ───────────────────────────────────────────────────────────────────
@@ -106,7 +106,7 @@ warning() {
 validate_column() {
     local table_name="$1"
     local col_path="$2"
-    COLUMNS_CHECKED=$((COLUMNS_CHECKED + 1))
+    ((COLUMNS_CHECKED++))
 
     local col_name col_desc col_type col_nullable col_role col_format
     col_name=$(yq "$col_path.name" "$REGISTRY_FILE")
@@ -165,7 +165,7 @@ validate_column() {
 validate_table() {
     local table_path="$1"
     local is_spine="${2:-false}"
-    TABLES_CHECKED=$((TABLES_CHECKED + 1))
+    ((TABLES_CHECKED++))
 
     local table_name table_desc leaf_type sot ris
     table_name=$(yq "$table_path.name" "$REGISTRY_FILE")
