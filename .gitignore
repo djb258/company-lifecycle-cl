@@ -31,3 +31,14 @@ dist-ssr
 *.pem
 Thumbs.db
 desktop.ini
+
+# === Scratch / one-off artifacts ===
+# Prevent untracked scratch files from accumulating at root or in subdirs
+remaining_failed.json
+domain_discovery_queue.json
+run-query.js
+sc_dol_import.cjs
+LCS_SCHEMA_AUDIT_RESULTS.md
+
+# === Vestigial directories ===
+global-config/
