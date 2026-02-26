@@ -21,7 +21,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 # When was this checkpoint last filled?
-last_verified: "2026-02-21T02:00:00Z"
+last_verified: "2026-02-26T16:00:00Z"
 
 # Who verified it?
 verified_by: "claude-code"
@@ -32,7 +32,7 @@ digest_version: "1.0.0"
 checkpoint:
   # What CTB branch does this change touch?
   # Valid: sys | data | app | ai | ui
-  ctb_branch_target: "sys"
+  ctb_branch_target: "data"
 
   # Is the change in a hub or spoke?
   # Valid: hub | spoke
@@ -41,7 +41,7 @@ checkpoint:
   # Where does processing logic live? (MUST be hub, never spoke)
   # If spoke: set to "n/a" — spokes carry data only
   # If hub: e.g. "src/data/hub/" or "src/app/services/"
-  logic_placement: "n/a"
+  logic_placement: "src/data/hub/"
 
   # Does this require an ADR? (yes if: new tool, new integration, architecture change)
   # Valid: yes | no
@@ -49,17 +49,17 @@ checkpoint:
 
   # Does this change database schema? (yes = update column_registry.yml first)
   # Valid: yes | no
-  registry_impact: "no"
+  registry_impact: "yes"
 
   # Which error table catches failures? (each sub-hub has its own)
   # If no data processing: set to "n/a"
-  error_table_identified: "n/a"
+  error_table_identified: "lcs.message_error"
 
   # CONST -> VAR: What constant is being transformed into what variable?
   # If not a new feature: set to "n/a"
-  transformation: "n/a"
+  transformation: "LCS structure lock (6 sub-hubs) -> single womb-to-tomb message ledger sub-hub (04.01.04)"
 
   # Does validate-schema-completeness.sh pass?
   # If registry_impact is "yes", this MUST be "yes" before commit.
   # If registry_impact is "no": set to "n/a"
-  schema_completeness_verified: "n/a"
+  schema_completeness_verified: "yes"

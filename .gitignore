@@ -32,6 +32,10 @@ dist-ssr
 Thumbs.db
 desktop.ini
 
+# === CTB gate reports (generated, not tracked) ===
+.ctb-registry-gate-report.json
+.ctb-registry-gate-report.md
+
 # === Scratch / one-off artifacts ===
 # Prevent untracked scratch files from accumulating at root or in subdirs
 remaining_failed.json
