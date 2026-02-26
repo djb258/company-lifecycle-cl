@@ -22,9 +22,9 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 
 manifest:
-  version: "2.9.0"
-  last_updated: "2026-02-16"
-  total_file_count: 115  # Run: find templates -type f | wc -l to verify
+  version: "3.3.0"
+  last_updated: "2026-02-20"
+  total_file_count: 139  # Run: find templates -type f | wc -l to verify
   ctb_hardening_version: "2.0.0"
   note: "CTB Hardening refactor - ARCHITECTURE.md consolidates architecture doctrine"
   authority: "CONSTITUTIONAL"
@@ -97,6 +97,10 @@ files:
     - path: "templates/TEMPLATE_STAMP_PROTOCOL.md"
       purpose: "Template stamping protocol"
       required: true
+
+    - path: "templates/DOWNSTREAM_HANDOFF.md.template"
+      purpose: "Downstream handoff template for child repo initialization"
+      required: false
 
   # ═══════════════════════════════════════════════════════════════════════════
   # DOCTRINE (LOCKED - AI CANNOT MODIFY)
@@ -174,6 +178,27 @@ files:
       required: true
       locked: true
       version: "1.0.0"
+
+    # CHILD-SPECIFIC DOCTRINE TEMPLATES
+    - path: "templates/doctrine/AIR_DOCTRINE.md.template"
+      purpose: "Action/Incident/Result telemetry contract template"
+      required: false
+
+    - path: "templates/doctrine/CONCEPTUAL_SCHEMA.md.template"
+      purpose: "Conceptual data definitions template"
+      required: false
+
+    - path: "templates/doctrine/HUB_DOCTRINE.md.template"
+      purpose: "Sovereign hub definition template"
+      required: false
+
+    - path: "templates/doctrine/INTAKE_LOCK.md.template"
+      purpose: "Non-negotiable intake rules template"
+      required: false
+
+    - path: "templates/doctrine/INVARIANTS_AND_KILL_SWITCHES.md.template"
+      purpose: "Invariants and kill switches template"
+      required: false
 
   # ═══════════════════════════════════════════════════════════════════════════
   # SEMANTIC (OSAM - QUERY ROUTING CONTRACT)
@@ -658,6 +683,90 @@ files:
     - path: "templates/validators/README.md"
       purpose: "Validator documentation"
       required: true
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # MIGRATIONS (DATABASE GOVERNANCE)
+  # ═══════════════════════════════════════════════════════════════════════════
+  migrations:
+    - path: "templates/migrations/README.md"
+      purpose: "Migration directory documentation — architecture, usage, design principles"
+      required: true
+
+    - path: "templates/migrations/001_ctb_table_registry.sql"
+      purpose: "CTB schema + table_registry + audit log — runtime registry of all allowed tables"
+      required: true
+
+    - path: "templates/migrations/002_ctb_event_trigger.sql"
+      purpose: "DDL event trigger — blocks CREATE/ALTER/DROP TABLE on unregistered tables"
+      required: true
+
+    - path: "templates/migrations/003_ctb_write_guards.sql"
+      purpose: "Write guard triggers — blocks INSERT/UPDATE/DELETE on unregistered or frozen tables"
+      required: true
+
+    - path: "templates/migrations/004_ctb_promotion_enforcement.sql"
+      purpose: "Promotion enforcement — controls SUPPORTING → CANONICAL data flow via declared paths"
+      required: true
+
+    - path: "templates/migrations/005_raw_immutability.sql"
+      purpose: "RAW immutability — INSERT-only enforcement on STAGING/SUPPORTING/CANONICAL, vendor bridge registration"
+      required: true
+
+    - path: "templates/migrations/006_raw_batch_registry.sql"
+      purpose: "Batch registry — tracks every ingestion batch with supersede chain and status lifecycle"
+      required: true
+
+    - path: "templates/migrations/007_raw_active_view_template.sql"
+      purpose: "RAW active view — helper to create _active views filtering to current batches, validation functions"
+      required: true
+
+    - path: "templates/migrations/008_vendor_json_template.sql"
+      purpose: "Vendor JSON table template — per-sub-hub JSON sandbox with validation helper"
+      required: true
+
+    - path: "templates/migrations/009_bridge_template.sql"
+      purpose: "Frozen bridge function template — versioned JSON→RAW transformation with strict validation"
+      required: true
+
+    - path: "templates/migrations/010_vendor_write_permissions.sql"
+      purpose: "Role separation template — ctb_vendor_writer, ctb_data_reader, ctb_bridge_executor roles"
+      required: true
+
+    - path: "templates/migrations/011_enforce_application_role.sql"
+      purpose: "Application role enforcement — ctb_app_role (non-superuser), validate_application_role() function"
+      required: true
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # SCHEMA TEMPLATES
+  # ═══════════════════════════════════════════════════════════════════════════
+  schema:
+    - path: "templates/schema/ERD_DOCUMENTATION.md.template"
+      purpose: "ERD documentation template for hub-level ERD"
+      required: false
+
+    - path: "templates/schema/SCHEMA_INDEX.md.template"
+      purpose: "Schema index template — table inventory"
+      required: false
+
+    - path: "templates/schema/TABLE_DOCUMENTATION.md.template"
+      purpose: "Individual table documentation template"
+      required: false
+
+    - path: "templates/schema/VIEW_DOCUMENTATION.md.template"
+      purpose: "View documentation template"
+      required: false
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # WORKFLOW TEMPLATES
+  # ═══════════════════════════════════════════════════════════════════════════
+  workflows:
+    - path: "templates/workflows/imo-audit.yml.template"
+      purpose: "GitHub Actions IMO audit workflow template"
+      required: false
+
+    - path: "templates/workflows/pipeline_guard.yml.template"
+      purpose: "GitHub Actions pipeline guard workflow template"
+      required: false
 
 # ─────────────────────────────────────────────────────────────────────────────────
 # READING ORDER (CONTEXT-AWARE)
@@ -1355,7 +1464,7 @@ verification:
     After pulling templates, verify:
 
     [ ] All files in this manifest exist locally
-    [ ] File count matches total_file_count (115 files)
+    [ ] File count matches total_file_count (139 files)
     [ ] No files were skipped or missed
     [ ] Doctrine files are present and locked
     [ ] Claude prompts are present and locked
@@ -1369,8 +1478,8 @@ verification:
 
 document_control:
   created: "2026-01-30"
-  last_modified: "2026-02-16"
-  version: "2.9.0"
+  last_modified: "2026-02-20"
+  version: "3.3.0"
   doctrine_version: "2.1.0"
   status: "ACTIVE"
   authority: "CONSTITUTIONAL"

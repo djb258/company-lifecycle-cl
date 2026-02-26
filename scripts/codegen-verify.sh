@@ -96,7 +96,7 @@ diff_directory() {
             echo -e "${RED}[VIOLATION]${NC} $label: Directory missing — $actual_dir"
             echo "            Expected generated files but directory does not exist"
             echo "            Action: Run codegen-generate.sh"
-            ((VIOLATIONS++))
+            VIOLATIONS=$((VIOLATIONS + 1))
         fi
         return
     fi
@@ -116,13 +116,13 @@ diff_directory() {
             echo -e "${RED}[VIOLATION]${NC} $label: Missing file — $filename"
             echo "            Expected: $actual_file"
             echo "            Action: Run codegen-generate.sh"
-            ((VIOLATIONS++))
+            VIOLATIONS=$((VIOLATIONS + 1))
         elif ! diff -q "$expected_file" "$actual_file" > /dev/null 2>&1; then
             echo -e "${RED}[VIOLATION]${NC} $label: Out of sync — $filename"
             echo "            Diff:"
             diff --unified=3 "$expected_file" "$actual_file" | head -20 | sed 's/^/              /'
             echo "            Action: Run codegen-generate.sh"
-            ((VIOLATIONS++))
+            VIOLATIONS=$((VIOLATIONS + 1))
         else
             echo -e "  ${GREEN}[OK]${NC} $label/$filename"
         fi

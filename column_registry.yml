@@ -3,7 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # Authority: imo-creator (Inherited)
 # Status: REQUIRED — Every hub with data/ branch MUST have a column_registry.yml
-# Version: 1.0.0
+# Version: 2.0.0
 # Purpose: Single source of truth for all table schemas in this hub
 # ═══════════════════════════════════════════════════════════════════════════════
 #
@@ -17,20 +17,28 @@
 #   7. Each sub-hub has exactly 1 CANONICAL + 1 ERROR table (OWN-10a, OWN-10b)
 #   8. Additional table types require ADR justification (OWN-10c)
 #
+# STRUCTURE:
+#   CL Hub (04.01) — Sovereign identity
+#     ├── CL Core sub-hubs (04.01.01–03) — identity pipeline
+#     └── LCS sub-hub (04.01.04) — womb-to-tomb message ledger
+#   All sub-hubs connect through sovereign_id (company_unique_id)
+#   LCS has its own identity (lcs_id) on the CL spine, same pattern as outreach_id
+#   LCS CANONICAL = message_ledger (MID), LCS ERROR = message_error
+#
 # READING ORDER:
 #   OSAM → column_registry.yml → generated files
 #
 # ═══════════════════════════════════════════════════════════════════════════════
 
-version: "1.0.0"
-last_updated: "2026-02-16"
+version: "2.0.0"
+last_updated: "2026-02-26"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # HUB IDENTITY
 # ═══════════════════════════════════════════════════════════════════════════════
 
 hub:
-  hub_id: "HUB-CL-001"
+  hub_id: "04.01"
   hub_name: "Company Lifecycle"
   universal_join_key: "company_unique_id"
   universal_join_key_type: "UUID"
@@ -174,6 +182,12 @@ spine_table:
       description: "Write-once pointer to client record, set when company becomes client"
       semantic_role: "foreign_key"
       format: "UUID"
+    - name: "lcs_id"
+      type: "UUID"
+      nullable: true
+      description: "Write-once pointer to LCS record, set when company enters lifecycle communication system"
+      semantic_role: "foreign_key"
+      format: "UUID"
     - name: "outreach_attached_at"
       type: "TIMESTAMPTZ"
       nullable: true
@@ -192,24 +206,28 @@ spine_table:
       description: "Timestamp when client_id was attached, auto-set on first write"
       semantic_role: "attribute"
       format: "ISO-8601"
+    - name: "lcs_attached_at"
+      type: "TIMESTAMPTZ"
+      nullable: true
+      description: "Timestamp when lcs_id was attached, auto-set on first write"
+      semantic_role: "attribute"
+      format: "ISO-8601"
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # SUB-HUB TABLES
 # ═══════════════════════════════════════════════════════════════════════════════
-# Each sub-hub declares exactly:
-#   - 1 CANONICAL table (OWN-10a)
-#   - 1 ERROR table (OWN-10b) — or references shared error table
-#   - Additional types require ADR (OWN-10c)
+# CL Core (04.01.01–03): Identity pipeline — intake, enrichment, gate
+# LCS (04.01.04): Womb-to-tomb message ledger — own identity (lcs_id)
+# All sub-hubs connect through sovereign_id (company_unique_id)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 subhubs:
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Intake
-  # Error routing: cl.cl_errors (shared)
+  # CL INTAKE (04.01.01)
   # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-INTAKE"
-    name: "Intake"
+  - subhub_id: "04.01.01"
+    name: "intake"
     tables:
 
       - schema: "cl"
@@ -286,18 +304,102 @@ subhubs:
             semantic_role: "foreign_key"
             format: "UUID"
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Bridge
-  # Error routing: cl.cl_errors (shared)
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-BRIDGE"
-    name: "Bridge"
-    tables:
+      - schema: "cl"
+        name: "cl_errors"
+        description: "Unified error logging for all CL validation passes with retry and TTL support"
+        leaf_type: "ERROR"
+        source_of_truth: true
+        row_identity_strategy: "UUID"
+        columns:
+          - name: "error_id"
+            type: "UUID"
+            nullable: false
+            description: "Unique error identifier, auto-generated primary key"
+            semantic_role: "identifier"
+            format: "UUID"
+          - name: "company_unique_id"
+            type: "UUID"
+            nullable: true
+            description: "FK to cl.company_identity, NULL for pre-mint errors"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "lifecycle_run_id"
+            type: "TEXT"
+            nullable: false
+            description: "Identifier for the lifecycle processing run that produced this error"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "pass_name"
+            type: "TEXT"
+            nullable: false
+            description: "Validation pass category: existence, name, domain, collision, firmographic"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "failure_reason_code"
+            type: "TEXT"
+            nullable: false
+            description: "Standardized failure reason code (e.g. EXISTENCE_FAIL, NAME_FAIL)"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "inputs_snapshot"
+            type: "JSONB"
+            nullable: true
+            description: "Complete snapshot of inputs at time of failure for audit and reprocessing"
+            semantic_role: "attribute"
+            format: "JSON"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Timestamp when error was logged, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "resolved_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when error was resolved, NULL if unresolved"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "retry_count"
+            type: "INTEGER"
+            nullable: true
+            description: "Number of retry attempts made, default 0"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "retry_ceiling"
+            type: "INTEGER"
+            nullable: true
+            description: "Maximum retries before marking permanent, default 3"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "retry_after"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Earliest time to retry this error"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "tool_used"
+            type: "TEXT"
+            nullable: true
+            description: "Tool that resolved or attempted resolution (e.g. MXLookup, Firecrawl)"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "tool_tier"
+            type: "INTEGER"
+            nullable: true
+            description: "Toolbox tier: 0=free, 1=cheap, 2=surgical"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "expires_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "TTL for transient errors, auto-resolve after this timestamp"
+            semantic_role: "attribute"
+            format: "ISO-8601"
 
       - schema: "cl"
         name: "company_identity_bridge"
         description: "Join surface mapping source system records to sovereign company identities"
-        leaf_type: "CANONICAL"
+        leaf_type: "STAGING"
         source_of_truth: true
         row_identity_strategy: "UUID"
         columns:
@@ -381,17 +483,242 @@ subhubs:
             format: "STRING"
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Names
-  # Error routing: cl.cl_errors (shared)
+  # CL ENRICHMENT (04.01.02)
   # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-NAMES"
-    name: "Names"
+  - subhub_id: "04.01.02"
+    name: "enrichment"
     tables:
+
+      - schema: "cl"
+        name: "identity_confidence"
+        description: "Confidence scoring envelope for identity attributes across verification dimensions"
+        leaf_type: "CANONICAL"
+        source_of_truth: true
+        row_identity_strategy: "UUID"
+        columns:
+          - name: "company_unique_id"
+            type: "UUID"
+            nullable: false
+            description: "FK to cl.company_identity, primary key (1:1 relationship with spine)"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "name_confidence_score"
+            type: "INTEGER"
+            nullable: true
+            description: "Name matching confidence score from 0 to 100"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "domain_confidence_score"
+            type: "INTEGER"
+            nullable: true
+            description: "Domain verification confidence score from 0 to 100"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "linkedin_confidence_score"
+            type: "INTEGER"
+            nullable: true
+            description: "LinkedIn profile match confidence score from 0 to 100"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "state_confidence_score"
+            type: "INTEGER"
+            nullable: true
+            description: "State registration confidence score from 0 to 100"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "overall_confidence_score"
+            type: "INTEGER"
+            nullable: true
+            description: "Composite overall confidence score from 0 to 100"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "confidence_level"
+            type: "TEXT"
+            nullable: true
+            description: "Derived confidence level: HIGH, MEDIUM, or LOW"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "name_verification_status"
+            type: "TEXT"
+            nullable: true
+            description: "Name dimension verification status: verified, pending, or failed"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "domain_verification_status"
+            type: "TEXT"
+            nullable: true
+            description: "Domain dimension verification status: verified, pending, or failed"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "linkedin_verification_status"
+            type: "TEXT"
+            nullable: true
+            description: "LinkedIn dimension verification status: verified, pending, or failed"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "state_verification_status"
+            type: "TEXT"
+            nullable: true
+            description: "State dimension verification status: verified, pending, or failed"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "name_evidence"
+            type: "JSONB"
+            nullable: true
+            description: "Evidence payload supporting name confidence score as JSON"
+            semantic_role: "attribute"
+            format: "JSON"
+          - name: "domain_evidence"
+            type: "JSONB"
+            nullable: true
+            description: "Evidence payload supporting domain confidence score as JSON"
+            semantic_role: "attribute"
+            format: "JSON"
+          - name: "linkedin_evidence"
+            type: "JSONB"
+            nullable: true
+            description: "Evidence payload supporting LinkedIn confidence score as JSON"
+            semantic_role: "attribute"
+            format: "JSON"
+          - name: "state_evidence"
+            type: "JSONB"
+            nullable: true
+            description: "Evidence payload supporting state confidence score as JSON"
+            semantic_role: "attribute"
+            format: "JSON"
+          - name: "last_calculated_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when confidence scores were last calculated"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "calculation_method"
+            type: "TEXT"
+            nullable: true
+            description: "Method used for confidence calculation (e.g. weighted_average, rules_v2)"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when confidence record was created, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "updated_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when confidence record was last updated, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+
+      - schema: "cl"
+        name: "cl_errors_archive"
+        description: "Archived errors preserving forensic history without cluttering active error table"
+        leaf_type: "ERROR"
+        source_of_truth: true
+        row_identity_strategy: "UUID"
+        columns:
+          - name: "error_id"
+            type: "UUID"
+            nullable: false
+            description: "Unique error identifier copied from cl_errors"
+            semantic_role: "identifier"
+            format: "UUID"
+          - name: "company_unique_id"
+            type: "UUID"
+            nullable: true
+            description: "FK to cl.company_identity, NULL for pre-mint errors"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "lifecycle_run_id"
+            type: "TEXT"
+            nullable: false
+            description: "Identifier for the lifecycle processing run that produced this error"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "pass_name"
+            type: "TEXT"
+            nullable: false
+            description: "Validation pass category: existence, name, domain, collision, firmographic"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "failure_reason_code"
+            type: "TEXT"
+            nullable: false
+            description: "Standardized failure reason code (e.g. EXISTENCE_FAIL, NAME_FAIL)"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "inputs_snapshot"
+            type: "JSONB"
+            nullable: true
+            description: "Complete snapshot of inputs at time of failure for audit and reprocessing"
+            semantic_role: "attribute"
+            format: "JSON"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Original timestamp when error was logged"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "resolved_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when error was resolved"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "retry_count"
+            type: "INTEGER"
+            nullable: true
+            description: "Number of retry attempts made before archival"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "retry_ceiling"
+            type: "INTEGER"
+            nullable: true
+            description: "Maximum retries before marking permanent"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "retry_after"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Earliest time to retry this error"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "tool_used"
+            type: "TEXT"
+            nullable: true
+            description: "Tool that resolved or attempted resolution"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "tool_tier"
+            type: "INTEGER"
+            nullable: true
+            description: "Toolbox tier: 0=free, 1=cheap, 2=surgical"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "expires_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "TTL for transient errors"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "archived_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Timestamp when error was archived, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "archive_reason"
+            type: "TEXT"
+            nullable: true
+            description: "Reason for archiving: RESOLVED, TTL_EXPIRED, MANUAL"
+            semantic_role: "attribute"
+            format: "ENUM"
 
       - schema: "cl"
         name: "company_names"
         description: "Name variants and aliases for companies, sidecar to spine identity table"
-        leaf_type: "CANONICAL"
+        leaf_type: "STAGING"
         source_of_truth: true
         row_identity_strategy: "UUID"
         columns:
@@ -474,19 +801,10 @@ subhubs:
             semantic_role: "attribute"
             format: "JSON"
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Domains
-  # Error routing: cl.cl_errors (shared)
-  # ADR-justified additional table: domain_hierarchy
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-DOMAINS"
-    name: "Domains"
-    tables:
-
       - schema: "cl"
         name: "company_domains"
         description: "Domain records and DNS metadata for companies, sidecar to spine identity table"
-        leaf_type: "CANONICAL"
+        leaf_type: "STAGING"
         source_of_truth: true
         row_identity_strategy: "UUID"
         columns:
@@ -635,415 +953,11 @@ subhubs:
             semantic_role: "attribute"
             format: "JSON"
 
-      # ADR-justified: domain_hierarchy (OWN-10c)
-      - schema: "cl"
-        name: "domain_hierarchy"
-        description: "Domain sharing relationships between parent and child companies in hierarchies"
-        leaf_type: "CANONICAL"
-        source_of_truth: true
-        row_identity_strategy: "UUID"
-        columns:
-          - name: "hierarchy_id"
-            type: "UUID"
-            nullable: false
-            description: "Unique hierarchy record identifier, auto-generated primary key"
-            semantic_role: "identifier"
-            format: "UUID"
-          - name: "domain"
-            type: "TEXT"
-            nullable: false
-            description: "Shared domain that connects parent and child companies"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "parent_company_id"
-            type: "UUID"
-            nullable: true
-            description: "FK to cl.company_identity for the definitive parent entity"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "child_company_id"
-            type: "UUID"
-            nullable: true
-            description: "FK to cl.company_identity for subsidiary/branch/location entity"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "relationship_type"
-            type: "TEXT"
-            nullable: false
-            description: "Hierarchy type: PARENT_ANCHOR, CHILD_OPERATING_UNIT, SIBLING_BRAND, AMBIGUOUS_UNRESOLVED"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "confidence_score"
-            type: "INTEGER"
-            nullable: true
-            description: "Confidence score 0-100 for the hierarchy relationship determination"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "resolution_method"
-            type: "TEXT"
-            nullable: true
-            description: "How the hierarchy was determined: CORPORATE_SIGNALS, OLDEST_RECORD, MANUAL"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp when hierarchy relationship was recorded, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "resolved_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when ambiguity was resolved, if applicable"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "resolved_by"
-            type: "TEXT"
-            nullable: true
-            description: "Identity of the agent or user who resolved the ambiguity"
-            semantic_role: "attribute"
-            format: "STRING"
-
   # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Confidence
-  # Error routing: cl.cl_errors (shared)
+  # CL GATE (04.01.03)
   # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-CONFIDENCE"
-    name: "Confidence"
-    tables:
-
-      - schema: "cl"
-        name: "identity_confidence"
-        description: "Confidence scoring envelope for identity attributes across verification dimensions"
-        leaf_type: "CANONICAL"
-        source_of_truth: true
-        row_identity_strategy: "UUID"
-        columns:
-          - name: "company_unique_id"
-            type: "UUID"
-            nullable: false
-            description: "FK to cl.company_identity, primary key (1:1 relationship with spine)"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "name_confidence_score"
-            type: "INTEGER"
-            nullable: true
-            description: "Name matching confidence score from 0 to 100"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "domain_confidence_score"
-            type: "INTEGER"
-            nullable: true
-            description: "Domain verification confidence score from 0 to 100"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "linkedin_confidence_score"
-            type: "INTEGER"
-            nullable: true
-            description: "LinkedIn profile match confidence score from 0 to 100"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "state_confidence_score"
-            type: "INTEGER"
-            nullable: true
-            description: "State registration confidence score from 0 to 100"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "overall_confidence_score"
-            type: "INTEGER"
-            nullable: true
-            description: "Composite overall confidence score from 0 to 100"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "confidence_level"
-            type: "TEXT"
-            nullable: true
-            description: "Derived confidence level: HIGH, MEDIUM, or LOW"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "name_verification_status"
-            type: "TEXT"
-            nullable: true
-            description: "Name dimension verification status: verified, pending, or failed"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "domain_verification_status"
-            type: "TEXT"
-            nullable: true
-            description: "Domain dimension verification status: verified, pending, or failed"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "linkedin_verification_status"
-            type: "TEXT"
-            nullable: true
-            description: "LinkedIn dimension verification status: verified, pending, or failed"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "state_verification_status"
-            type: "TEXT"
-            nullable: true
-            description: "State dimension verification status: verified, pending, or failed"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "name_evidence"
-            type: "JSONB"
-            nullable: true
-            description: "Evidence payload supporting name confidence score as JSON"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "domain_evidence"
-            type: "JSONB"
-            nullable: true
-            description: "Evidence payload supporting domain confidence score as JSON"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "linkedin_evidence"
-            type: "JSONB"
-            nullable: true
-            description: "Evidence payload supporting LinkedIn confidence score as JSON"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "state_evidence"
-            type: "JSONB"
-            nullable: true
-            description: "Evidence payload supporting state confidence score as JSON"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "last_calculated_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when confidence scores were last calculated"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "calculation_method"
-            type: "TEXT"
-            nullable: true
-            description: "Method used for confidence calculation (e.g. weighted_average, rules_v2)"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when confidence record was created, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "updated_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when confidence record was last updated, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Errors
-  # CANONICAL: cl_errors | ERROR: cl_errors_archive
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-ERRORS"
-    name: "Errors"
-    tables:
-
-      - schema: "cl"
-        name: "cl_errors"
-        description: "Unified error logging for all CL validation passes with retry and TTL support"
-        leaf_type: "CANONICAL"
-        source_of_truth: true
-        row_identity_strategy: "UUID"
-        columns:
-          - name: "error_id"
-            type: "UUID"
-            nullable: false
-            description: "Unique error identifier, auto-generated primary key"
-            semantic_role: "identifier"
-            format: "UUID"
-          - name: "company_unique_id"
-            type: "UUID"
-            nullable: true
-            description: "FK to cl.company_identity, NULL for pre-mint errors"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "lifecycle_run_id"
-            type: "TEXT"
-            nullable: false
-            description: "Identifier for the lifecycle processing run that produced this error"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "pass_name"
-            type: "TEXT"
-            nullable: false
-            description: "Validation pass category: existence, name, domain, collision, firmographic"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "failure_reason_code"
-            type: "TEXT"
-            nullable: false
-            description: "Standardized failure reason code (e.g. EXISTENCE_FAIL, NAME_FAIL)"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "inputs_snapshot"
-            type: "JSONB"
-            nullable: true
-            description: "Complete snapshot of inputs at time of failure for audit and reprocessing"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp when error was logged, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "resolved_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when error was resolved, NULL if unresolved"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "retry_count"
-            type: "INTEGER"
-            nullable: true
-            description: "Number of retry attempts made, default 0"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "retry_ceiling"
-            type: "INTEGER"
-            nullable: true
-            description: "Maximum retries before marking permanent, default 3"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "retry_after"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Earliest time to retry this error"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "tool_used"
-            type: "TEXT"
-            nullable: true
-            description: "Tool that resolved or attempted resolution (e.g. MXLookup, Firecrawl)"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "tool_tier"
-            type: "INTEGER"
-            nullable: true
-            description: "Toolbox tier: 0=free, 1=cheap, 2=surgical"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "expires_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "TTL for transient errors, auto-resolve after this timestamp"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-
-      - schema: "cl"
-        name: "cl_errors_archive"
-        description: "Archived errors preserving forensic history without cluttering active error table"
-        leaf_type: "ERROR"
-        source_of_truth: true
-        row_identity_strategy: "UUID"
-        columns:
-          - name: "error_id"
-            type: "UUID"
-            nullable: false
-            description: "Unique error identifier copied from cl_errors"
-            semantic_role: "identifier"
-            format: "UUID"
-          - name: "company_unique_id"
-            type: "UUID"
-            nullable: true
-            description: "FK to cl.company_identity, NULL for pre-mint errors"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "lifecycle_run_id"
-            type: "TEXT"
-            nullable: false
-            description: "Identifier for the lifecycle processing run that produced this error"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "pass_name"
-            type: "TEXT"
-            nullable: false
-            description: "Validation pass category: existence, name, domain, collision, firmographic"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "failure_reason_code"
-            type: "TEXT"
-            nullable: false
-            description: "Standardized failure reason code (e.g. EXISTENCE_FAIL, NAME_FAIL)"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "inputs_snapshot"
-            type: "JSONB"
-            nullable: true
-            description: "Complete snapshot of inputs at time of failure for audit and reprocessing"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Original timestamp when error was logged"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "resolved_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when error was resolved"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "retry_count"
-            type: "INTEGER"
-            nullable: true
-            description: "Number of retry attempts made before archival"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "retry_ceiling"
-            type: "INTEGER"
-            nullable: true
-            description: "Maximum retries before marking permanent"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "retry_after"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Earliest time to retry this error"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "tool_used"
-            type: "TEXT"
-            nullable: true
-            description: "Tool that resolved or attempted resolution"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "tool_tier"
-            type: "INTEGER"
-            nullable: true
-            description: "Toolbox tier: 0=free, 1=cheap, 2=surgical"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "expires_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "TTL for transient errors"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "archived_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp when error was archived, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "archive_reason"
-            type: "TEXT"
-            nullable: true
-            description: "Reason for archiving: RESOLVED, TTL_EXPIRED, MANUAL"
-            semantic_role: "attribute"
-            format: "ENUM"
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: Gate
-  # CANONICAL: identity_gate_audit | ERROR: identity_gate_failures
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-GATE"
-    name: "Gate"
+  - subhub_id: "04.01.03"
+    name: "gate"
     tables:
 
       - schema: "cl"
@@ -1182,151 +1096,209 @@ subhubs:
             semantic_role: "attribute"
             format: "ISO-8601"
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: LCS Events
-  # CANONICAL: lcs.event (CET) | ERROR: lcs.err0
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-LCS-EVENTS"
-    name: "LCS Events"
-    tables:
-
-      - schema: "lcs"
-        name: "event"
-        description: "Canonical Event Table — append-only ledger of all communication events, partitioned monthly"
-        leaf_type: "CANONICAL"
+      - schema: "cl"
+        name: "domain_hierarchy"
+        description: "Domain sharing relationships between parent and child companies in hierarchies"
+        leaf_type: "REGISTRY"
         source_of_truth: true
-        row_identity_strategy: "COMPOSITE"
+        row_identity_strategy: "UUID"
         columns:
-          - name: "communication_id"
-            type: "TEXT"
-            nullable: false
-            description: "Message artifact ID (ULID), format: LCS-{PHASE}-{YYYYMMDD}-{ULID}, immutable"
-            semantic_role: "identifier"
-            format: "STRING"
-          - name: "message_run_id"
-            type: "TEXT"
-            nullable: false
-            description: "Delivery attempt ID, format: RUN-LCS-{PHASE}-{YYYYMMDD}-{ULID}-{CHANNEL}-{ATTEMPT}"
-            semantic_role: "identifier"
-            format: "STRING"
-          - name: "sovereign_company_id"
+          - name: "hierarchy_id"
             type: "UUID"
             nullable: false
-            description: "Reference to cl.company_identity by value (not FK due to partitioning)"
-            semantic_role: "foreign_key"
+            description: "Unique hierarchy record identifier, auto-generated primary key"
+            semantic_role: "identifier"
             format: "UUID"
-          - name: "entity_type"
+          - name: "domain"
             type: "TEXT"
             nullable: false
-            description: "Entity target type: slot or person"
+            description: "Shared domain that connects parent and child companies"
             semantic_role: "attribute"
-            format: "ENUM"
-          - name: "entity_id"
+            format: "STRING"
+          - name: "parent_company_id"
             type: "UUID"
-            nullable: false
-            description: "Upstream entity resolution identifier"
+            nullable: true
+            description: "FK to cl.company_identity for the definitive parent entity"
             semantic_role: "foreign_key"
             format: "UUID"
-          - name: "signal_set_hash"
-            type: "TEXT"
-            nullable: false
-            description: "References lcs.signal_registry by value for signal traceability"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "frame_id"
-            type: "TEXT"
-            nullable: false
-            description: "References lcs.frame_registry by value for message frame"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "adapter_type"
-            type: "TEXT"
-            nullable: false
-            description: "References lcs.adapter_registry by value for delivery adapter"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "channel"
-            type: "TEXT"
-            nullable: false
-            description: "Delivery channel code: MG (Mailgun), HR (HeyReach), SH (Sales Handoff)"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "delivery_status"
-            type: "TEXT"
-            nullable: false
-            description: "Delivery outcome: PENDING, SENT, DELIVERED, OPENED, CLICKED, REPLIED, BOUNCED, FAILED"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "lifecycle_phase"
-            type: "TEXT"
-            nullable: false
-            description: "Lifecycle phase: OUTREACH, SALES, or CLIENT"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "event_type"
-            type: "TEXT"
-            nullable: false
-            description: "Pipeline event type (20 canonical types including SIGNAL_RECEIVED, DELIVERY_SENT, etc.)"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "lane"
-            type: "TEXT"
-            nullable: false
-            description: "Communication lane: MAIN, LANE_A, LANE_B, or NEWSLETTER"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "agent_number"
-            type: "TEXT"
-            nullable: false
-            description: "Territory agent identifier for routing and attribution"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "step_number"
-            type: "INTEGER"
-            nullable: false
-            description: "Pipeline step number: 0=gate block, 1-7=pipeline, 8=webhook, 9=reserved"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "step_name"
-            type: "TEXT"
-            nullable: false
-            description: "Human-readable step name in the pipeline sequence"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "payload"
-            type: "JSONB"
+          - name: "child_company_id"
+            type: "UUID"
             nullable: true
-            description: "Compiled message payload (send steps only)"
+            description: "FK to cl.company_identity for subsidiary/branch/location entity"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "relationship_type"
+            type: "TEXT"
+            nullable: false
+            description: "Hierarchy type: PARENT_ANCHOR, CHILD_OPERATING_UNIT, SIBLING_BRAND, AMBIGUOUS_UNRESOLVED"
             semantic_role: "attribute"
-            format: "JSON"
-          - name: "adapter_response"
-            type: "JSONB"
-            nullable: true
-            description: "Raw adapter response from delivery service (post-adapter call only)"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "intelligence_tier"
+            format: "ENUM"
+          - name: "confidence_score"
             type: "INTEGER"
             nullable: true
-            description: "Intelligence tier 1-5 from company intelligence snapshot at composition time"
+            description: "Confidence score 0-100 for the hierarchy relationship determination"
             semantic_role: "metric"
             format: "INTEGER"
-          - name: "sender_identity"
+          - name: "resolution_method"
             type: "TEXT"
             nullable: true
-            description: "Sender persona used for this communication"
+            description: "How the hierarchy was determined: CORPORATE_SIGNALS, OLDEST_RECORD, MANUAL"
             semantic_role: "attribute"
             format: "STRING"
           - name: "created_at"
             type: "TIMESTAMPTZ"
             nullable: false
-            description: "Timestamp when event was created, immutable, part of composite PK"
+            description: "Timestamp when hierarchy relationship was recorded, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "resolved_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when ambiguity was resolved, if applicable"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "resolved_by"
+            type: "TEXT"
+            nullable: true
+            description: "Identity of the agent or user who resolved the ambiguity"
+            semantic_role: "attribute"
+            format: "STRING"
+
+  # ═════════════════════════════════════════════════════════════════════════════
+  # LCS — LIFECYCLE COMMUNICATION SYSTEM (04.01.04)
+  # Womb-to-tomb message ledger — every send ever, all stages
+  # CANONICAL: message_ledger (MID) — one record per send attempt
+  # ERROR: message_error — fail-closed logging for invalid CID-to-MID or output failures
+  # SUPPORTING: sender_profile_registry — from/reply-to/provider configs
+  # CID tables remain stage-owned (outreach, sales, client)
+  # ═════════════════════════════════════════════════════════════════════════════
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # LCS (04.01.04) — Message ledger
+  # ─────────────────────────────────────────────────────────────────────────────
+  - subhub_id: "04.01.04"
+    name: "lcs"
+    tables:
+
+      - schema: "lcs"
+        name: "message_ledger"
+        description: "CTB CANONICAL — womb-to-tomb message ledger, one record per send attempt (MID), source of truth for everything ever sent across all stages"
+        leaf_type: "CANONICAL"
+        source_of_truth: true
+        row_identity_strategy: "UUID"
+        columns:
+          - name: "mid"
+            type: "UUID"
+            nullable: false
+            description: "Primary key, message instance ID — one per send attempt"
+            semantic_role: "identifier"
+            format: "UUID"
+          - name: "sovereign_id"
+            type: "UUID"
+            nullable: false
+            description: "FK to cl.company_identity(company_unique_id)"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "lcs_id"
+            type: "UUID"
+            nullable: false
+            description: "LCS identity, resolves 1:1 from sovereign_id, permanent per company"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "source_stage"
+            type: "TEXT"
+            nullable: false
+            description: "Stage that originated this send: OUTREACH, SALES, or CLIENT"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "source_cid_table"
+            type: "TEXT"
+            nullable: false
+            description: "Fully qualified source CID table name (e.g. outreach.cid_table)"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "cid"
+            type: "TEXT"
+            nullable: false
+            description: "Movement intent identifier from source CID table, logical FK"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "channel"
+            type: "TEXT"
+            nullable: false
+            description: "Communication channel: EMAIL or LINKEDIN"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "provider"
+            type: "TEXT"
+            nullable: false
+            description: "Transport provider: MAILGUN, HEYREACH, or SMTP"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "sender_profile_id"
+            type: "UUID"
+            nullable: false
+            description: "FK to lcs.sender_profile_registry, determines from/reply-to/provider config"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "payload_hash"
+            type: "TEXT"
+            nullable: false
+            description: "Hash of message payload for deduplication and audit"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "status"
+            type: "TEXT"
+            nullable: false
+            description: "Send status FSM: READY, SENT, FAIL, SUPPRESSED, or RETRY"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "provider_message_id"
+            type: "TEXT"
+            nullable: true
+            description: "External message ID returned by transport provider for tracking"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "attempt_number"
+            type: "INTEGER"
+            nullable: false
+            description: "Send attempt number, starts at 1, incremented on retry"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "ready_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when MID entered READY state"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "sent_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp when transport confirmed send"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "last_error_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "Timestamp of most recent error on this MID"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Row creation timestamp, auto-set, immutable"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "updated_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Last update timestamp, auto-set on status change"
             semantic_role: "attribute"
             format: "ISO-8601"
 
       - schema: "lcs"
-        name: "err0"
-        description: "Append-only LCS failure log with ORBT 3-strike protocol for delivery errors"
+        name: "message_error"
+        description: "CTB ERROR — fail-closed logging for invalid CID-to-MID creation or output failures that cannot be recorded on MID"
         leaf_type: "ERROR"
         source_of_truth: true
         row_identity_strategy: "UUID"
@@ -1334,514 +1306,116 @@ subhubs:
           - name: "error_id"
             type: "UUID"
             nullable: false
-            description: "Unique error identifier, auto-generated primary key"
+            description: "Primary key, auto-generated"
             semantic_role: "identifier"
             format: "UUID"
-          - name: "message_run_id"
+          - name: "sovereign_id"
+            type: "UUID"
+            nullable: false
+            description: "FK to cl.company_identity(company_unique_id)"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "lcs_id"
+            type: "UUID"
+            nullable: true
+            description: "FK to lcs record, nullable if lookup fails before resolution"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "source_stage"
             type: "TEXT"
             nullable: false
-            description: "Delivery attempt that encountered failure (by value, not FK)"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "communication_id"
+            description: "Stage that originated the failed operation: OUTREACH, SALES, or CLIENT"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "cid"
             type: "TEXT"
             nullable: true
-            description: "Communication attempt that failed, NULL if pre-CET failure"
+            description: "CID from source table, nullable if error occurs before CID resolution"
             semantic_role: "foreign_key"
             format: "STRING"
-          - name: "sovereign_company_id"
-            type: "TEXT"
-            nullable: true
-            description: "Company reference by value (not FK), nullable for system errors"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "failure_type"
+          - name: "error_code"
             type: "TEXT"
             nullable: false
-            description: "Error classification: ADAPTER_ERROR, TIMEOUT, VALIDATION_ERROR, RATE_LIMIT, BOUNCE_HARD, etc."
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "failure_message"
-            type: "TEXT"
-            nullable: false
-            description: "Human-readable failure message describing the error"
+            description: "Standardized error code: INVALID_CID, LCS_NOT_FOUND, SUPPRESSED, PROVIDER_REJECT, VALIDATION_FAIL"
             semantic_role: "attribute"
             format: "STRING"
-          - name: "lifecycle_phase"
-            type: "TEXT"
+          - name: "payload"
+            type: "JSONB"
             nullable: true
-            description: "Lifecycle phase: OUTREACH, SALES, CLIENT, or NULL"
+            description: "Structured error detail payload for debugging and audit"
             semantic_role: "attribute"
-            format: "ENUM"
-          - name: "adapter_type"
-            type: "TEXT"
-            nullable: true
-            description: "Which adapter failed, if applicable"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "orbt_strike_number"
-            type: "INTEGER"
-            nullable: true
-            description: "ORBT strike: 1, 2, or 3, nullable for non-ORBT errors"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "orbt_action_taken"
-            type: "TEXT"
-            nullable: true
-            description: "Action taken: AUTO_RETRY, ALT_CHANNEL, or HUMAN_ESCALATION"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "orbt_alt_channel_eligible"
-            type: "BOOLEAN"
-            nullable: true
-            description: "Whether alternate channel delivery was checked"
-            semantic_role: "attribute"
-            format: "BOOLEAN"
-          - name: "orbt_alt_channel_reason"
-            type: "TEXT"
-            nullable: true
-            description: "Reason why alternate channel passed or failed eligibility"
-            semantic_role: "attribute"
-            format: "STRING"
+            format: "JSON"
           - name: "created_at"
             type: "TIMESTAMPTZ"
             nullable: false
-            description: "Timestamp when error was logged, immutable, auto-set"
+            description: "Error creation timestamp, auto-set, immutable"
             semantic_role: "attribute"
             format: "ISO-8601"
 
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: LCS Signals
-  # CANONICAL: signal_queue | ERROR: lcs.err0 (shared)
-  # ADR-justified additional table: signal_registry
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-LCS-SIGNALS"
-    name: "LCS Signals"
-    tables:
-
       - schema: "lcs"
-        name: "signal_queue"
-        description: "Transactional signal staging — bridge functions write PENDING rows, cron runner processes them"
-        leaf_type: "CANONICAL"
+        name: "sender_profile_registry"
+        description: "SUPPORTING — sender identity configs per stage/persona/channel, defines from/reply-to/provider settings for transport adapters"
+        leaf_type: "STAGING"
         source_of_truth: true
         row_identity_strategy: "UUID"
         columns:
-          - name: "id"
+          - name: "sender_profile_id"
             type: "UUID"
             nullable: false
-            description: "Unique queue entry identifier, auto-generated primary key"
+            description: "Primary key, unique sender profile identifier"
             semantic_role: "identifier"
             format: "UUID"
-          - name: "signal_set_hash"
+          - name: "stage"
             type: "TEXT"
             nullable: false
-            description: "References lcs.signal_registry by value for signal configuration"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "signal_category"
-            type: "TEXT"
-            nullable: false
-            description: "Signal category denormalized from registry (e.g. RENEWAL_PROXIMITY, GROWTH_SIGNAL)"
+            description: "Stage this profile applies to: OUTREACH, SALES, or CLIENT"
             semantic_role: "attribute"
             format: "ENUM"
-          - name: "sovereign_company_id"
-            type: "UUID"
-            nullable: false
-            description: "Target company, references cl.company_identity by value"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "lifecycle_phase"
-            type: "TEXT"
-            nullable: false
-            description: "Target lifecycle phase: OUTREACH, SALES, or CLIENT"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "preferred_channel"
-            type: "TEXT"
-            nullable: true
-            description: "Routing hint: MG, HR, or SH, nullable for cron runner defaults"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "preferred_lane"
-            type: "TEXT"
-            nullable: true
-            description: "Routing hint: MAIN, LANE_A, LANE_B, or NEWSLETTER, nullable"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "agent_number"
-            type: "TEXT"
-            nullable: true
-            description: "Routing hint for territory agent, nullable"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "signal_data"
-            type: "JSONB"
-            nullable: false
-            description: "Signal payload from pressure_signals.signal_value, default empty object"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "source_hub"
-            type: "TEXT"
-            nullable: false
-            description: "Originating sub-hub: PEOPLE, DOL, BLOG, or MANUAL"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "source_signal_id"
-            type: "UUID"
-            nullable: true
-            description: "FK to pressure_signals.signal_id by value for traceability only"
-            semantic_role: "foreign_key"
-            format: "UUID"
-          - name: "status"
-            type: "TEXT"
-            nullable: false
-            description: "Queue status: PENDING, COMPLETED, FAILED, or SKIPPED, default PENDING"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "priority"
-            type: "INTEGER"
-            nullable: false
-            description: "Priority level for queue processing, default 0"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp when signal was queued, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "processed_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "Timestamp when processing completed"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-
-      # ADR-justified: signal_registry (OWN-10c)
-      - schema: "lcs"
-        name: "signal_registry"
-        description: "Declarative catalog of known signal sets — configuration only, not transactional"
-        leaf_type: "CANONICAL"
-        source_of_truth: true
-        row_identity_strategy: "COMPOSITE"
-        columns:
-          - name: "signal_set_hash"
-            type: "TEXT"
-            nullable: false
-            description: "Deterministic hash of signal configuration, primary key"
-            semantic_role: "identifier"
-            format: "STRING"
-          - name: "signal_name"
-            type: "TEXT"
-            nullable: false
-            description: "Human-readable signal name, unique constraint"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "lifecycle_phase"
-            type: "TEXT"
-            nullable: false
-            description: "Lifecycle phase: OUTREACH, SALES, or CLIENT"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "signal_category"
-            type: "TEXT"
-            nullable: false
-            description: "Signal category: RENEWAL_PROXIMITY, PLAN_CHANGE, GROWTH_SIGNAL, etc."
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "description"
-            type: "TEXT"
-            nullable: true
-            description: "Human-readable description of the signal purpose"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "data_fetched_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "When signal data was last fetched from source"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "data_expires_at"
-            type: "TIMESTAMPTZ"
-            nullable: true
-            description: "When signal data becomes stale (computed: data_fetched_at + freshness_window)"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "freshness_window"
-            type: "TEXT"
-            nullable: false
-            description: "How long data stays fresh before expiry, default 30 days interval"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "signal_validity_score"
-            type: "NUMERIC"
-            nullable: true
-            description: "Computed signal validity score 0.00-1.00"
-            semantic_role: "metric"
-            format: "STRING"
-          - name: "validity_threshold"
-            type: "NUMERIC"
-            nullable: false
-            description: "Minimum validity score to proceed, default 0.50"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "is_active"
-            type: "BOOLEAN"
-            nullable: false
-            description: "Status flag, default TRUE, soft-deactivate via FALSE (no DELETE)"
-            semantic_role: "attribute"
-            format: "BOOLEAN"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp when signal was registered, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "updated_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp of last update, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: LCS Frames
-  # CANONICAL: frame_registry | ERROR: lcs.err0 (shared)
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-LCS-FRAMES"
-    name: "LCS Frames"
-    tables:
-
-      - schema: "lcs"
-        name: "frame_registry"
-        description: "Declarative catalog of known message frames — configuration only, not transactional"
-        leaf_type: "CANONICAL"
-        source_of_truth: true
-        row_identity_strategy: "COMPOSITE"
-        columns:
-          - name: "frame_id"
-            type: "TEXT"
-            nullable: false
-            description: "Unique frame identifier, primary key"
-            semantic_role: "identifier"
-            format: "STRING"
-          - name: "frame_name"
-            type: "TEXT"
-            nullable: false
-            description: "Human-readable frame name, unique constraint"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "lifecycle_phase"
-            type: "TEXT"
-            nullable: false
-            description: "Lifecycle phase: OUTREACH, SALES, or CLIENT"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "frame_type"
-            type: "TEXT"
-            nullable: false
-            description: "Frame type: HAMMER, NEWSLETTER, POND, MEETING_FOLLOWUP, EMPLOYEE_COMM, etc."
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "tier"
-            type: "INTEGER"
-            nullable: false
-            description: "Intelligence tier required (1-5), higher tier = more data required"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "required_fields"
-            type: "JSONB"
-            nullable: false
-            description: "JSON array of field names from v_company_intelligence required for this frame"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "fallback_frame"
-            type: "TEXT"
-            nullable: true
-            description: "Frame to cascade to if required_fields are missing (references frame_id)"
-            semantic_role: "foreign_key"
-            format: "STRING"
-          - name: "channel"
-            type: "TEXT"
-            nullable: true
-            description: "Delivery channel: MG or HR, nullable for non-channel-specific frames"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "step_in_sequence"
-            type: "INTEGER"
-            nullable: true
-            description: "Position in hammer/sequence, nullable for non-sequence frames"
-            semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "description"
-            type: "TEXT"
-            nullable: true
-            description: "Human-readable description of the frame purpose"
-            semantic_role: "attribute"
-            format: "STRING"
-          - name: "is_active"
-            type: "BOOLEAN"
-            nullable: false
-            description: "Status flag, default TRUE, soft-deactivate via FALSE (no DELETE)"
-            semantic_role: "attribute"
-            format: "BOOLEAN"
-          - name: "created_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp when frame was registered, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-          - name: "updated_at"
-            type: "TIMESTAMPTZ"
-            nullable: false
-            description: "Timestamp of last update, auto-set"
-            semantic_role: "attribute"
-            format: "ISO-8601"
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # SUB-HUB: LCS Adapters
-  # CANONICAL: adapter_registry | ERROR: lcs.err0 (shared)
-  # ─────────────────────────────────────────────────────────────────────────────
-  - subhub_id: "SH-LCS-ADAPTERS"
-    name: "LCS Adapters"
-    tables:
-
-      - schema: "lcs"
-        name: "adapter_registry"
-        description: "Declarative catalog of known delivery adapters — configuration only, not transactional"
-        leaf_type: "CANONICAL"
-        source_of_truth: true
-        row_identity_strategy: "COMPOSITE"
-        columns:
-          - name: "adapter_type"
-            type: "TEXT"
-            nullable: false
-            description: "Unique adapter identifier, primary key"
-            semantic_role: "identifier"
-            format: "STRING"
-          - name: "adapter_name"
-            type: "TEXT"
-            nullable: false
-            description: "Human-readable adapter name, unique constraint"
-            semantic_role: "attribute"
-            format: "STRING"
           - name: "channel"
             type: "TEXT"
             nullable: false
-            description: "Delivery channel: MG (Mailgun), HR (HeyReach), SH (Sales Handoff)"
+            description: "Communication channel: EMAIL or LINKEDIN"
             semantic_role: "attribute"
             format: "ENUM"
-          - name: "direction"
+          - name: "provider"
             type: "TEXT"
             nullable: false
-            description: "Direction: outbound or inbound, default outbound"
+            description: "Transport provider: MAILGUN, HEYREACH, or SMTP"
             semantic_role: "attribute"
             format: "ENUM"
-          - name: "description"
+          - name: "from_address"
             type: "TEXT"
             nullable: true
-            description: "Human-readable description of the adapter purpose"
+            description: "Sender email address or LinkedIn profile identifier"
             semantic_role: "attribute"
             format: "STRING"
-          - name: "domain_rotation_config"
-            type: "JSONB"
-            nullable: true
-            description: "MG adapter domain rotation config: domains, rotation_strategy, daily_cap_per_domain"
-            semantic_role: "attribute"
-            format: "JSON"
-          - name: "health_status"
+          - name: "reply_to_address"
             type: "TEXT"
-            nullable: false
-            description: "Current adapter health: HEALTHY, DEGRADED, PAUSED, or WARMING"
-            semantic_role: "attribute"
-            format: "ENUM"
-          - name: "daily_cap"
-            type: "INTEGER"
             nullable: true
-            description: "Maximum sends per day, nullable for uncapped adapters"
+            description: "Reply-to email address, nullable for LinkedIn channel"
             semantic_role: "attribute"
-            format: "INTEGER"
-          - name: "sent_today"
-            type: "INTEGER"
-            nullable: false
-            description: "Daily counter reset via cron, default 0"
-            semantic_role: "metric"
-            format: "INTEGER"
-          - name: "bounce_rate_24h"
-            type: "NUMERIC"
-            nullable: true
-            description: "Rolling 24-hour bounce rate, default 0"
-            semantic_role: "metric"
             format: "STRING"
-          - name: "complaint_rate_24h"
-            type: "NUMERIC"
+          - name: "display_name"
+            type: "TEXT"
             nullable: true
-            description: "Rolling 24-hour complaint rate, default 0"
-            semantic_role: "metric"
-            format: "STRING"
-          - name: "auto_pause_rules"
-            type: "JSONB"
-            nullable: true
-            description: "Auto-pause thresholds: max_bounce_rate, max_complaint_rate, daily_cap_pause"
+            description: "Human-readable sender display name"
             semantic_role: "attribute"
-            format: "JSON"
+            format: "STRING"
           - name: "is_active"
             type: "BOOLEAN"
             nullable: false
-            description: "Status flag, default TRUE, soft-deactivate via FALSE (no DELETE)"
+            description: "Whether this sender profile is active, default TRUE"
             semantic_role: "attribute"
             format: "BOOLEAN"
           - name: "created_at"
             type: "TIMESTAMPTZ"
             nullable: false
-            description: "Timestamp when adapter was registered, auto-set"
+            description: "Profile creation timestamp, auto-set"
             semantic_role: "attribute"
             format: "ISO-8601"
           - name: "updated_at"
             type: "TIMESTAMPTZ"
             nullable: false
-            description: "Timestamp of last update, auto-set"
+            description: "Last update timestamp, auto-set"
             semantic_role: "attribute"
             format: "ISO-8601"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# MATERIALIZED VIEWS (PROJECTIONS — documented, not editable via registry)
-# ═══════════════════════════════════════════════════════════════════════════════
-# These are read-only projections maintained by database cron jobs.
-# They are documented here for completeness but are NOT entry points.
-# Editing these views requires changing the underlying SQL, not this file.
-#
-# Views:
-#   - lcs.v_latest_by_entity: Latest communication event per entity
-#   - lcs.v_latest_by_company: Latest communication event per company
-#   - lcs.v_company_intelligence: Cross-sub-hub intelligence snapshot (41+ cols)
-#   - cl.v_company_identity_eligible: Eligibility contract for downstream
-#   - cl.v_identity_gate_summary: Gate eligibility statistics
-#   - cl.v_company_lifecycle_status: Lifecycle pointer status for UI
-#
-# Refresh schedule: nightly at 2:00-2:30 AM UTC (materialized views)
-# ═══════════════════════════════════════════════════════════════════════════════
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# GENERATED OUTPUT PATHS
-# ═══════════════════════════════════════════════════════════════════════════════
-# These paths are where codegen-generate.sh writes output.
-# Files in these paths are PROJECTIONS — never hand-edit.
-# ═══════════════════════════════════════════════════════════════════════════════
-
-generated_output:
-  hub_types: "src/data/hub/generated/"
-  spoke_types: "src/data/spokes/generated/"
-  data_dictionary: "docs/data/COLUMN_DATA_DICTIONARY.md"
-  marker: "// AUTO-GENERATED FROM column_registry.yml — DO NOT EDIT"
-
-# ═══════════════════════════════════════════════════════════════════════════════
-# DOCUMENT CONTROL
-# ═══════════════════════════════════════════════════════════════════════════════
-
-document_control:
-  created: "2026-02-16"
-  last_modified: "2026-02-16"
-  status: "ACTIVE"
-  authority: "imo-creator (Inherited)"
-  change_protocol: "Update registry → run codegen-generate.sh → commit both"
