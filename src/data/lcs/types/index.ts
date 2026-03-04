@@ -5,3 +5,5 @@ export * from './signal-registry';
 export * from './frame-registry';
 export * from './adapter-registry';
 export * from './views';
+export * from './mid-sequence-state';
+export * from './sid-output';

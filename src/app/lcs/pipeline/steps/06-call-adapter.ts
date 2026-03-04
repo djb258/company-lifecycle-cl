@@ -35,9 +35,9 @@ export async function callAdapter(
       channel,
       recipient_email: state.recipient_email,
       recipient_linkedin_url: state.recipient_linkedin_url,
-      subject: null,        // Frame template populates this (future: AI composition)
-      body_html: null,      // Frame template populates this
-      body_text: null,      // Frame template populates this
+      subject: state.subject_line ?? null,
+      body_html: state.body_html ?? null,
+      body_text: state.body_plain ?? null,
       sender_identity: state.sender_identity!,
       sender_email: state.sender_email,
       sender_domain: state.sender_domain,
