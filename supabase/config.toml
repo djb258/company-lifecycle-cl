@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.lcs-inbound-reply]
 verify_jwt = false
+
+[functions.lcs-delivery-runner]
+verify_jwt = false
