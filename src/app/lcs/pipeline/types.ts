@@ -64,6 +64,12 @@ export interface PipelineState {
   sender_email: string | null;
   sender_domain: string | null;
 
+  // --- From SID Output (hydrated by delivery-queue) ---
+  subject_line: string | null;
+  body_plain: string | null;
+  body_html: string | null;
+  recipient_name: string | null;
+
   // --- From Adapter Call (Step 6) ---
   message_run_id: string | null;
   channel: Channel | null;
