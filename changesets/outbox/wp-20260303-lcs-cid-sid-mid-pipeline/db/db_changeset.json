@@ -1,0 +1,56 @@
+{
+  "changeset_id": "db-cs-20260303-lcs-cid-sid-mid-001",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "db_system": "neon",
+  "db_targets": [
+    "lcs.cid",
+    "lcs.sid_output",
+    "lcs.mid_sequence_state",
+    "lcs.frame_registry"
+  ],
+  "migrations": [
+    {
+      "file": "migrations/lcs/005_lcs_cid_sid_mid.sql",
+      "direction": "forward",
+      "description": "Create lcs.cid, lcs.sid_output, lcs.mid_sequence_state; enforce append-only triggers; add SID notify trigger from CID COMPILED inserts; alter lcs.frame_registry for CID/SID/MID integration columns."
+    },
+    {
+      "file": "migrations/lcs/005_lcs_cid_sid_mid_rollback.sql",
+      "direction": "rollback",
+      "description": "Rollback migration 005: remove SID notify trigger/function, remove append-only triggers/functions, drop new tables, and remove frame_registry integration columns/constraints."
+    }
+  ],
+  "schema_diff_artifact": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/schema_diff.md",
+  "rollback_plan": {
+    "strategy": "migration_reverse",
+    "migrations": [
+      "migrations/lcs/005_lcs_cid_sid_mid_rollback.sql"
+    ],
+    "verification": "Verify lcs.cid/lcs.sid_output/lcs.mid_sequence_state are absent, frame_registry integration columns are absent, and trg_lcs_cid_notify_sid_worker + lcs.notify_sid_worker() are absent after rollback."
+  },
+  "validation_steps": [
+    {
+      "step": "SELECT to_regclass('lcs.cid'), to_regclass('lcs.sid_output'), to_regclass('lcs.mid_sequence_state');",
+      "expected": "All three values are non-null after forward migration."
+    },
+    {
+      "step": "SELECT count(*) FROM information_schema.columns WHERE table_schema='lcs' AND table_name='frame_registry' AND column_name IN ('cid_compilation_rule','sid_template_id','mid_sequence_type','mid_delay_hours','mid_max_attempts');",
+      "expected": "Returns 5 after forward migration."
+    },
+    {
+      "step": "SELECT count(*) FROM pg_trigger WHERE tgname='trg_lcs_cid_notify_sid_worker';",
+      "expected": "Returns 1 after forward migration."
+    },
+    {
+      "step": "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON p.pronamespace=n.oid WHERE n.nspname='lcs' AND p.proname='notify_sid_worker';",
+      "expected": "Returns 1 after forward migration."
+    },
+    {
+      "step": "SELECT count(*) FROM pg_trigger WHERE tgname IN ('trg_lcs_cid_no_update','trg_lcs_cid_no_delete','trg_lcs_sid_output_no_update','trg_lcs_sid_output_no_delete','trg_lcs_mid_sequence_state_no_update','trg_lcs_mid_sequence_state_no_delete');",
+      "expected": "Returns 6 to confirm append-only immutability triggers are installed."
+    }
+  ],
+  "risk_class": "MED",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T22:21:06Z"
+}

@@ -1,0 +1,41 @@
+{
+  "routing_id": "route-wp-20260303-lcs-cid-sid-mid-pipeline-to-auditor",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "source_agent": "worker",
+  "target_agent": "auditor",
+  "status": "READY_FOR_AUDIT",
+  "work_packet_path": "work_packets/inbox/wp-20260303-lcs-cid-sid-mid-pipeline.json",
+  "changeset_path": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/changeset.json",
+  "execution_log_path": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/execution_log.json",
+  "db_changeset_path": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/db_changeset.json",
+  "worker_briefing_path": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/worker_briefing.md",
+  "pressure_test_reports": {
+    "arch": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/audit/ARCH_PRESSURE_REPORT.json",
+    "flow": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/audit/FLOW_PRESSURE_REPORT.json"
+  },
+  "documentation": [
+    "docs/schema/LCS_CID_SID_MID.md",
+    "docs/schema/LCS_PIPELINE_ERD.md",
+    "docs/schema/CTB_DOCTRINE_TABLES.md",
+    "src/sys/lcs/doctrine/LCS_DATA_MODEL.md",
+    "docs/schema/CL_SCHEMA_INDEX.md"
+  ],
+  "lanes_completed": ["standard", "db"],
+  "phases_completed": [
+    "Phase 1: Schema migrations — APPLIED",
+    "Phase 2: CID compiler — CODE COMPLETE",
+    "Phase 3: SID worker — CODE COMPLETE",
+    "Phase 4: MID engine — CODE COMPLETE",
+    "Post-build: Deprecation notices — COMPLETE",
+    "DB Agent: Doctrine migration — COMPLETE",
+    "DB Agent: Type B documentation — COMPLETE"
+  ],
+  "neon_verified": true,
+  "pressure_test_all_pass": true,
+  "architectural_flag": true,
+  "requires_pressure_test": true,
+  "doctrine_version": "3.5.0",
+  "process_id": "d6cccd55-ec64-4caa-b380-1b7ee047a783",
+  "operational_id": "a1f3c8e7-4b29-4d6a-9e01-7f5c3d2b8a64",
+  "timestamp": "2026-03-03T23:45:00Z"
+}

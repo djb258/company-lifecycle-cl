@@ -100,3 +100,34 @@ export type IntelligenceTier = 1 | 2 | 3 | 4 | 5;
 
 // --- Phase code (used in ID format) ---
 export type PhaseCode = 'OUT' | 'SAL' | 'CLI';
+
+// --- CID: compilation_status ---
+export type CompilationStatus = 'COMPILED' | 'FAILED' | 'BLOCKED';
+
+// --- SID: construction_status ---
+export type ConstructionStatus = 'CONSTRUCTED' | 'FAILED' | 'BLOCKED';
+
+// --- MID: gate_verdict ---
+export type GateVerdict = 'PASS' | 'FAIL' | 'SKIP';
+
+// --- MID: throttle_status ---
+export type ThrottleStatus =
+  | 'CLEAR'
+  | 'THROTTLED_RECIPIENT'
+  | 'THROTTLED_COMPANY'
+  | 'THROTTLED_ADAPTER';
+
+// --- MID: delivery_status (MID-specific, extends CET delivery_status) ---
+export type MidDeliveryStatus =
+  | 'PENDING'
+  | 'QUEUED'
+  | 'SENT'
+  | 'DELIVERED'
+  | 'FAILED'
+  | 'BOUNCED';
+
+// --- Frame Registry: cid_compilation_rule ---
+export type CidCompilationRule = 'STANDARD' | 'STRICT' | 'LITE';
+
+// --- Frame Registry: mid_sequence_type ---
+export type MidSequenceType = 'IMMEDIATE' | 'DELAYED' | 'BATCH';

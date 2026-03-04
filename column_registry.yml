@@ -1697,6 +1697,36 @@ subhubs:
             description: "Timestamp of last update, auto-set"
             semantic_role: "attribute"
             format: "ISO-8601"
+          - name: "cid_compilation_rule"
+            type: "TEXT"
+            nullable: true
+            description: "CID compilation rule: STANDARD (normal), STRICT (all fields required), LITE (minimal checks)"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "sid_template_id"
+            type: "TEXT"
+            nullable: true
+            description: "SID template identifier for message construction, references template catalog by value"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "mid_sequence_type"
+            type: "TEXT"
+            nullable: true
+            description: "MID delivery sequence type: IMMEDIATE (send now), DELAYED (wait), BATCH (aggregate)"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "mid_delay_hours"
+            type: "INTEGER"
+            nullable: true
+            description: "Hours to delay between sequence steps, applicable when mid_sequence_type = DELAYED"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "mid_max_attempts"
+            type: "INTEGER"
+            nullable: true
+            description: "Maximum delivery attempts per channel, default 3"
+            semantic_role: "attribute"
+            format: "INTEGER"
 
   # ─────────────────────────────────────────────────────────────────────────────
   # SUB-HUB: LCS Adapters
@@ -1801,6 +1831,291 @@ subhubs:
             type: "TIMESTAMPTZ"
             nullable: false
             description: "Timestamp of last update, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # SUB-HUB: LCS Pipeline (CID/SID/MID)
+  # CANONICAL: lcs.cid | ERROR: lcs.err0 (shared)
+  # SUPPORTING: lcs.sid_output, lcs.mid_sequence_state
+  # ─────────────────────────────────────────────────────────────────────────────
+  - subhub_id: "SH-LCS-PIPELINE"
+    name: "LCS Pipeline"
+    tables:
+
+      - schema: "lcs"
+        name: "cid"
+        description: "CID Compiler Registry — append-only ledger of minted communication_ids with compilation state, signal source, frame binding"
+        leaf_type: "CANONICAL"
+        source_of_truth: true
+        row_identity_strategy: "COMPOSITE"
+        columns:
+          - name: "communication_id"
+            type: "TEXT"
+            nullable: false
+            description: "Minted communication ID, format: LCS-{PHASE}-{YYYYMMDD}-{ULID}, immutable primary key"
+            semantic_role: "identifier"
+            format: "STRING"
+          - name: "sovereign_company_id"
+            type: "UUID"
+            nullable: false
+            description: "Target company, references cl.company_identity by value (not FK)"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "entity_type"
+            type: "TEXT"
+            nullable: false
+            description: "Entity target type: slot or person"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "entity_id"
+            type: "UUID"
+            nullable: false
+            description: "Resolved entity identifier from upstream"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "signal_set_hash"
+            type: "TEXT"
+            nullable: false
+            description: "Source signal reference, references lcs.signal_registry by value"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "signal_queue_id"
+            type: "UUID"
+            nullable: true
+            description: "Reference to lcs.signal_queue entry that triggered compilation, nullable for manual mints"
+            semantic_role: "foreign_key"
+            format: "UUID"
+          - name: "frame_id"
+            type: "TEXT"
+            nullable: false
+            description: "Bound frame from lcs.frame_registry, by value reference"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "lifecycle_phase"
+            type: "TEXT"
+            nullable: false
+            description: "Lifecycle phase: OUTREACH, SALES, or CLIENT"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "lane"
+            type: "TEXT"
+            nullable: false
+            description: "Communication lane: MAIN, LANE_A, LANE_B, or NEWSLETTER"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "agent_number"
+            type: "TEXT"
+            nullable: false
+            description: "Territory agent identifier for routing and attribution"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "intelligence_tier"
+            type: "INTEGER"
+            nullable: true
+            description: "Intelligence tier 1-5 from v_company_intelligence snapshot at compilation time"
+            semantic_role: "metric"
+            format: "INTEGER"
+          - name: "compilation_status"
+            type: "TEXT"
+            nullable: false
+            description: "Compilation outcome: COMPILED (success), FAILED (data issue), BLOCKED (gate/throttle)"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "compilation_reason"
+            type: "TEXT"
+            nullable: true
+            description: "Reason for FAILED or BLOCKED compilation status"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Timestamp when CID was minted, immutable, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+
+      - schema: "lcs"
+        name: "sid_output"
+        description: "SID Message Construction Output — append-only record of message construction per communication"
+        leaf_type: "STAGING"
+        source_of_truth: true
+        row_identity_strategy: "UUID"
+        columns:
+          - name: "sid_id"
+            type: "UUID"
+            nullable: false
+            description: "Unique SID output identifier, auto-generated primary key"
+            semantic_role: "identifier"
+            format: "UUID"
+          - name: "communication_id"
+            type: "TEXT"
+            nullable: false
+            description: "References lcs.cid.communication_id by value (not FK)"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "frame_id"
+            type: "TEXT"
+            nullable: false
+            description: "Frame used for message construction, by value reference"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "template_id"
+            type: "TEXT"
+            nullable: true
+            description: "Resolved template identifier used for message construction"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "subject_line"
+            type: "TEXT"
+            nullable: true
+            description: "Constructed email subject line"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "body_plain"
+            type: "TEXT"
+            nullable: true
+            description: "Constructed message body in plain text"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "body_html"
+            type: "TEXT"
+            nullable: true
+            description: "Constructed message body in HTML"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "sender_identity"
+            type: "TEXT"
+            nullable: true
+            description: "Sender persona used for this communication"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "sender_email"
+            type: "TEXT"
+            nullable: true
+            description: "Resolved from-address for delivery"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "recipient_email"
+            type: "TEXT"
+            nullable: true
+            description: "Resolved recipient email address"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "recipient_name"
+            type: "TEXT"
+            nullable: true
+            description: "Resolved recipient display name"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "construction_status"
+            type: "TEXT"
+            nullable: false
+            description: "Construction outcome: CONSTRUCTED (success), FAILED (template/data issue), BLOCKED (gate)"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "construction_reason"
+            type: "TEXT"
+            nullable: true
+            description: "Reason for FAILED or BLOCKED construction status"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Timestamp when SID output was created, immutable, auto-set"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+
+      - schema: "lcs"
+        name: "mid_sequence_state"
+        description: "MID Delivery Sequence State — append-only record of delivery sequencing, gate verdicts, adapter routing, attempt lifecycle"
+        leaf_type: "STAGING"
+        source_of_truth: true
+        row_identity_strategy: "UUID"
+        columns:
+          - name: "mid_id"
+            type: "UUID"
+            nullable: false
+            description: "Unique MID sequence state identifier, auto-generated primary key"
+            semantic_role: "identifier"
+            format: "UUID"
+          - name: "message_run_id"
+            type: "TEXT"
+            nullable: false
+            description: "Delivery attempt ID, format: RUN-LCS-{PHASE}-{YYYYMMDD}-{ULID}-{CHANNEL}-{ATTEMPT}"
+            semantic_role: "identifier"
+            format: "STRING"
+          - name: "communication_id"
+            type: "TEXT"
+            nullable: false
+            description: "References lcs.cid.communication_id by value (not FK)"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "adapter_type"
+            type: "TEXT"
+            nullable: false
+            description: "Routed adapter type, by value reference to lcs.adapter_registry"
+            semantic_role: "foreign_key"
+            format: "STRING"
+          - name: "channel"
+            type: "TEXT"
+            nullable: false
+            description: "Delivery channel: MG (Mailgun), HR (HeyReach), SH (Sales Handoff)"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "sequence_position"
+            type: "INTEGER"
+            nullable: false
+            description: "Position in delivery sequence"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "attempt_number"
+            type: "INTEGER"
+            nullable: false
+            description: "Delivery attempt number (1-10), default 1"
+            semantic_role: "attribute"
+            format: "INTEGER"
+          - name: "gate_verdict"
+            type: "TEXT"
+            nullable: false
+            description: "Pre-delivery gate verdict: PASS (proceed), FAIL (blocked), SKIP (not applicable)"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "gate_reason"
+            type: "TEXT"
+            nullable: true
+            description: "Reason for FAIL or SKIP gate verdict"
+            semantic_role: "attribute"
+            format: "STRING"
+          - name: "throttle_status"
+            type: "TEXT"
+            nullable: true
+            description: "Throttle state: CLEAR, THROTTLED_RECIPIENT, THROTTLED_COMPANY, THROTTLED_ADAPTER"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "delivery_status"
+            type: "TEXT"
+            nullable: false
+            description: "Delivery lifecycle state: PENDING, QUEUED, SENT, DELIVERED, FAILED, BOUNCED"
+            semantic_role: "attribute"
+            format: "ENUM"
+          - name: "scheduled_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "When delivery is scheduled for, nullable for immediate sends"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "attempted_at"
+            type: "TIMESTAMPTZ"
+            nullable: true
+            description: "When delivery was attempted"
+            semantic_role: "attribute"
+            format: "ISO-8601"
+          - name: "created_at"
+            type: "TIMESTAMPTZ"
+            nullable: false
+            description: "Timestamp when MID state was recorded, immutable, auto-set"
             semantic_role: "attribute"
             format: "ISO-8601"
 

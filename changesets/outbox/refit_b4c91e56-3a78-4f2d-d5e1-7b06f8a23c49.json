@@ -1,0 +1,28 @@
+{
+  "process_id": "8e3e42d5-dc39-4ba2-96be-d6de9b511c75",
+  "operational_id": "b4c91e56-3a78-4f2d-d5e1-7b06f8a23c49",
+  "repo_alias": "company-lifecycle-cl",
+  "refit_applied": true,
+  "surfaces_created": [
+    ".github/workflows/garage-certification-gate.yml",
+    "audit_reports/.keep",
+    ".garage/README.md"
+  ],
+  "surfaces_skipped": [
+    {
+      "path": "heir.doctrine.yaml",
+      "reason": "Existing valid heir.doctrine.yaml found — guard rail: do not overwrite"
+    },
+    {
+      "path": "changesets/outbox/",
+      "reason": "Directory already exists"
+    }
+  ],
+  "fleet_inventory_update": {
+    "previous_state": "independent",
+    "new_state": "aligned",
+    "all_surfaces_present": true
+  },
+  "work_packet_id": "wp-20260303-cl-fleet-refit-cert-surfaces",
+  "timestamp": "2026-03-03T23:30:00Z"
+}

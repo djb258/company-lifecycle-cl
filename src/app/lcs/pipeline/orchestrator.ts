@@ -13,18 +13,17 @@ import {
 } from './steps';
 
 /**
+ * @deprecated Use the CID→SID→MID pipeline instead:
+ *   - CID Compiler: ./cid-compiler.ts (replaces Steps 1-4)
+ *   - SID Worker: ./sid-worker.ts (replaces Step 5 + composition)
+ *   - MID Engine: ./mid-engine.ts (replaces Steps 6-7 + delivery)
+ *   - Cron: src/runtime/lcs/cid-sid-mid-cron.ts
+ *
+ * This monolithic 9-step orchestrator is superseded by the three-phase
+ * CID→SID→MID pipeline (wp-20260303-lcs-cid-sid-mid-pipeline).
+ * Retained for backward compatibility during transition.
+ *
  * LCS Pipeline Orchestrator — runs the 9-step IMO pipeline.
- *
- * The orchestrator is the HUB of the bicycle wheel.
- * Spokes deliver signals IN, the hub processes through 9 steps, spokes deliver messages OUT.
- *
- * Gate integration points:
- *   - CAPACITY gate: after Step 1, before Step 2
- *   - FRESHNESS gate: after Step 2, before Step 3
- *   - SUPPRESSION gate: after Step 4, before Step 5 (needs intelligence for recipient lookup)
- *
- * What triggers this? An ingress spoke calls runPipeline() with a SignalInput.
- * How do we get it? The spoke pushes the signal; the orchestrator owns the rest.
  *
  * @param signal — Raw signal from an ingress spoke
  * @param adapter — The delivery adapter to use (injected, not resolved internally)

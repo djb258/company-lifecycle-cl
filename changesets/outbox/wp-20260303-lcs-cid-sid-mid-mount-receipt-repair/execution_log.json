@@ -1,0 +1,58 @@
+{
+  "execution_log_id": "exec-wp-20260303-lcs-cid-sid-mid-mount-receipt-repair",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-mount-receipt-repair",
+  "changeset_id": "cs-wp-20260303-lcs-cid-sid-mid-mount-receipt-repair",
+  "agent": "Builder v2.7.0",
+  "execution_type": "standard",
+  "orbt_mode": "repair",
+  "target_repo": "company-lifecycle-cl",
+  "doctrine_version": "3.5.0",
+  "timestamp_start": "2026-03-03T23:55:00Z",
+  "timestamp_end": "2026-03-03T23:55:00Z",
+  "actions": [
+    {
+      "step": 1,
+      "action": "WORK_PACKET validation",
+      "status": "COMPLETED",
+      "detail": "Validated wp-20260303-lcs-cid-sid-mid-mount-receipt-repair. orbt_mode=repair, execution_type=standard, no blockers."
+    },
+    {
+      "step": 2,
+      "action": "Read original execution log",
+      "status": "COMPLETED",
+      "detail": "Read changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/execution_log.json. Identified 16 files_created and 9 files_modified (plus 4 additional files from db/doc steps = 29 total source files)."
+    },
+    {
+      "step": 3,
+      "action": "Compute integrity hashes",
+      "status": "COMPLETED",
+      "detail": "Computed SHA256 for all 29 source files using shasum -a 256. All files present in working tree."
+    },
+    {
+      "step": 4,
+      "action": "Record commit SHAs",
+      "status": "COMPLETED",
+      "detail": "commit_sha_at_mount = commit_sha_at_completion = 7d6bafc (HEAD). Original build files exist uncommitted in working tree; HEAD is pre-build baseline."
+    },
+    {
+      "step": 5,
+      "action": "HEIR validation",
+      "status": "COMPLETED",
+      "detail": "5/5 checks PASS: heir_present, lcs_subhub_declared, scope_containment (all files within allowed_paths post scope-repair-v2), id_model_integrity, schema_ownership_respected."
+    },
+    {
+      "step": 6,
+      "action": "Produce mount_receipt.json",
+      "status": "COMPLETED",
+      "detail": "Written to changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/mount_receipt.json. RULE-013/014 blocker resolved."
+    }
+  ],
+  "files_created": [
+    "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/mount_receipt.json"
+  ],
+  "files_modified": [],
+  "scope_violations": [],
+  "deviations": [],
+  "overall_status": "COMPLETED",
+  "ready_for_auditor": true
+}

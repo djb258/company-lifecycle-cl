@@ -1,0 +1,65 @@
+{
+  "artifact": "schema_diff",
+  "work_packet_id": "wp-20260303-ctb-doctrine-db-scope-correction",
+  "db_system": "neon",
+  "baseline": {
+    "schemas_expected_absent": [
+      "ctb",
+      "doctrine"
+    ],
+    "tables_expected_absent": [
+      "ctb.table_registry",
+      "doctrine.doctrine_library",
+      "doctrine.doctrine_key",
+      "doctrine.doctrine_library_error"
+    ],
+    "extensions_expected_absent": [
+      "vector"
+    ],
+    "triggers_expected_absent": [
+      "trg_set_updated_at"
+    ],
+    "functions_expected_absent": [
+      "doctrine.set_updated_at"
+    ]
+  },
+  "target": {
+    "schemas_expected_present": [
+      "ctb",
+      "doctrine"
+    ],
+    "tables_expected_present": [
+      "ctb.table_registry",
+      "doctrine.doctrine_library",
+      "doctrine.doctrine_key",
+      "doctrine.doctrine_library_error"
+    ],
+    "extensions_expected_present": [
+      "vector"
+    ],
+    "triggers_expected_present": [
+      "trg_set_updated_at"
+    ],
+    "functions_expected_present": [
+      "doctrine.set_updated_at"
+    ],
+    "indexes_expected_present": [
+      "idx_dl_doctrine_id",
+      "idx_dl_domain_audience",
+      "idx_dl_embedding",
+      "idx_dk_lookup",
+      "idx_dk_title_search"
+    ],
+    "data_expected": {
+      "ctb.table_registry": 20,
+      "doctrine.doctrine_library": 668,
+      "doctrine.doctrine_key": 335,
+      "doctrine.doctrine_library_error": 0
+    }
+  },
+  "migration_files": [
+    "migrations/006_ctb_doctrine_tables.sql",
+    "migrations/006_ctb_doctrine_tables_rollback.sql"
+  ],
+  "generated_at": "2026-03-03T23:35:00Z"
+}
