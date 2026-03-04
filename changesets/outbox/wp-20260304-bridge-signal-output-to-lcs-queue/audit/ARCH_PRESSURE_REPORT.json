@@ -1,0 +1,46 @@
+{
+  "report_type": "ARCH_PRESSURE_TEST",
+  "work_packet_id": "wp-20260304-bridge-signal-output-to-lcs-queue",
+  "changeset_id": "db-cs-20260304-bridge-signal-output-001",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T20:30:00Z",
+  "result": "PASS",
+  "score": "5/5",
+  "invariants": [
+    {
+      "id": "ARCH-1",
+      "name": "Registry-First Enforcement",
+      "description": "All target tables referenced by function must be registered before function creation.",
+      "result": "PASS",
+      "evidence": "lcs.signal_queue and lcs.signal_registry are pre-existing registered tables. lcs.bridge_signal_output is a function, not a table — no registry entry required. outreach.signal_output is a source table owned by outreach hub (not LCS registry scope)."
+    },
+    {
+      "id": "ARCH-2",
+      "name": "Schema Isolation",
+      "description": "Function resides in correct schema and does not create cross-schema DDL.",
+      "result": "PASS",
+      "evidence": "Function created in lcs schema. Reads from outreach and cl schemas (cross-schema SELECT only). Writes only to lcs.signal_queue. No DDL in other schemas."
+    },
+    {
+      "id": "ARCH-3",
+      "name": "Existing Function Immutability",
+      "description": "Existing lcs.bridge_pressure_signals() must not be modified.",
+      "result": "PASS",
+      "evidence": "WP constraint: 'Replace lcs.bridge_pressure_signals() — do not modify it.' Migration 009 creates a NEW function (bridge_signal_output). bridge_pressure_signals is untouched. Verified: both functions coexist in lcs schema."
+    },
+    {
+      "id": "ARCH-4",
+      "name": "Append-Only Write Pattern",
+      "description": "Function must INSERT into signal_queue (not UPDATE/DELETE). signal_queue is a staging table with INSERT semantics.",
+      "result": "PASS",
+      "evidence": "Function uses INSERT...ON CONFLICT DO NOTHING. No UPDATE or DELETE statements in function body. Consistent with lcs.bridge_pressure_signals pattern."
+    },
+    {
+      "id": "ARCH-5",
+      "name": "Rollback Reversibility",
+      "description": "Migration must be fully reversible via rollback script.",
+      "result": "PASS",
+      "evidence": "Rollback script: DROP FUNCTION IF EXISTS lcs.bridge_signal_output(). Function creation is fully reversible. No data mutations in migration (function definition only)."
+    }
+  ]
+}
