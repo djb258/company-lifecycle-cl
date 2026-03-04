@@ -1,82 +1,91 @@
 
 
-# LCS Data Flow: Three-Table Contract
+# Plan: LCS Delivery Runner Edge Function (Neon Direct)
 
 ## Summary
 
-Wire the existing pipeline to read from two upstream tables (`lcs.mid_sequence_state` and `lcs.sid_output`) and write delivery results to `lcs.event`. Currently, the pipeline passes data through in-memory `PipelineState` with placeholder/null values for recipient info and message content. This plan connects it to real data.
+Create a Deno edge function `lcs-delivery-runner` that connects to Neon via `pg`, reads queued deliveries, fires adapters, and writes results to `lcs.event`. No UPDATE on `mid_sequence_state` — CET is the source of truth for delivery outcomes.
 
-## What Changes
+## Critical Design Decision: No UPDATE on mid_sequence_state
 
-### 1. Create TypeScript types for the two READ tables
+The `mid_sequence_state` table follows the same append-only / immutability-trigger pattern as the rest of the LCS schema. If `trg_lcs_mid_no_update` (or similar) exists, any UPDATE will be blocked at runtime.
 
-New file: `src/data/lcs/types/mid-sequence-state.ts`
-- `MidSequenceStateRow`: `message_run_id`, `communication_id`, `channel`, `delivery_status`, `sovereign_company_id`, `entity_id`, `entity_type`, `lifecycle_phase`, `agent_number`, `lane`, `signal_set_hash`, `frame_id`, `adapter_type`, `step_number`, `created_at`
+**Resolution**: The edge function only INSERTs into `lcs.event`. The QUEUED row in `mid_sequence_state` represents the MID decision (what to send). The CET event represents the delivery outcome (what happened). Two separate facts. To determine what's already been processed, the edge function queries CET for existing `DELIVERY_SENT` / `DELIVERY_FAILED` events matching the `communication_id` and skips those.
 
-New file: `src/data/lcs/types/sid-output.ts`
-- `SidOutputRow`: `communication_id`, `recipient_email`, `recipient_name`, `subject_line`, `body_plain`, `body_html`, `sender_identity`
+## Prerequisite: NEON_CONNECTION_STRING Secret
 
-Export both from `src/data/lcs/types/index.ts`.
+Must be added before the edge function can work. Currently missing from secrets.
 
-### 2. Create a delivery-queue reader
+## Changes
 
-New file: `src/app/lcs/delivery-queue.ts`
-- `fetchQueuedDeliveries()`: queries `lcsClient.from('mid_sequence_state')` where `delivery_status = 'QUEUED'`, then joins to `lcsClient.from('sid_output')` on `communication_id` to hydrate recipient/content fields.
-- Returns an array of fully hydrated delivery payloads ready for the adapter.
+### 1. New edge function: `supabase/functions/lcs-delivery-runner/index.ts`
 
-### 3. Update Step 6 (call-adapter) to accept hydrated payloads
+Single file, all logic inline (edge function rules — no subfolder imports from `src/`).
 
-Currently Step 6 builds `AdapterPayload` from pipeline state with nulls for `subject`, `body_html`, `body_text`. Update it so that when hydrated data is present on `PipelineState` (populated by the queue reader), those values flow through to the adapter payload.
+**Auth**: `x-webhook-secret` header validated against `MAILGUN_WEBHOOK_SIGNING_KEY` (reuses existing secret).
 
-Add to `PipelineState`:
-- `subject_line: string | null`
-- `body_plain: string | null`
-- `body_html: string | null`
-- `recipient_name: string | null`
+**Flow**:
+1. Connect to Neon via `postgres` (npm specifier)
+2. SELECT from `lcs.mid_sequence_state` WHERE `delivery_status = 'QUEUED'`
+3. LEFT JOIN `lcs.sid_output` ON `communication_id` for recipient/content
+4. LEFT JOIN `lcs.event` to exclude rows that already have a `DELIVERY_SENT` or `DELIVERY_FAILED` event (dedup — prevents re-processing)
+5. For each row: call Mailgun or HeyReach API based on `channel`
+6. INSERT result into `lcs.event` (DELIVERY_SENT or DELIVERY_FAILED)
+7. On adapter error: INSERT DELIVERY_FAILED event + INSERT into `lcs.err0`
 
-Then in `callAdapter`, use `state.subject_line` / `state.body_html` / `state.body_plain` instead of hardcoded nulls.
+**Key difference from client-side version**: Uses raw SQL via `pg` against Neon. Can do a proper JOIN in one query instead of two sequential PostgREST calls.
 
-### 4. CET write (already done)
+### 2. Register in `supabase/config.toml`
 
-The existing `cet-logger.ts` already writes to `lcs.event` via `lcsClient.from('event').insert(...)`. No changes needed. The `logStep` helper in the orchestrator already maps all required CET columns (`communication_id`, `message_run_id`, `delivery_status`, `adapter_type`, `channel`, `event_type`, `adapter_response`, `sovereign_company_id`, `entity_id`).
+```toml
+[functions.lcs-delivery-runner]
+verify_jwt = false
+```
 
-### 5. Create a delivery-runner entry point
+### 3. Deprecate client-side files
 
-New file: `src/app/lcs/delivery-runner.ts`
-- `runQueuedDeliveries()`: calls `fetchQueuedDeliveries()`, then for each item instantiates the correct adapter (MG or HR based on `channel`), builds pipeline state from the hydrated row, and calls the adapter + logs to CET.
-- This is the function an edge function or cron would invoke.
+Add deprecation headers to:
+- `src/app/lcs/delivery-queue.ts` — replaced by edge function SQL
+- `src/app/lcs/delivery-runner.ts` — replaced by edge function
 
-## Files Touched
+These files stay for type reference but are no longer called.
+
+## Files
 
 | File | Action |
 |------|--------|
-| `src/data/lcs/types/mid-sequence-state.ts` | **New** — type for queue table |
-| `src/data/lcs/types/sid-output.ts` | **New** — type for composition output |
-| `src/data/lcs/types/index.ts` | **Edit** — re-export new types |
-| `src/app/lcs/delivery-queue.ts` | **New** — reads QUEUED rows + joins sid_output |
-| `src/app/lcs/delivery-runner.ts` | **New** — orchestrates queue → adapter → CET write |
-| `src/app/lcs/pipeline/types.ts` | **Edit** — add content fields to PipelineState |
-| `src/app/lcs/pipeline/steps/06-call-adapter.ts` | **Edit** — use state content fields in payload |
+| `supabase/functions/lcs-delivery-runner/index.ts` | **New** |
+| `supabase/config.toml` | **Edit** — add function entry |
+| `src/app/lcs/delivery-queue.ts` | **Edit** — add deprecation comment |
+| `src/app/lcs/delivery-runner.ts` | **Edit** — add deprecation comment |
 
-## Data Flow Diagram
+## Dedup Query (core SQL)
 
-```text
-lcs.mid_sequence_state          lcs.sid_output
-(delivery_status='QUEUED')      (recipient + content)
-        │                              │
-        └──── JOIN on communication_id ─┘
-                       │
-                  delivery-queue.ts
-                  (fetchQueuedDeliveries)
-                       │
-                  delivery-runner.ts
-                       │
-              ┌────────┴────────┐
-              │  MG adapter     │  HR adapter
-              └────────┬────────┘
-                       │
-                  cet-logger.ts
-                       │
-                  lcs.event (INSERT)
+```sql
+SELECT
+  mss.message_run_id, mss.communication_id, mss.channel,
+  mss.sovereign_company_id, mss.entity_id, mss.entity_type,
+  mss.lifecycle_phase, mss.agent_number, mss.lane,
+  mss.signal_set_hash, mss.frame_id, mss.adapter_type,
+  sid.recipient_email, sid.recipient_name,
+  sid.subject_line, sid.body_plain, sid.body_html,
+  sid.sender_identity
+FROM lcs.mid_sequence_state mss
+JOIN lcs.sid_output sid ON sid.communication_id = mss.communication_id
+LEFT JOIN lcs.event evt
+  ON evt.communication_id = mss.communication_id
+  AND evt.event_type IN ('DELIVERY_SENT', 'DELIVERY_FAILED')
+WHERE mss.delivery_status = 'QUEUED'
+  AND evt.communication_id IS NULL
 ```
+
+This gives us only QUEUED rows that haven't already been processed — no UPDATE needed.
+
+## Secrets Needed
+
+| Secret | Status |
+|--------|--------|
+| `NEON_CONNECTION_STRING` | **Missing** — must add first |
+| `MAILGUN_API_KEY` | Exists |
+| `MAILGUN_WEBHOOK_SIGNING_KEY` | Exists (used for auth) |
 
