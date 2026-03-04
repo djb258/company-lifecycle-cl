@@ -1,0 +1,95 @@
+{
+  "execution_log_id": "exec-wp-20260304-mid-egress-lovable-rewire",
+  "work_packet_id": "wp-20260304-mid-egress-lovable-rewire",
+  "changeset_id": "cs-wp-20260304-mid-egress-lovable-rewire",
+  "agent": "Builder v2.7.0",
+  "execution_type": "standard",
+  "orbt_mode": "repair",
+  "target_repo": "company-lifecycle-cl",
+  "doctrine_version": "3.5.0",
+  "timestamp_start": "2026-03-04T15:00:00Z",
+  "timestamp_end": "2026-03-04T15:00:00Z",
+  "lanes_executed": ["standard", "documentation"],
+  "actions": [
+    {
+      "step": 1,
+      "action": "WORK_PACKET validation",
+      "status": "COMPLETED",
+      "detail": "Validated wp-20260304-mid-egress-lovable-rewire. orbt_mode=repair, execution_type=standard, architectural_flag=true, requires_pressure_test=true. Deviation noted: doc_surface='repo_markdown' not in schema enum."
+    },
+    {
+      "step": 2,
+      "action": "Read existing adapter infrastructure",
+      "status": "COMPLETED",
+      "detail": "Read types.ts, adapter-resolver.ts, mailgun-adapter.ts, heyreach-adapter.ts, sales-handoff-adapter.ts, index.ts. 3 direct adapters (MG, HR, SH) with shared AdapterPayload/AdapterResponse types."
+    },
+    {
+      "step": 3,
+      "action": "Extend AdapterPayload types",
+      "status": "COMPLETED",
+      "detail": "Added 5 new fields to AdapterPayload: frame_id, lifecycle_phase, sovereign_company_id, company_name, agent_number. These match the Lovable contract request_fields."
+    },
+    {
+      "step": 4,
+      "action": "Create LovableDeliveryAdapter",
+      "status": "COMPLETED",
+      "detail": "Created lovable-delivery-adapter.ts. Single adapter using LOVABLE_DELIVERY_URL env var (Doppler). Maps AdapterPayload to Lovable contract: subject→subject_line, body_text→body_plain. Returns AdapterResponse from Lovable response."
+    },
+    {
+      "step": 5,
+      "action": "Rewire adapter-resolver",
+      "status": "COMPLETED",
+      "detail": "All channels (MG, HR, SH) now route through single LovableDeliveryAdapter instance. Removed per-channel adapter instantiation. Old adapters deprecated but retained."
+    },
+    {
+      "step": 6,
+      "action": "Update MID engine payload construction",
+      "status": "COMPLETED",
+      "detail": "Extended AdapterPayload in deliverSingleMessage() with frame_id, lifecycle_phase, sovereign_company_id, company_name, agent_number sourced from CID row."
+    },
+    {
+      "step": 7,
+      "action": "Add DRY_RUN mode",
+      "status": "COMPLETED",
+      "detail": "Added runCidSidMidDryRun() to cid-sid-mid-cron.ts. Checks all 15 Lovable contract fields across CID, SID, and MID_HANDOFF phases. Logs PASS/FAIL per field per communication_id."
+    },
+    {
+      "step": 8,
+      "action": "Verify webhook return path",
+      "status": "COMPLETED",
+      "detail": "Verified 3 supabase functions: lcs-mailgun-webhook (HMAC + CET + engagement signals), lcs-heyreach-webhook (API key + CET + reply signals), lcs-inbound-reply (webhook secret + CET + reply signals). All write correctly to CET (lcs.event) at step 8/9. No modifications needed."
+    },
+    {
+      "step": 9,
+      "action": "DOC_ARTIFACT production",
+      "status": "COMPLETED",
+      "detail": "Produced doc_artifact.json documenting adapter architecture changes and DRY_RUN mode."
+    },
+    {
+      "step": 10,
+      "action": "CHANGESET + execution log",
+      "status": "COMPLETED",
+      "detail": "Produced changeset.json (1 created, 5 modified) and this execution log."
+    }
+  ],
+  "files_created": [
+    "src/app/lcs/adapters/lovable-delivery-adapter.ts"
+  ],
+  "files_modified": [
+    "src/app/lcs/adapters/types.ts",
+    "src/app/lcs/adapters/adapter-resolver.ts",
+    "src/app/lcs/adapters/index.ts",
+    "src/app/lcs/pipeline/mid-engine.ts",
+    "src/runtime/lcs/cid-sid-mid-cron.ts"
+  ],
+  "scope_violations": [],
+  "deviations": [
+    {
+      "code": "DEV-001",
+      "type": "SCHEMA_MISMATCH",
+      "detail": "WORK_PACKET.doc_surface='repo_markdown' not in work_packet.schema.json enum. Processed as-is per WP authority."
+    }
+  ],
+  "overall_status": "COMPLETED",
+  "ready_for_auditor": true
+}

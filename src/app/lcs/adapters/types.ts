@@ -13,15 +13,20 @@ export interface AdapterPayload {
   message_run_id: string;
   communication_id: string;
   channel: Channel;
-  recipient_email: string | null;     // for MG
-  recipient_linkedin_url: string | null; // for HR
-  subject: string | null;             // for MG
-  body_html: string | null;           // for MG
-  body_text: string | null;           // for MG/HR
+  recipient_email: string | null;
+  recipient_linkedin_url: string | null;
+  subject: string | null;
+  body_html: string | null;
+  body_text: string | null;
   sender_identity: string;
-  sender_email: string | null;        // for MG
-  sender_domain: string | null;       // for MG (from domain rotation)
-  metadata: Record<string, unknown>;  // pass-through for adapter-specific data
+  sender_email: string | null;
+  sender_domain: string | null;
+  frame_id: string;
+  lifecycle_phase: string;
+  sovereign_company_id: string;
+  company_name: string | null;
+  agent_number: string;
+  metadata: Record<string, unknown>;
 }
 
 /** What the adapter gives back */

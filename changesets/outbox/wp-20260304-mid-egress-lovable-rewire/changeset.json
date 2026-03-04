@@ -1,0 +1,60 @@
+{
+  "changeset_id": "cs-wp-20260304-mid-egress-lovable-rewire",
+  "work_packet_id": "wp-20260304-mid-egress-lovable-rewire",
+  "execution_type": "standard",
+  "orbt_mode": "repair",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T15:00:00Z",
+  "files": {
+    "created": [
+      {
+        "path": "src/app/lcs/adapters/lovable-delivery-adapter.ts",
+        "change_type": "CREATED",
+        "description": "LovableDeliveryAdapter — single egress adapter for all channels. Posts structured payload to LOVABLE_DELIVERY_URL (Doppler). Maps AdapterPayload to Lovable contract request fields."
+      }
+    ],
+    "modified": [
+      {
+        "path": "src/app/lcs/adapters/types.ts",
+        "change_type": "MODIFIED",
+        "description": "Extended AdapterPayload with frame_id, lifecycle_phase, sovereign_company_id, company_name, agent_number fields required by Lovable contract."
+      },
+      {
+        "path": "src/app/lcs/adapters/adapter-resolver.ts",
+        "change_type": "MODIFIED",
+        "description": "Rewired resolveAdapter() to return LovableDeliveryAdapter for all channels. Removed direct adapter instantiation. Added getDeliveryAdapter() export."
+      },
+      {
+        "path": "src/app/lcs/adapters/index.ts",
+        "change_type": "MODIFIED",
+        "description": "Added LovableDeliveryAdapter export. Marked direct adapters as @deprecated. Updated resolver exports."
+      },
+      {
+        "path": "src/app/lcs/pipeline/mid-engine.ts",
+        "change_type": "MODIFIED",
+        "description": "Extended AdapterPayload construction in deliverSingleMessage() to populate frame_id, lifecycle_phase, sovereign_company_id, company_name, agent_number from CID row."
+      },
+      {
+        "path": "src/runtime/lcs/cid-sid-mid-cron.ts",
+        "change_type": "MODIFIED",
+        "description": "Added runCidSidMidDryRun() — DRY_RUN mode that checks all 15 Lovable contract fields across CID/SID/MID_HANDOFF phases with PASS/FAIL per field."
+      }
+    ]
+  },
+  "webhook_verification": {
+    "lcs-mailgun-webhook": "VERIFIED — correct CET return path, engagement signal emission, HMAC validation",
+    "lcs-heyreach-webhook": "VERIFIED — correct CET return path, LinkedIn reply signal emission, API key validation",
+    "lcs-inbound-reply": "VERIFIED — correct CET return path, reply signal emission, webhook secret validation"
+  },
+  "deviations": [
+    {
+      "type": "SCHEMA_MISMATCH",
+      "detail": "WORK_PACKET.doc_surface='repo_markdown' is not in work_packet.schema.json enum (prd, osam, erd, schema, column_registry, mixed). Proceeding per WP as-is — Auditor will evaluate.",
+      "severity": "LOW"
+    }
+  ],
+  "pre_deploy_blockers": [],
+  "pressure_test_required": true
+}

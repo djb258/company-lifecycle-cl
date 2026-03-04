@@ -249,6 +249,11 @@ async function deliverSingleMessage(
       sender_identity: sid.sender_identity ?? 'default-sender',
       sender_email: sid.sender_email,
       sender_domain: null,
+      frame_id: cid.frame_id,
+      lifecycle_phase: cid.lifecycle_phase,
+      sovereign_company_id: cid.sovereign_company_id,
+      company_name: (cid as Record<string, unknown>).company_name as string | null ?? null,
+      agent_number: cid.agent_number,
       metadata: { frame_id: sid.frame_id },
     };
 
