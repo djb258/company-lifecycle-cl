@@ -1,3 +1,9 @@
+/**
+ * @deprecated REPLACED by supabase/functions/lcs-delivery-runner/index.ts
+ * This file used lcsClient (Supabase PostgREST) which cannot reach the lcs schema on Neon.
+ * The edge function connects to Neon via pg directly and does a proper JOIN.
+ * Kept for type reference only — do not call fetchQueuedDeliveries().
+ */
 import { lcsClient } from '@/data/integrations/supabase/lcs-client';
 import type { MidSequenceStateRow, SidOutputRow } from '@/data/lcs';
 

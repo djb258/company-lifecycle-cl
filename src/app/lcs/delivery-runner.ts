@@ -1,3 +1,10 @@
+/**
+ * @deprecated REPLACED by supabase/functions/lcs-delivery-runner/index.ts
+ * This file used lcsClient (Supabase PostgREST) which cannot reach the lcs schema on Neon.
+ * The edge function connects to Neon via pg directly, does dedup via CET LEFT JOIN,
+ * and writes results to lcs.event without updating mid_sequence_state.
+ * Kept for type reference only — do not call runQueuedDeliveries().
+ */
 import { fetchQueuedDeliveries, type HydratedDelivery } from './delivery-queue';
 import { resolveAdapter } from './adapters';
 import { callAdapter } from './pipeline/steps/06-call-adapter';
