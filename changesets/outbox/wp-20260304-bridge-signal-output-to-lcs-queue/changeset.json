@@ -52,11 +52,13 @@
     }
   ],
   "blocker_status": {
-    "is_blocked": true,
-    "blocker": "outreach.signal_output table does not exist in Neon",
-    "source": "Outreach hub migration required — table must be created before bridge function can operate"
+    "is_blocked": false,
+    "original_blocker": "outreach.signal_output table did not exist in Neon",
+    "resolved_by": "db_agent via wp-20260304-va-green-bridge-smoke-retest",
+    "resolved_at": "2026-03-04T20:32:00Z",
+    "status": "RESOLVED"
   },
-  "pressure_test_note": "requires_pressure_test=true; ARCH and FLOW pressure reports deferred — function verified structurally but cannot operate until outreach.signal_output exists",
+  "pressure_test_note": "requires_pressure_test=true; DB Agent produced ARCH 5/5 PASS and FLOW 5/5 PASS reports in audit/ directory",
   "deviations": [],
   "doctrine_version": "3.5.0"
 }

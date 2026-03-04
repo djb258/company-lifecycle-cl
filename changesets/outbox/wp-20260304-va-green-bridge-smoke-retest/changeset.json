@@ -5,34 +5,62 @@
   "target_repo": "company-lifecycle-cl",
   "target_branch": "main",
   "execution_agent": "builder",
-  "execution_status": "FAILED_AT_GATE",
-  "timestamp": "2026-03-04T20:30:00Z",
-  "summary": "Virginia Green bridge smoke re-test FAILED at prerequisite check. outreach.signal_output still does not exist. All three dependent work packets verified (signal-queue constraint PASS, catchall frame PASS, bridge function PASS) but the bridge function itself returns BLOCKED because outreach.signal_output has never been created. This is the same structural gap identified in the original smoke test.",
+  "execution_status": "VERIFIED",
+  "timestamp": "2026-03-04T20:35:00Z",
+  "summary": "Virginia Green bridge smoke re-test VERIFIED. DB Agent resolved the outreach.signal_output blocker — table created, D-04 signal inserted, bridge function called (1 found, 1 inserted), signal_queue row confirmed PENDING with all 6 validation fields matching. Duplicate detection verified on idempotent re-run. Builder verified DB Agent completion receipts and confirmed live Neon state.",
   "files_modified": [],
   "files_created": [],
-  "db_changes": [],
-  "smoke_test_results": [
+  "db_changes": [
     {
-      "step": 0,
-      "name": "Prerequisite check: outreach.signal_output exists",
-      "result": "FAIL",
-      "data_written": null,
-      "issues": "Table outreach.signal_output does not exist. Cannot insert D-04 signal. Same gap as wp-20260304-va-green-cid-sid-mid-smoke-test."
+      "table": "outreach.signal_output",
+      "operation": "CREATE TABLE + INSERT",
+      "status": "APPLIED_BY_DB_AGENT",
+      "detail": "11 columns, Virginia Green D-04 signal row inserted"
+    },
+    {
+      "table": "lcs.signal_queue",
+      "operation": "INSERT via lcs.bridge_signal_output()",
+      "status": "APPLIED_BY_DB_AGENT",
+      "row_id": "0fc3e627-086b-4f57-bb34-0caa38fad7d5",
+      "detail": "PENDING, source_hub=OUTREACH, signal_set_hash=SIG-GROWTH-SIGNAL-V1"
     }
   ],
-  "prerequisite_status": {
-    "signal_queue_source_hub_constraint": "PASS — PEOPLE, DOL, BLOG, MANUAL, OUTREACH, SYSTEM",
-    "outreach_catchall_frame": "PASS — OUT-GENERAL-V1 active at tier 5",
-    "bridge_signal_output_function": "PASS — exists, returns blocker correctly",
-    "outreach_signal_output_table": "FAIL — does not exist"
+  "builder_verification": [
+    {
+      "step": 1,
+      "action": "Verify outreach.signal_output table exists in Neon",
+      "result": "PASS",
+      "detail": "11 columns confirmed matching bridge function expectations"
+    },
+    {
+      "step": 2,
+      "action": "Verify signal_queue row 0fc3e627-086b-4f57-bb34-0caa38fad7d5",
+      "result": "PASS",
+      "detail": "PENDING, sovereign=0817f0f1..., signal_set_hash=SIG-GROWTH-SIGNAL-V1, source_hub=OUTREACH, lifecycle_phase=OUTREACH, channel=MG, lane=MAIN"
+    },
+    {
+      "step": 3,
+      "action": "Verify outreach.signal_output D-04 source row",
+      "result": "PASS",
+      "detail": "Row da040000... present, signal_code='Growth / Executive Movement Signal', run_month=2026-03"
+    },
+    {
+      "step": 4,
+      "action": "Verify DB Agent smoke test report",
+      "result": "PASS",
+      "detail": "5/5 steps PASS, blocker_resolution=RESOLVED, duplicate detection confirmed"
+    }
+  ],
+  "blocker_resolution": {
+    "original_blocker": "outreach.signal_output did not exist",
+    "resolved_by": "db_agent (wp-20260304-va-green-bridge-smoke-retest)",
+    "status": "RESOLVED"
   },
-  "root_cause": "outreach.signal_output table has never been created. This is the origin table that feeds the bridge function. An outreach hub migration is required to create it before any smoke test through the signal_output→bridge→signal_queue path can proceed.",
-  "recommended_action": "Route a create-table work packet to DB Agent for outreach.signal_output with columns: id (uuid PK), sovereign_company_id (uuid FK), signal_code (text), signal_category (text), lifecycle_phase (text), preferred_channel (text), preferred_lane (text), signal_data (jsonb), run_month (text), priority (integer), created_at (timestamptz). Then re-execute this smoke test.",
-  "deviations": [
-    {
-      "type": "STRUCTURAL_GAP",
-      "detail": "Same blocker as original smoke test — outreach.signal_output not created"
-    }
-  ],
+  "prior_builder_attempt": {
+    "status": "FAILED_AT_GATE",
+    "reason": "outreach.signal_output did not exist at initial execution time",
+    "superseded": true
+  },
+  "deviations": [],
   "doctrine_version": "3.5.0"
 }
