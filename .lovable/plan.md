@@ -1,118 +1,82 @@
 
 
-# Mailgun + Cloudflare Integration Plan
+# LCS Data Flow: Three-Table Contract
 
-This plan covers setting up Mailgun from scratch for outbound email delivery, and Cloudflare for DNS management (SPF/DKIM/DMARC) plus Email Routing for inbound reply detection.
+## Summary
 
----
+Wire the existing pipeline to read from two upstream tables (`lcs.mid_sequence_state` and `lcs.sid_output`) and write delivery results to `lcs.event`. Currently, the pipeline passes data through in-memory `PipelineState` with placeholder/null values for recipient info and message content. This plan connects it to real data.
 
-## Phase 1: Mailgun Account Setup
+## What Changes
 
-### 1.1 Create Mailgun Account
-- Sign up at mailgun.com (Flex plan is free for low volume)
-- Verify your account identity
+### 1. Create TypeScript types for the two READ tables
 
-### 1.2 Add a Sending Domain
-- In Mailgun dashboard, go to **Sending > Domains > Add New Domain**
-- Add the domain you want to send from (e.g., `mail.yourdomain.com` -- using a subdomain is best practice to protect your root domain's reputation)
-- Mailgun will give you DNS records to add (covered in Phase 2)
+New file: `src/data/lcs/types/mid-sequence-state.ts`
+- `MidSequenceStateRow`: `message_run_id`, `communication_id`, `channel`, `delivery_status`, `sovereign_company_id`, `entity_id`, `entity_type`, `lifecycle_phase`, `agent_number`, `lane`, `signal_set_hash`, `frame_id`, `adapter_type`, `step_number`, `created_at`
 
-### 1.3 Collect Credentials
-You will need three values from Mailgun:
-- **API Key**: Found in Mailgun dashboard > API Security > Private API key
-- **Webhook Signing Key**: Found in Mailgun dashboard > Webhooks > Signing Key (used to verify inbound webhook payloads)
-- **Sending Domain**: The domain you registered (e.g., `mail.yourdomain.com`)
+New file: `src/data/lcs/types/sid-output.ts`
+- `SidOutputRow`: `communication_id`, `recipient_email`, `recipient_name`, `subject_line`, `body_plain`, `body_html`, `sender_identity`
 
----
+Export both from `src/data/lcs/types/index.ts`.
 
-## Phase 2: Cloudflare DNS Configuration
+### 2. Create a delivery-queue reader
 
-### 2.1 Mailgun DNS Records
-In your Cloudflare DNS panel for the domain, add the records Mailgun provides:
+New file: `src/app/lcs/delivery-queue.ts`
+- `fetchQueuedDeliveries()`: queries `lcsClient.from('mid_sequence_state')` where `delivery_status = 'QUEUED'`, then joins to `lcsClient.from('sid_output')` on `communication_id` to hydrate recipient/content fields.
+- Returns an array of fully hydrated delivery payloads ready for the adapter.
 
-| Type  | Name                         | Value                         | Purpose         |
-|-------|------------------------------|-------------------------------|-----------------|
-| TXT   | `mail.yourdomain.com`        | `v=spf1 include:mailgun.org ~all` | SPF             |
-| TXT   | `smtp._domainkey.mail...`    | *(Mailgun DKIM value)*        | DKIM            |
-| TXT   | `_dmarc.yourdomain.com`      | `v=DMARC1; p=none; ...`      | DMARC           |
-| CNAME | `email.mail.yourdomain.com`  | `mailgun.org`                 | Tracking        |
-| MX    | `mail.yourdomain.com`        | `mxa.mailgun.org` / `mxb...` | Receive (for MG) |
+### 3. Update Step 6 (call-adapter) to accept hydrated payloads
 
-**Important**: Set these records to **DNS Only** (grey cloud) in Cloudflare -- do NOT proxy them.
+Currently Step 6 builds `AdapterPayload` from pipeline state with nulls for `subject`, `body_html`, `body_text`. Update it so that when hydrated data is present on `PipelineState` (populated by the queue reader), those values flow through to the adapter payload.
 
-### 2.2 Cloudflare Email Routing (Reply Detection)
-To catch inbound replies on your root domain or a different subdomain:
+Add to `PipelineState`:
+- `subject_line: string | null`
+- `body_plain: string | null`
+- `body_html: string | null`
+- `recipient_name: string | null`
 
-1. In Cloudflare dashboard, go to **Email > Email Routing**
-2. Enable Email Routing for the domain
-3. Add a **Catch-All** or specific address rule that forwards to a webhook
-4. Cloudflare Email Routing can forward to another email address, OR you can use a Cloudflare Worker to POST the inbound email to the `lcs-mailgun-webhook` edge function (or a new dedicated inbound-reply edge function)
+Then in `callAdapter`, use `state.subject_line` / `state.body_html` / `state.body_plain` instead of hardcoded nulls.
 
----
+### 4. CET write (already done)
 
-## Phase 3: Wire Secrets into the Project
+The existing `cet-logger.ts` already writes to `lcs.event` via `lcsClient.from('event').insert(...)`. No changes needed. The `logStep` helper in the orchestrator already maps all required CET columns (`communication_id`, `message_run_id`, `delivery_status`, `adapter_type`, `channel`, `event_type`, `adapter_response`, `sovereign_company_id`, `entity_id`).
 
-Once you have your Mailgun credentials, we add them as backend secrets so the edge functions and adapter can use them:
+### 5. Create a delivery-runner entry point
 
-| Secret Name                    | Where Used                                    |
-|--------------------------------|-----------------------------------------------|
-| `MAILGUN_API_KEY`              | `mailgun-adapter.ts` (outbound sends)         |
-| `MAILGUN_WEBHOOK_SIGNING_KEY`  | `lcs-mailgun-webhook` edge function (inbound) |
+New file: `src/app/lcs/delivery-runner.ts`
+- `runQueuedDeliveries()`: calls `fetchQueuedDeliveries()`, then for each item instantiates the correct adapter (MG or HR based on `channel`), builds pipeline state from the hydrated row, and calls the adapter + logs to CET.
+- This is the function an edge function or cron would invoke.
 
-### 3.1 Configure Mailgun Webhooks
-In Mailgun dashboard > **Webhooks**, point these events to the edge function URL:
+## Files Touched
 
+| File | Action |
+|------|--------|
+| `src/data/lcs/types/mid-sequence-state.ts` | **New** — type for queue table |
+| `src/data/lcs/types/sid-output.ts` | **New** — type for composition output |
+| `src/data/lcs/types/index.ts` | **Edit** — re-export new types |
+| `src/app/lcs/delivery-queue.ts` | **New** — reads QUEUED rows + joins sid_output |
+| `src/app/lcs/delivery-runner.ts` | **New** — orchestrates queue → adapter → CET write |
+| `src/app/lcs/pipeline/types.ts` | **Edit** — add content fields to PipelineState |
+| `src/app/lcs/pipeline/steps/06-call-adapter.ts` | **Edit** — use state content fields in payload |
+
+## Data Flow Diagram
+
+```text
+lcs.mid_sequence_state          lcs.sid_output
+(delivery_status='QUEUED')      (recipient + content)
+        │                              │
+        └──── JOIN on communication_id ─┘
+                       │
+                  delivery-queue.ts
+                  (fetchQueuedDeliveries)
+                       │
+                  delivery-runner.ts
+                       │
+              ┌────────┴────────┐
+              │  MG adapter     │  HR adapter
+              └────────┬────────┘
+                       │
+                  cet-logger.ts
+                       │
+                  lcs.event (INSERT)
 ```
-https://orexplnmgolioaayhojg.supabase.co/functions/v1/lcs-mailgun-webhook
-```
-
-Events to enable: `delivered`, `failed`, `bounced`, `complained`, `opened`, `clicked`
-
----
-
-## Phase 4: Inbound Reply Edge Function (New)
-
-Create a new edge function `lcs-inbound-reply` to handle forwarded replies from Cloudflare Email Routing. This function:
-
-1. Receives the forwarded email (from Cloudflare Worker or email-to-webhook bridge)
-2. Extracts the original `communication_id` from the reply headers (In-Reply-To / References)
-3. Inserts a `REPLY_RECEIVED` signal into `lcs.signal_queue`
-4. Logs the event to CET
-
-This completes the reply-detection loop that the existing `lcs-mailgun-webhook` already has stub code for (`eventName === 'replied'`).
-
----
-
-## Phase 5: Update ENV Manifest
-
-Update `docs/lcs/ENV_MANIFEST.md` to reflect the Cloudflare additions if any Worker secrets are needed.
-
----
-
-## Summary of Steps (in order)
-
-1. You create a Mailgun account and add your sending domain
-2. You add Mailgun's DNS records in Cloudflare (SPF, DKIM, DMARC, MX)
-3. You enable Cloudflare Email Routing for inbound replies
-4. You provide me with the `MAILGUN_API_KEY` and `MAILGUN_WEBHOOK_SIGNING_KEY`
-5. I wire the secrets into the project
-6. I create the `lcs-inbound-reply` edge function for reply detection
-7. You configure Mailgun webhooks to point at the edge function URL
-8. You verify DNS propagation and send a test email
-
----
-
-## Technical Details
-
-### Files Modified
-- **New**: `supabase/functions/lcs-inbound-reply/index.ts` -- Cloudflare Email Routing webhook receiver
-- **Updated**: `docs/lcs/ENV_MANIFEST.md` -- document new secrets
-
-### Files Unchanged (already correct)
-- `src/app/lcs/adapters/mailgun-adapter.ts` -- outbound adapter is ready
-- `supabase/functions/lcs-mailgun-webhook/index.ts` -- delivery webhook is ready
-- `src/runtime/lcs/webhook-handler.ts` -- runtime handler is ready
-
-### No Database Changes Required
-The existing `lcs.event` and `lcs.signal_queue` tables already support all the event types needed.
 
