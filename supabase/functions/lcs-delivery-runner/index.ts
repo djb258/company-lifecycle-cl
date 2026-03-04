@@ -33,6 +33,7 @@ interface QueuedDelivery {
   adapter_type: string | null;
   recipient_email: string | null;
   recipient_name: string | null;
+  recipient_linkedin_url: string | null;
   subject_line: string | null;
   body_plain: string | null;
   body_html: string | null;
@@ -128,12 +129,14 @@ async function sendMailgun(
   }
 }
 
-// ─── HeyReach Adapter (stub) ───────────────────────────
+// ─── HeyReach Adapter ──────────────────────────────────
 
-function sendHeyReach(
+const HEYREACH_BASE_URL = 'https://api.heyreach.io/api/v1';
+
+async function sendHeyReach(
   delivery: QueuedDelivery,
   apiKey: string | undefined,
-): DeliveryResult {
+): Promise<DeliveryResult> {
   if (!apiKey) {
     return {
       event_type: 'DELIVERY_FAILED',
@@ -145,14 +148,83 @@ function sendHeyReach(
     };
   }
 
-  return {
-    event_type: 'DELIVERY_FAILED',
-    delivery_status: 'FAILED',
-    adapter_response: { error: 'HeyReach adapter not yet implemented' },
-    payload: { communication_id: delivery.communication_id },
-    failure_type: 'ADAPTER_ERROR',
-    failure_message: 'HeyReach adapter pending implementation',
+  if (!delivery.recipient_linkedin_url) {
+    return {
+      event_type: 'DELIVERY_FAILED',
+      delivery_status: 'FAILED',
+      adapter_response: { error: 'No recipient LinkedIn URL in sid_output' },
+      payload: null,
+      failure_type: 'VALIDATION_ERROR',
+      failure_message: 'HeyReach requires recipient_linkedin_url',
+    };
+  }
+
+  if (!delivery.body_plain) {
+    return {
+      event_type: 'DELIVERY_FAILED',
+      delivery_status: 'FAILED',
+      adapter_response: { error: 'No message text in sid_output' },
+      payload: null,
+      failure_type: 'VALIDATION_ERROR',
+      failure_message: 'HeyReach requires body_plain for LinkedIn messages',
+    };
+  }
+
+  const url = `${HEYREACH_BASE_URL}/messages/send`;
+  const requestBody = {
+    linkedin_url: delivery.recipient_linkedin_url,
+    message: delivery.body_plain,
+    sender_identity: delivery.sender_identity,
+    metadata: {
+      communication_id: delivery.communication_id,
+      message_run_id: delivery.message_run_id,
+    },
   };
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const respBody = await resp.json().catch(async () => ({ raw: await resp.text() }));
+
+    if (!resp.ok) {
+      return {
+        event_type: 'DELIVERY_FAILED',
+        delivery_status: 'FAILED',
+        adapter_response: { status: resp.status, body: respBody },
+        payload: { linkedin_url: delivery.recipient_linkedin_url },
+        failure_type: resp.status === 429 ? 'RATE_LIMIT' : 'ADAPTER_ERROR',
+        failure_message: (respBody as Record<string, unknown>).error as string
+          ?? (respBody as Record<string, unknown>).message as string
+          ?? `HeyReach ${resp.status}`,
+      };
+    }
+
+    return {
+      event_type: 'DELIVERY_SENT',
+      delivery_status: 'SENT',
+      adapter_response: { status: resp.status, body: respBody },
+      payload: {
+        linkedin_url: delivery.recipient_linkedin_url,
+        heyreach_id: (respBody as Record<string, unknown>).id ?? (respBody as Record<string, unknown>).message_id ?? null,
+      },
+    };
+  } catch (err) {
+    return {
+      event_type: 'DELIVERY_FAILED',
+      delivery_status: 'FAILED',
+      adapter_response: { error: err instanceof Error ? err.message : String(err) },
+      payload: null,
+      failure_type: 'CONNECTION_FAILED',
+      failure_message: err instanceof Error ? err.message : String(err),
+    };
+  }
 }
 
 // ─── CET INSERT helper ─────────────────────────────────
@@ -300,6 +372,7 @@ Deno.serve(async (req: Request) => {
           mss.adapter_type,
           sid.recipient_email,
           sid.recipient_name,
+          sid.recipient_linkedin_url,
           sid.subject_line,
           sid.body_plain,
           sid.body_html,
@@ -341,7 +414,7 @@ Deno.serve(async (req: Request) => {
         if (delivery.channel === 'MG') {
           result = await sendMailgun(delivery, mailgunApiKey);
         } else if (delivery.channel === 'HR') {
-          result = sendHeyReach(delivery, heyreachApiKey);
+          result = await sendHeyReach(delivery, heyreachApiKey);
         } else {
           result = {
             event_type: 'DELIVERY_FAILED',
