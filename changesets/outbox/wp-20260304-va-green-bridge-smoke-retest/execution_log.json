@@ -1,0 +1,28 @@
+{
+  "execution_id": "exec-wp-20260304-va-green-bridge-smoke-retest",
+  "work_packet_id": "wp-20260304-va-green-bridge-smoke-retest",
+  "agent": "builder",
+  "agent_version": "2.7.0",
+  "started_at": "2026-03-04T20:29:00Z",
+  "completed_at": "2026-03-04T20:30:00Z",
+  "status": "FAILED",
+  "outcome": "FAILED_AT_GATE",
+  "execution_type": "standard",
+  "orbt_mode": "operate",
+  "steps": [
+    {
+      "step": 1,
+      "action": "Check prerequisite: outreach.signal_output exists",
+      "result": "Table does not exist",
+      "status": "FAIL"
+    },
+    {
+      "step": 2,
+      "action": "Apply hard gate per execution requirements",
+      "result": "Stopped execution. Insert D-04 signal, bridge call, and validation steps NOT_REACHED.",
+      "status": "GATED"
+    }
+  ],
+  "notes": "All three dependency WPs verified (constraint, frame, bridge function) but the underlying table gap persists. An outreach hub migration to create outreach.signal_output is the single remaining blocker for the entire Virginia Green smoke test chain.",
+  "doctrine_version": "3.5.0"
+}
