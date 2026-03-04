@@ -1,0 +1,83 @@
+{
+  "report_type": "FLOW_PRESSURE_REPORT",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "changeset_id": "cs-wp-20260303-lcs-cid-sid-mid-pipeline",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T22:30:00Z",
+  "flow_contract_ref": {
+    "ingress": [
+      "pipeline/adapters/*",
+      "pipeline/ingest.js",
+      "src/app/lcs/pipeline/steps/01-signal-intake.ts"
+    ],
+    "middle": [
+      "migrations/lcs/*",
+      "src/app/lcs/pipeline/orchestrator.ts",
+      "src/app/lcs/pipeline/steps/*",
+      "src/runtime/lcs/*"
+    ],
+    "egress": [
+      "src/app/lcs/adapters/*",
+      "src/runtime/lcs/signal-bridge.ts",
+      "pipeline/orchestrator.js"
+    ]
+  },
+  "invariants": {
+    "ingress_contract_exists": {
+      "verdict": "PASS",
+      "evidence": "All declared ingress surfaces have explicit contracts. signal_queue has SQL contract (lcs_signal_queue.schema.sql) and TypeScript types. Signal intake step (01-signal-intake.ts) exists. Pipeline adapters exist with StateCsvSourceAdapter base class. Ingest entry point (pipeline/ingest.js) exists.",
+      "ingress_surfaces": [
+        { "surface": "lcs.signal_queue", "contract": "src/sys/lcs/contracts/lcs_signal_queue.schema.sql" },
+        { "surface": "signal-intake step", "contract": "src/app/lcs/pipeline/steps/01-signal-intake.ts" },
+        { "surface": "pipeline/ingest.js", "contract": "pipeline/README.md (CLI entry point)" }
+      ]
+    },
+    "egress_contract_exists": {
+      "verdict": "PASS",
+      "evidence": "All declared egress surfaces have contracts. Adapter layer (src/app/lcs/adapters/) has type contracts (types.ts). CET event log (lcs.event) has SQL contract (lcs_event.schema.sql). Signal bridge (signal-bridge.ts) exists. MID delivery writes to lcs.mid_sequence_state (contract: lcs_mid_sequence_state.schema.sql) and logs to lcs.event.",
+      "egress_surfaces": [
+        { "surface": "lcs.event (CET)", "contract": "src/sys/lcs/contracts/lcs_event.schema.sql" },
+        { "surface": "lcs.err0 (ORBT)", "contract": "src/sys/lcs/contracts/lcs_err0.schema.sql" },
+        { "surface": "adapter layer", "contract": "src/app/lcs/adapters/types.ts" },
+        { "surface": "signal-bridge", "contract": "src/runtime/lcs/signal-bridge.ts" }
+      ]
+    },
+    "no_orphan_tables": {
+      "verdict": "PASS",
+      "evidence": "All 3 new tables have producing and consuming processes declared. lcs.cid is produced by CID compiler, consumed by SID worker. lcs.sid_output is produced by SID worker, consumed by MID engine. lcs.mid_sequence_state is produced by MID engine, consumed by monitoring/query egress.",
+      "table_consumers": [
+        { "table": "lcs.cid", "producer": "cid-compiler.ts", "consumer": "sid-worker.ts" },
+        { "table": "lcs.sid_output", "producer": "sid-worker.ts", "consumer": "mid-engine.ts" },
+        { "table": "lcs.mid_sequence_state", "producer": "mid-engine.ts", "consumer": "monitoring/query egress (declared)" }
+      ]
+    },
+    "no_unconsumed_events": {
+      "verdict": "PASS",
+      "evidence": "MID engine logs CET events via logCetEvent() with declared event types (DELIVERY_ATTEMPTED, DELIVERY_SUCCEEDED, DELIVERY_FAILED). All event types have existing consumers in the CET dashboard and monitoring layer. ORBT errors logged via logErr0() feed into the existing err0 → ORBT strike protocol. No new event types introduced without consumers.",
+      "events_produced": [
+        { "event": "CET delivery events", "producer": "mid-engine.ts → logCetEvent()", "consumer": "lcs.event → CET dashboard" },
+        { "event": "ORBT errors", "producer": "mid-engine.ts → logErr0()", "consumer": "lcs.err0 → ORBT protocol" }
+      ]
+    },
+    "id_propagation_intact": {
+      "verdict": "PASS",
+      "evidence": "Sovereign IDs propagate through the full pipeline: sovereign_company_id flows from signal_queue → CID (stored) → SID worker (read from CID) → MID engine (read from CID) → CET event (logged). communication_id flows: CID compiler (minted) → lcs.cid (PK) → SID worker (by-value ref) → lcs.sid_output → MID engine (by-value ref) → lcs.mid_sequence_state → CET event. message_run_id flows: MID engine (minted) → lcs.mid_sequence_state → CET event. No ID breaks in the chain.",
+      "id_chains": [
+        {
+          "id": "sovereign_company_id",
+          "chain": "signal_queue → lcs.cid → sid_worker (reads cid) → mid_engine (reads cid) → lcs.event"
+        },
+        {
+          "id": "communication_id",
+          "chain": "cid-compiler (mints) → lcs.cid (PK) → lcs.sid_output (by-value) → lcs.mid_sequence_state (by-value) → lcs.event"
+        },
+        {
+          "id": "message_run_id",
+          "chain": "mid-engine (mints) → lcs.mid_sequence_state → lcs.event"
+        }
+      ]
+    }
+  },
+  "overall_verdict": "PASS",
+  "failures": []
+}

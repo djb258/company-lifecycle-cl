@@ -1,0 +1,57 @@
+{
+  "execution_id": "exec-wp-20260304-va-green-cid-sid-mid-smoke-test",
+  "work_packet_id": "wp-20260304-va-green-cid-sid-mid-smoke-test",
+  "agent": "builder",
+  "agent_version": "2.7.0",
+  "started_at": "2026-03-04T20:17:00Z",
+  "completed_at": "2026-03-04T20:20:00Z",
+  "status": "FAILED",
+  "outcome": "FAILED_AT_GATE",
+  "execution_type": "standard",
+  "orbt_mode": "operate",
+  "steps": [
+    {
+      "step": 1,
+      "action": "Look up virginiagreen.com in cl.company_identity",
+      "result": "Found sovereign_company_id=0817f0f1-1f4f-438d-bd6c-2817582c206d (Virginia Green) via normalized_domain",
+      "status": "PASS"
+    },
+    {
+      "step": 2,
+      "action": "Enumerate outreach schema tables",
+      "result": "outreach schema contains: blog, dol, outreach — NO signal_output table",
+      "status": "PASS"
+    },
+    {
+      "step": 3,
+      "action": "Attempt Step 1 of smoke test: Insert signal into outreach.signal_output",
+      "result": "BLOCKED — table outreach.signal_output does not exist",
+      "status": "FAIL"
+    },
+    {
+      "step": 4,
+      "action": "Apply hard gate per execution requirements",
+      "result": "Stopped execution. Steps 2-6 NOT_REACHED.",
+      "status": "GATED"
+    }
+  ],
+  "pre_flight_findings": {
+    "company_found": true,
+    "sovereign_company_id": "0817f0f1-1f4f-438d-bd6c-2817582c206d",
+    "company_name": "Virginia Green",
+    "duplicate_entries": "2 rows with normalized_domain=virginiagreen.com (different company_unique_ids)",
+    "outreach_record_exists": false,
+    "signal_output_table_exists": false,
+    "lcs_tables_verified": [
+      "lcs.signal_queue (15 columns — OK)",
+      "lcs.cid (14 columns — OK)",
+      "lcs.sid_output (14 columns — OK)",
+      "lcs.mid_sequence_state (14 columns — OK)",
+      "lcs.frame_registry (18 columns — OK)",
+      "lcs.event (21 columns — OK)"
+    ],
+    "active_outreach_frames": 9
+  },
+  "notes": "All LCS pipeline tables exist and have correct schema. The gap is at the origin: outreach.signal_output has never been created. This table represents the signal emission point from the outreach hub before bridging into LCS signal_queue. A DB migration is required before the smoke test can proceed.",
+  "doctrine_version": "3.5.0"
+}

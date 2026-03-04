@@ -1,0 +1,32 @@
+{
+  "changeset_id": "db-cs-20260304-bridge-signal-output-001",
+  "work_packet_id": "wp-20260304-bridge-signal-output-to-lcs-queue",
+  "diff_type": "function_create",
+  "baseline": {
+    "function_exists": false,
+    "function_name": "lcs.bridge_signal_output"
+  },
+  "target": {
+    "function_exists": true,
+    "function_name": "lcs.bridge_signal_output",
+    "returns": "TABLE(source_hub TEXT, signals_found INTEGER, signals_inserted INTEGER, signals_skipped INTEGER, blocker_note TEXT)",
+    "language": "plpgsql",
+    "reads_from": ["outreach.signal_output", "cl.company_identity", "lcs.signal_registry", "lcs.signal_queue"],
+    "writes_to": ["lcs.signal_queue"],
+    "duplicate_detection": [
+      "sovereign_company_id + source_signal_id (exact match)",
+      "signal_set_hash + sovereign_company_id + run_month (temporal match)"
+    ],
+    "runtime_guard": "IF NOT EXISTS outreach.signal_output → returns blocker notice"
+  },
+  "structural_changes": [
+    {
+      "operation": "CREATE FUNCTION",
+      "schema": "lcs",
+      "name": "bridge_signal_output",
+      "type": "plpgsql"
+    }
+  ],
+  "data_changes": [],
+  "timestamp": "2026-03-04T20:30:00Z"
+}

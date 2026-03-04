@@ -1,0 +1,95 @@
+{
+  "id": "wp-20260303-lcs-cid-sid-mid-pipeline-audit",
+  "change_type": "architectural",
+  "orbt_mode": "build",
+  "execution_type": "standard",
+  "target_repo_alias": "company-lifecycle-cl",
+  "target_branch": "main",
+  "architectural_flag": true,
+  "requires_pressure_test": true,
+  "allowed_paths": [
+    "migrations/lcs/",
+    "src/sys/lcs/contracts/",
+    "src/data/lcs/",
+    "src/app/lcs/pipeline/",
+    "src/app/lcs/adapters/",
+    "src/runtime/lcs/",
+    "pipeline/lifecycle_worker.js",
+    "pipeline/orchestrator.js",
+    "pipeline/README.md"
+  ],
+  "summary": "Auditor: evaluate Worker execution of wp-20260303-lcs-cid-sid-mid-pipeline. Verify CID-SID-MID pipeline build across all phases — schema migrations, CID compiler, SID worker (with DB trigger), MID engine, deprecation notices. Validate DB lane (db_changeset + migrations 005/005a), pressure test reports (ARCH + FLOW), column registry patch, and SQL contracts.",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:15:00Z",
+  "payload": {
+    "process_id": "d6cccd55-ec64-4caa-b380-1b7ee047a783",
+    "operational_id": "a1f3c8e7-4b29-4d6a-9e01-7f5c3d2b8a64",
+    "routing": "auditor",
+    "source_work_packet": "wp-20260303-lcs-cid-sid-mid-pipeline",
+    "source_work_packet_path": "work_packets/inbox/wp-20260303-lcs-cid-sid-mid-pipeline.json",
+    "worker_agent": "Worker v2.6.0",
+    "execution_artifacts": {
+      "changeset": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/changeset.json",
+      "execution_log": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/execution_log.json",
+      "arch_pressure_report": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/audit/ARCH_PRESSURE_REPORT.json",
+      "flow_pressure_report": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/audit/FLOW_PRESSURE_REPORT.json",
+      "db_changeset": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/db_changeset.json",
+      "schema_diff": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/schema_diff.md",
+      "column_registry_patch": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/column_registry_patch.yml",
+      "worker_briefing": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/worker_briefing.md"
+    },
+    "files_created": [
+      "src/data/lcs/types/cid.ts",
+      "src/data/lcs/types/sid-output.ts",
+      "src/data/lcs/types/mid-sequence-state.ts",
+      "src/app/lcs/pipeline/cid-compiler.ts",
+      "src/app/lcs/pipeline/sid-worker.ts",
+      "src/app/lcs/pipeline/mid-engine.ts",
+      "src/runtime/lcs/cid-sid-mid-cron.ts",
+      "src/sys/lcs/contracts/lcs_cid.schema.sql",
+      "src/sys/lcs/contracts/lcs_sid_output.schema.sql",
+      "src/sys/lcs/contracts/lcs_mid_sequence_state.schema.sql",
+      "migrations/lcs/005a_lcs_cid_notify_sid_worker.sql"
+    ],
+    "files_modified": [
+      "src/data/lcs/types/enums.ts",
+      "src/data/lcs/types/frame-registry.ts",
+      "src/data/lcs/types/index.ts",
+      "src/app/lcs/pipeline/orchestrator.ts",
+      "src/runtime/lcs/cron-runner.ts",
+      "src/sys/lcs/contracts/lcs_frame_registry.schema.sql",
+      "column_registry.yml"
+    ],
+    "lanes_executed": ["standard", "db"],
+    "db_lane": {
+      "migrations_applied": ["005_lcs_cid_sid_mid.sql", "005a_lcs_cid_notify_sid_worker.sql"],
+      "db_system": "neon",
+      "tables_created": ["lcs.cid", "lcs.sid_output", "lcs.mid_sequence_state"],
+      "tables_altered": ["lcs.frame_registry"],
+      "triggers_created": ["trg_lcs_cid_no_update", "trg_lcs_cid_no_delete", "trg_lcs_cid_notify_sid_worker"]
+    },
+    "pressure_tests": {
+      "arch_invariants": ["cantonal_cardinality", "registry_first", "id_authority", "no_sideways_calls", "contracts_declared"],
+      "flow_invariants": ["ingress_contract_exists", "egress_contract_exists", "no_orphan_tables", "no_unconsumed_events", "id_propagation_intact"],
+      "all_pass": true
+    },
+    "evaluation_instructions": [
+      "Phase 0: Validate orbt_mode=build, execution_type=standard",
+      "Phase 1: Validate envelope — all files within allowed_paths, doctrine_version=3.5.0",
+      "Phase 2: Compliance — no forbidden folders, no protected asset violations",
+      "Phase 3 DB Lane: Validate db_changeset.json against schema, verify rollback_plan present, verify migration files sequential (005 + 005a), verify db_targets subset of WORK_PACKET.db_targets",
+      "Phase 3 Pressure: Verify ARCH_PRESSURE_REPORT.json and FLOW_PRESSURE_REPORT.json — all 10 invariants PASS",
+      "Phase 4: Acceptance — all phases executed per phase_plan, required artifacts present (changeset, execution_log, pressure reports)"
+    ]
+  },
+  "db_required": true,
+  "db_targets": [
+    "lcs.cid",
+    "lcs.sid_output",
+    "lcs.mid_sequence_state",
+    "lcs.frame_registry"
+  ],
+  "db_system": "neon",
+  "ui_required": false,
+  "container_required": false
+}

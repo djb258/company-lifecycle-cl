@@ -1,4 +1,7 @@
-import type { LifecyclePhase, FrameType, Channel, IntelligenceTier } from './enums';
+import type {
+  LifecyclePhase, FrameType, Channel, IntelligenceTier,
+  CidCompilationRule, MidSequenceType
+} from './enums';
 
 /**
  * LCS Frame Registry — lcs.frame_registry
@@ -23,4 +26,11 @@ export interface LcsFrameRegistryRow {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+
+  // CID/SID/MID pipeline integration (migration 005)
+  cid_compilation_rule: CidCompilationRule | null;
+  sid_template_id: string | null;
+  mid_sequence_type: MidSequenceType | null;
+  mid_delay_hours: number | null;
+  mid_max_attempts: number | null;  // default 3
 }

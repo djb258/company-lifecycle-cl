@@ -1,0 +1,36 @@
+{
+  "changeset_id": "cs-wp-20260304-mid-egress-lovable-rewire-envelope-repair",
+  "work_packet_id": "wp-20260304-mid-egress-lovable-rewire-envelope-repair",
+  "execution_type": "standard",
+  "orbt_mode": "repair",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T15:20:00Z",
+  "repairs_work_packet": "wp-20260304-mid-egress-lovable-rewire",
+  "governance_only": true,
+  "repair_description": "Materialized governance envelope for the completed MID egress Lovable rewire: work packet JSON in CL repo + ARCH/FLOW pressure reports (5/5 PASS each).",
+  "files": {
+    "created": [
+      {
+        "path": "work_packets/inbox/wp-20260304-mid-egress-lovable-rewire.json",
+        "change_type": "CREATED",
+        "description": "Work packet materialized from IMO-Creator builder inbox to CL repo."
+      },
+      {
+        "path": "changesets/outbox/wp-20260304-mid-egress-lovable-rewire/audit/ARCH_PRESSURE_REPORT.json",
+        "change_type": "CREATED",
+        "description": "Architectural pressure test: 5/5 PASS (cantonal_cardinality, registry_first, id_authority, no_sideways_calls, contracts_declared)."
+      },
+      {
+        "path": "changesets/outbox/wp-20260304-mid-egress-lovable-rewire/audit/FLOW_PRESSURE_REPORT.json",
+        "change_type": "CREATED",
+        "description": "Flow pressure test: 5/5 PASS (ingress_contract, egress_contract, no_orphan_tables, no_unconsumed_events, id_propagation_intact)."
+      }
+    ],
+    "modified": []
+  },
+  "deviations": [],
+  "pre_deploy_blockers": [],
+  "pressure_test_required": true
+}

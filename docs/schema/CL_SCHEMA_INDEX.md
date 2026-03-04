@@ -1,8 +1,8 @@
 # CL Schema Documentation Index
 
 > **Source of Truth:** Neon PostgreSQL
-> **Last Updated:** 2026-02-04
-> **Schema Statistics:** 21 tables (cl) + 5 tables (lcs) | 275+ columns | 44 constraints | 3 FKs | 106,086 active records
+> **Last Updated:** 2026-03-03
+> **Schema Statistics:** 5 tables (cl) + 12 tables (lcs) + 1 table (ctb) + 3 tables (doctrine) | 3 materialized views (lcs) | 350+ columns | 60+ constraints | 0 FKs (by-value references) | 117,000+ cl records | 668 doctrine chunks
 
 ---
 
@@ -36,12 +36,23 @@
 ### System Tables (LCS — Lifecycle Communication Spine)
 | Document | Tables / Views | Description |
 |----------|----------------|-------------|
-| [LCS_DATA_MODEL.md](../../src/sys/lcs/doctrine/LCS_DATA_MODEL.md) | `lcs.event`, `lcs.err0`, `lcs.adapter_registry`, `lcs.frame_registry`, `lcs.signal_registry`, `lcs.v_latest_by_company`, `lcs.v_latest_by_entity` | Communication event ledger (DRAFT v0.1.0) |
+| [LCS_DATA_MODEL.md](../../src/sys/lcs/doctrine/LCS_DATA_MODEL.md) | `lcs.event`, `lcs.err0`, `lcs.adapter_registry`, `lcs.frame_registry`, `lcs.signal_registry`, `lcs.signal_queue`, `lcs.v_latest_by_company`, `lcs.v_latest_by_entity`, `lcs.v_company_intelligence` | LCS data model contract (v2.3.0) |
 
-### ERD
+### LCS Pipeline Tables (CID/SID/MID)
+| Document | Tables | Description |
+|----------|--------|-------------|
+| [LCS_CID_SID_MID.md](LCS_CID_SID_MID.md) | `lcs.cid`, `lcs.sid_output`, `lcs.mid_sequence_state` | Pipeline tables — compilation, construction, delivery (SH-LCS-PIPELINE) |
+
+### CTB & Doctrine Tables
+| Document | Tables | Description |
+|----------|--------|-------------|
+| [CTB_DOCTRINE_TABLES.md](CTB_DOCTRINE_TABLES.md) | `ctb.table_registry`, `doctrine.doctrine_library`, `doctrine.doctrine_key`, `doctrine.doctrine_library_error` | Registry-first enforcement + vectorized doctrine content (SYSTEM_CORE / DOCTRINE_MGMT) |
+
+### ERDs
 | Document | Description |
 |----------|-------------|
-| [../CL_SCHEMA_ERD.md](../CL_SCHEMA_ERD.md) | Visual entity relationship diagram |
+| [../CL_SCHEMA_ERD.md](../CL_SCHEMA_ERD.md) | CL identity entity relationship diagram |
+| [LCS_PIPELINE_ERD.md](LCS_PIPELINE_ERD.md) | LCS pipeline entity relationship diagram (CID → SID → MID → CET) |
 
 ---
 
@@ -130,7 +141,7 @@ ORDER BY ic.overall_confidence_score NULLS FIRST;
 | Field | Value |
 |-------|-------|
 | Created | 2026-01-25 |
-| Updated | 2026-02-07 |
+| Updated | 2026-03-03 |
 | Status | Active |
 | Maintainer | System |
-| Last Intake | Manual Outreach Batch (+21 records, 2026-02-07) |
+| Last Change | CID/SID/MID pipeline + CTB/doctrine migration (2026-03-03) |

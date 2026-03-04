@@ -1,0 +1,29 @@
+{
+  "changeset_id": "cs-wp-20260304-mid-egress-lovable-rewire",
+  "work_packet_id": "wp-20260304-mid-egress-lovable-rewire",
+  "doc_surface": "repo_markdown",
+  "doc_targets": [
+    "docs/",
+    "src/runtime/lcs/"
+  ],
+  "updates": [
+    {
+      "target": "src/runtime/lcs/cid-sid-mid-cron.ts",
+      "action": "UPDATED",
+      "description": "Added DRY_RUN mode documentation in JSDoc header. runCidSidMidDryRun() exported with full field-by-field completeness logging."
+    },
+    {
+      "target": "src/app/lcs/adapters/lovable-delivery-adapter.ts",
+      "action": "CREATED",
+      "description": "New adapter with inline documentation: Lovable contract boundary, env var sourcing, request/response field mapping."
+    },
+    {
+      "target": "src/app/lcs/adapters/adapter-resolver.ts",
+      "action": "UPDATED",
+      "description": "Updated JSDoc to document Lovable routing architecture. Old adapters marked @deprecated."
+    }
+  ],
+  "staleness_resolved": [],
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T15:00:00Z"
+}

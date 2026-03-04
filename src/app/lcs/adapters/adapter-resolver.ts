@@ -1,36 +1,32 @@
 import type { LcsAdapter } from './types';
 import type { Channel } from '@/data/lcs';
-import { MailgunAdapter } from './mailgun-adapter';
-import { HeyReachAdapter } from './heyreach-adapter';
-import { SalesHandoffAdapter } from './sales-handoff-adapter';
+import { LovableDeliveryAdapter } from './lovable-delivery-adapter';
 
 /**
- * Adapter Resolver — factory that maps channel code → adapter instance.
+ * Adapter Resolver — routes all channels through LovableDeliveryAdapter.
  *
- * What triggers this? The runtime pipeline (Prompt 7) needs an adapter for a given channel.
- * How do we get it? Channel code from signal or adapter_registry determines which adapter.
+ * All egress channels (MG, HR, SH) are delivered via the single Lovable
+ * delivery endpoint. CL sends the structured payload with channel context;
+ * Lovable resolves templates and routes to the appropriate delivery service.
  *
- * Adapters are singletons (stateless) — one instance per channel is sufficient.
+ * @deprecated Direct adapters (MailgunAdapter, HeyReachAdapter, SalesHandoffAdapter)
+ * are retained as reference but no longer used in the pipeline. All delivery
+ * routes through LOVABLE_DELIVERY_URL.
  */
 
-const adapters: Record<Channel, LcsAdapter> = {
-  MG: new MailgunAdapter(),
-  HR: new HeyReachAdapter(),
-  SH: new SalesHandoffAdapter(),
-};
+const lovableAdapter = new LovableDeliveryAdapter();
 
 /**
  * Resolve an adapter by channel code.
- * Returns null if the channel has no registered adapter.
+ * All channels route through the Lovable delivery adapter.
  */
-export function resolveAdapter(channel: Channel): LcsAdapter | null {
-  return adapters[channel] ?? null;
+export function resolveAdapter(_channel: Channel): LcsAdapter | null {
+  return lovableAdapter;
 }
 
 /**
- * Get all registered adapters.
- * Useful for health checks and adapter registry sync.
+ * Get the canonical delivery adapter.
  */
-export function getAllAdapters(): Record<Channel, LcsAdapter> {
-  return { ...adapters };
+export function getDeliveryAdapter(): LcsAdapter {
+  return lovableAdapter;
 }
