@@ -361,23 +361,24 @@ Deno.serve(async (req: Request) => {
           mss.message_run_id,
           mss.communication_id,
           mss.channel,
-          mss.sovereign_company_id::text,
-          mss.entity_id::text,
-          mss.entity_type,
-          mss.lifecycle_phase,
-          mss.agent_number,
-          mss.lane,
-          mss.signal_set_hash,
-          mss.frame_id,
           mss.adapter_type,
+          cid.sovereign_company_id::text,
+          cid.entity_id::text,
+          cid.entity_type,
+          cid.lifecycle_phase,
+          cid.agent_number,
+          cid.lane,
+          cid.signal_set_hash,
+          cid.frame_id,
           sid.recipient_email,
           sid.recipient_name,
-          sid.recipient_linkedin_url,
+          NULL::text AS recipient_linkedin_url,
           sid.subject_line,
           sid.body_plain,
           sid.body_html,
           sid.sender_identity
         FROM lcs.mid_sequence_state mss
+        JOIN lcs.cid cid ON cid.communication_id = mss.communication_id
         JOIN lcs.sid_output sid ON sid.communication_id = mss.communication_id
         LEFT JOIN lcs.event evt
           ON evt.communication_id = mss.communication_id
