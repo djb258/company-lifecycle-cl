@@ -1,0 +1,40 @@
+{
+  "id": "wp-20260306-talent-flow-linkedin-monitor",
+  "change_type": "feature",
+  "orbt_mode": "build",
+  "execution_type": "standard",
+  "target_repo_alias": "barton-outreach-core",
+  "target_branch": "main",
+  "architectural_flag": false,
+  "requires_pressure_test": false,
+  "summary": "Talent Flow LinkedIn Monitor — DB Agent scope: verify field_monitor.url_registry and field_monitor.field_state tables exist (confirmed), verify people.people_master exists (confirmed), seed 100 LinkedIn profile URLs into field_monitor.url_registry with check_interval appropriate for LinkedIn, seed corresponding field_state rows. Kill switches KILL_TALENT_FLOW_MONITOR and KILL_LINKEDIN_SEED must be enforced.",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-06T14:05:02Z",
+  "routed_by": "builder",
+  "routed_at": "2026-03-06T00:00:00.000Z",
+  "routing_notes": "DB-scoped work extracted from wp-20260306-talent-flow-linkedin-monitor. Builder verified: field_monitor tables exist (5/5), people.people_master exists. Builder will execute code-side allowed_paths after DB Agent confirms.",
+  "payload": {
+    "process_id": "e56712ad-86a0-4717-b77d-4c23e7c2c65c",
+    "operational_id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "sample_gate": 100,
+    "vendor_tier": "field_monitor.*",
+    "named_system": "Talent Flow — LinkedIn Monitor",
+    "constraints": [
+      "field_monitor.* bridge reads only; never writes",
+      "Sample gate LIMIT 100",
+      "Kill switches KILL_TALENT_FLOW_MONITOR and KILL_LINKEDIN_SEED enforced"
+    ]
+  },
+  "db_required": true,
+  "db_targets": [
+    "field_monitor.url_registry",
+    "field_monitor.field_state",
+    "people.people_master"
+  ],
+  "db_system": "neon",
+  "pre_verification": {
+    "field_monitor_schema": "EXISTS — 5 tables (check_log, error_log, field_state, rate_state, url_registry)",
+    "people_people_master": "EXISTS",
+    "hub_path": "barton-outreach-core/hubs/people-intelligence/imo/middle/movement_engine/ — EXISTS"
+  }
+}

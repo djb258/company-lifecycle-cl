@@ -1,0 +1,24 @@
+{
+  "work_packet_id": "wp-20260306-field-monitor-marketing-db-migration",
+  "status": "DB_COMPLETE",
+  "agent": "db_agent",
+  "doctrine_version": "3.5.0",
+  "completion_timestamp": "2026-03-06T15:00:00Z",
+  "artifacts_produced": {
+    "db_changeset": "changesets/outbox/wp-20260306-field-monitor-marketing-db-migration/db/db_changeset.json",
+    "worker_briefing": "changesets/outbox/wp-20260306-field-monitor-marketing-db-migration/db/worker_briefing.md"
+  },
+  "neon_state": {
+    "database": "marketing (ep-ancient-waterfall-a42vy0du)",
+    "schema_created": "field_monitor",
+    "tables_created": 5,
+    "triggers_created": 4,
+    "ctb_registry_entries": 5,
+    "urls_seeded": 199,
+    "field_states_seeded": 199,
+    "verified": true
+  },
+  "risk_class": "MED",
+  "blockers": [],
+  "unblocks": ["wp-20260306-field-monitor-production-deploy"]
+}

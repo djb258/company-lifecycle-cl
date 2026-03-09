@@ -1,0 +1,39 @@
+{
+  "changeset_id": "db-cs-20260306-signal-sweep-blog-001",
+  "work_packet_id": "wp-20260306-signal-sweep-blog-monitor",
+  "db_system": "neon",
+  "db_targets": ["field_monitor.url_registry", "field_monitor.field_state", "vendor.blog"],
+  "seed_script": {
+    "file": "barton-outreach-core/hubs/blog-content/scripts/seed_blog_urls.sql",
+    "direction": "forward",
+    "description": "Seed 100 blog URLs from vendor.blog into field_monitor.url_registry + field_state (field: content_hash, hourly check). Idempotent via ON CONFLICT DO NOTHING."
+  },
+  "prerequisite_resolved": {
+    "blocker": "vendor.blog did not exist",
+    "resolved_by": "wp-20260306-vendor-blog-ddl",
+    "status": "RESOLVED"
+  },
+  "execution_result": {
+    "url_registry_inserted": 0,
+    "field_state_inserted": 0,
+    "reason": "vendor.blog is empty (just created). Script executed cleanly — will populate when blog vendor data is loaded.",
+    "script_status": "CLEAN_EXECUTION"
+  },
+  "validation_steps": [
+    {
+      "step": "SELECT count(*) FROM vendor.blog WHERE is_active = true;",
+      "expected": "Returns source count (currently 0)."
+    },
+    {
+      "step": "SELECT count(*) FROM field_monitor.url_registry ur JOIN vendor.blog vb ON ur.domain = vb.domain AND ur.path = vb.path;",
+      "expected": "Returns seeded count (currently 0)."
+    },
+    {
+      "step": "SELECT count(*) FROM field_monitor.field_state WHERE field_name = 'content_hash';",
+      "expected": "Returns field_state count matching blog url_registry rows."
+    }
+  ],
+  "risk_class": "LOW",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-06T00:15:00Z"
+}

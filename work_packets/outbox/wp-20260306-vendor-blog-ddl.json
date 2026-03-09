@@ -1,0 +1,18 @@
+{
+  "work_packet_id": "wp-20260306-vendor-blog-ddl",
+  "status": "DB_COMPLETE",
+  "agent": "db_agent",
+  "doctrine_version": "3.5.0",
+  "completion_timestamp": "2026-03-06T00:05:00Z",
+  "artifacts_produced": {
+    "db_changeset": "changesets/outbox/wp-20260306-vendor-blog-ddl/db/db_changeset.json"
+  },
+  "neon_state": {
+    "schema_created": "vendor",
+    "table_created": "vendor.blog",
+    "verified": true
+  },
+  "risk_class": "LOW",
+  "blockers": [],
+  "unblocks": ["wp-20260306-signal-sweep-blog-monitor"]
+}

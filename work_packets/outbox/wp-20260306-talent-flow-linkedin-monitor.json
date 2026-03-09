@@ -1,0 +1,19 @@
+{
+  "work_packet_id": "wp-20260306-talent-flow-linkedin-monitor",
+  "status": "DB_COMPLETE",
+  "agent": "db_agent",
+  "doctrine_version": "3.5.0",
+  "completion_timestamp": "2026-03-06T00:10:00Z",
+  "artifacts_produced": {
+    "db_changeset": "changesets/outbox/wp-20260306-talent-flow-linkedin-monitor/db/db_changeset.json",
+    "worker_briefing": "changesets/outbox/wp-20260306-talent-flow-linkedin-monitor/db/worker_briefing.md"
+  },
+  "neon_state": {
+    "seed_script_executed": true,
+    "rows_seeded": 0,
+    "reason": "people.people_master has 0 LinkedIn URLs — data-dependent, re-run when loaded",
+    "verified": true
+  },
+  "risk_class": "LOW",
+  "blockers": []
+}
