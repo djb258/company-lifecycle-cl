@@ -1,0 +1,40 @@
+{
+  "changeset_id": "db-cs-20260306-vendor-blog-ddl-001",
+  "work_packet_id": "wp-20260306-vendor-blog-ddl",
+  "db_system": "neon",
+  "db_targets": ["vendor.blog"],
+  "migrations": [
+    {
+      "file": "inline (from work packet payload.ddl)",
+      "direction": "forward",
+      "description": "Create vendor schema and vendor.blog table with columns: blog_id (UUID PK), domain, path, blog_name, company_name, source_type, is_active, created_at, updated_at. UNIQUE(domain, path). Idempotent (IF NOT EXISTS)."
+    }
+  ],
+  "rollback_plan": {
+    "strategy": "inline",
+    "command": "DROP TABLE IF EXISTS vendor.blog; DROP SCHEMA IF EXISTS vendor;",
+    "verification": "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'vendor'; — should return 0."
+  },
+  "validation_steps": [
+    {
+      "step": "SELECT table_schema, table_name FROM information_schema.tables WHERE table_schema = 'vendor';",
+      "expected": "Returns 1 row: vendor.blog."
+    },
+    {
+      "step": "SELECT column_name FROM information_schema.columns WHERE table_schema = 'vendor' AND table_name = 'blog' ORDER BY ordinal_position;",
+      "expected": "Returns 9 columns: blog_id, domain, path, blog_name, company_name, source_type, is_active, created_at, updated_at."
+    }
+  ],
+  "pre_generation_checks": {
+    "registry_first": "N/A — vendor is a source data schema, not LCS registry",
+    "cardinality": "PASS — 1 new table",
+    "migration_ordering": "N/A — inline DDL from builder",
+    "raw_immutability": "N/A — vendor.blog is a source/seed table (READ/WRITE)",
+    "vendor_json_containment": "N/A",
+    "bridge_versioning": "N/A",
+    "application_role": "N/A"
+  },
+  "risk_class": "LOW",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-06T00:05:00Z"
+}

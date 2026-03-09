@@ -1,0 +1,26 @@
+{
+  "id": "wp-20260304-signal-queue-source-hub-check-repair-db-changeset",
+  "parent_work_packet": "wp-20260304-signal-queue-source-hub-check-repair",
+  "lane": "db",
+  "agent": "db_agent",
+  "status": "COMPLETE",
+  "changeset_path": "changesets/outbox/wp-20260304-signal-queue-source-hub-check-repair/db/db_changeset.json",
+  "migration_files": [
+    "migrations/007_signal_queue_source_hub_repair.sql",
+    "migrations/007_signal_queue_source_hub_repair_rollback.sql"
+  ],
+  "risk_class": "LOW",
+  "validation_step_count": 5,
+  "pre_generation_checks": {
+    "registry_first": "PASS",
+    "cardinality": "N/A",
+    "migration_ordering": "PASS",
+    "raw_immutability": "N/A",
+    "vendor_json_containment": "N/A",
+    "bridge_versioning": "N/A",
+    "application_role": "N/A"
+  },
+  "process_id": "ea28ed4b-3213-414b-8ce8-4578cedf93ab",
+  "operational_id": "f7a12c30-9e84-4b5d-d0f2-4c87b9e61a05",
+  "timestamp": "2026-03-04T20:10:00Z"
+}

@@ -1,5 +1,6 @@
 // Cron runner
 export { runLcsCron } from './cron-runner';
+export { runCidSidMidCron } from './cid-sid-mid-cron';
 
 // Webhook handler
 export { handleMailgunWebhook, validateMailgunSignature } from './webhook-handler';

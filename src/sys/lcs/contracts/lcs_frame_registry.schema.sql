@@ -1,7 +1,7 @@
 -- LCS Frame Registry
 -- Classification: REGISTRY (configuration only)
 -- Authority: HUB-CL-001, SUBHUB-CL-LCS
--- Version: 2.2.0
+-- Version: 2.3.0 (migration 005: CID/SID/MID pipeline columns added)
 --
 -- Rules:
 --   Configuration only — no execution data
@@ -30,6 +30,13 @@ CREATE TABLE lcs.frame_registry (
     -- Description
     description         TEXT,
 
+    -- CID/SID/MID pipeline integration (migration 005)
+    cid_compilation_rule TEXT,                       -- STANDARD | STRICT | LITE
+    sid_template_id     TEXT,                        -- SID template identifier for message construction
+    mid_sequence_type   TEXT,                        -- IMMEDIATE | DELAYED | BATCH
+    mid_delay_hours     INT,                         -- hours to delay between sequence steps
+    mid_max_attempts    INT             DEFAULT 3,   -- maximum delivery attempts per channel
+
     -- Status
     is_active           BOOLEAN         NOT NULL    DEFAULT TRUE,
 
@@ -46,7 +53,19 @@ CREATE TABLE lcs.frame_registry (
         'EMPLOYEE_COMM', 'RENEWAL_NOTICE', 'ONBOARDING'
     )),
     CONSTRAINT chk_frame_tier CHECK (tier BETWEEN 1 AND 5),
-    CONSTRAINT chk_frame_channel CHECK (channel IN ('MG', 'HR'))
+    CONSTRAINT chk_frame_channel CHECK (channel IN ('MG', 'HR')),
+    CONSTRAINT chk_frame_cid_compilation_rule CHECK (
+        cid_compilation_rule IS NULL OR cid_compilation_rule IN ('STANDARD', 'STRICT', 'LITE')
+    ),
+    CONSTRAINT chk_frame_mid_sequence_type CHECK (
+        mid_sequence_type IS NULL OR mid_sequence_type IN ('IMMEDIATE', 'DELAYED', 'BATCH')
+    ),
+    CONSTRAINT chk_frame_mid_delay_hours CHECK (
+        mid_delay_hours IS NULL OR mid_delay_hours BETWEEN 0 AND 720
+    ),
+    CONSTRAINT chk_frame_mid_max_attempts CHECK (
+        mid_max_attempts IS NULL OR mid_max_attempts BETWEEN 1 AND 10
+    )
 );
 
 -- Comments
@@ -55,3 +74,8 @@ COMMENT ON COLUMN lcs.frame_registry.tier IS 'Intelligence tier 1-5 this frame r
 COMMENT ON COLUMN lcs.frame_registry.required_fields IS 'JSON array of field names required from v_company_intelligence (e.g., ["ceo_name", "plan_year_end", "participant_count"])';
 COMMENT ON COLUMN lcs.frame_registry.fallback_frame IS 'Frame to cascade to if required_fields are missing. References another frame_id by value (self-referential).';
 COMMENT ON COLUMN lcs.frame_registry.step_in_sequence IS 'Position in hammer/sequence (nullable for non-sequence frames like NEWSLETTER or POND)';
+COMMENT ON COLUMN lcs.frame_registry.cid_compilation_rule IS 'CID compilation rule: STANDARD (normal checks), STRICT (all fields required), LITE (minimal checks).';
+COMMENT ON COLUMN lcs.frame_registry.sid_template_id IS 'SID template identifier for message construction. References template catalog by value.';
+COMMENT ON COLUMN lcs.frame_registry.mid_sequence_type IS 'MID delivery sequence type: IMMEDIATE (send now), DELAYED (wait mid_delay_hours), BATCH (aggregate).';
+COMMENT ON COLUMN lcs.frame_registry.mid_delay_hours IS 'Hours to delay between sequence steps. Applicable when mid_sequence_type = DELAYED.';
+COMMENT ON COLUMN lcs.frame_registry.mid_max_attempts IS 'Maximum delivery attempts per channel. Default 3.';

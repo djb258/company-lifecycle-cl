@@ -1,0 +1,57 @@
+{
+  "changeset_id": "cs-wp-20260304-signal-queue-source-hub-check-repair",
+  "work_packet_id": "wp-20260304-signal-queue-source-hub-check-repair",
+  "change_type": "fix",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "execution_agent": "builder",
+  "execution_status": "VERIFIED_IDEMPOTENT",
+  "timestamp": "2026-03-04T20:15:00Z",
+  "summary": "Verified lcs.signal_queue source_hub CHECK constraint already includes OUTREACH and SYSTEM. Migration 007_signal_queue_source_hub_repair.sql exists and has been applied by DB Agent. Constraint chk_sq_source_hub confirmed with exact set: PEOPLE, DOL, BLOG, MANUAL, OUTREACH, SYSTEM.",
+  "files_modified": [],
+  "files_created": [],
+  "db_changes": [
+    {
+      "table": "lcs.signal_queue",
+      "operation": "ALTER CONSTRAINT",
+      "constraint": "chk_sq_source_hub",
+      "status": "ALREADY_APPLIED",
+      "migration_file": "migrations/007_signal_queue_source_hub_repair.sql",
+      "applied_by": "db_agent"
+    }
+  ],
+  "validation_steps": [
+    {
+      "step": 1,
+      "action": "Query pg_constraint for CHECK constraints on lcs.signal_queue",
+      "result": "PASS",
+      "detail": "Found chk_sq_source_hub with values PEOPLE, DOL, BLOG, MANUAL, OUTREACH, SYSTEM"
+    },
+    {
+      "step": 2,
+      "action": "Compare current constraint values against required set",
+      "result": "PASS",
+      "detail": "Exact match — all 6 values present, no extras"
+    },
+    {
+      "step": 3,
+      "action": "Verify migration file exists",
+      "result": "PASS",
+      "detail": "migrations/007_signal_queue_source_hub_repair.sql present with correct DDL"
+    },
+    {
+      "step": 4,
+      "action": "Verify rollback migration exists",
+      "result": "PASS",
+      "detail": "migrations/007_signal_queue_source_hub_repair_rollback.sql present"
+    },
+    {
+      "step": 5,
+      "action": "Verify DB_CHANGESET artifacts from DB Agent",
+      "result": "PASS",
+      "detail": "db_changeset.json, schema_diff.json, worker_briefing.md all present"
+    }
+  ],
+  "deviations": [],
+  "doctrine_version": "3.5.0"
+}

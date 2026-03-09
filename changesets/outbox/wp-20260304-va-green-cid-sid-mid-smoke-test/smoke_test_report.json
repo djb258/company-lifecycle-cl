@@ -1,0 +1,123 @@
+{
+  "report_id": "smoke-wp-20260304-va-green-cid-sid-mid",
+  "work_packet_id": "wp-20260304-va-green-cid-sid-mid-smoke-test",
+  "test_subject": {
+    "company_name": "Virginia Green",
+    "company_domain": "virginiagreen.com",
+    "sovereign_company_id": "0817f0f1-1f4f-438d-bd6c-2817582c206d",
+    "intelligence_tier": 5,
+    "signal_type": "D-04 Renewal Proximity",
+    "magnitude": 80
+  },
+  "steps": [
+    {
+      "step": 1,
+      "name": "Insert signal into outreach.signal_output",
+      "verdict": "SKIP",
+      "data_written": null,
+      "issues": [
+        "outreach.signal_output table does not exist — outreach schema contains only stub tables (outreach, dol, blog)",
+        "Work packet instruction 'insert directly into lcs.signal_queue' bypasses this step"
+      ]
+    },
+    {
+      "step": 2,
+      "name": "Insert bridged signal into lcs.signal_queue",
+      "verdict": "PASS",
+      "data_written": {
+        "table": "lcs.signal_queue",
+        "id": "6d82b959-1437-402b-adc4-52f9a13fe6a0",
+        "signal_set_hash": "SIG-RENEWAL-PROXIMITY-V1",
+        "status": "COMPLETED",
+        "source_hub": "MANUAL"
+      },
+      "issues": [
+        "source_hub constraint: CHECK (source_hub IN ('PEOPLE','DOL','BLOG','MANUAL')). Used MANUAL for smoke test. 'outreach' is not a valid source_hub."
+      ]
+    },
+    {
+      "step": 3,
+      "name": "Run CID compiler logic and write lcs.cid COMPILED row",
+      "verdict": "PASS",
+      "data_written": {
+        "table": "lcs.cid",
+        "communication_id": "LCS-OUT-20260304-SMOKE0TEST01",
+        "frame_id": "OUT-HAMMER-01-LITE",
+        "compilation_status": "COMPILED",
+        "intelligence_tier": 5
+      },
+      "issues": [
+        "communication_id format constraint: ^LCS-(OUT|SAL|CLI)-\\d{8}-[A-Z0-9]{10,}$ — phase abbreviation is OUT/SAL/CLI, not full OUTREACH",
+        "Virginia Green intelligence_tier=5 (lowest). No frames match naturally — all require tier 3-4 with CEO data. Frame forced for pipeline traversal.",
+        "In production, CID compiler would mark this BLOCKED (no eligible frame for tier 5 company with no people data)"
+      ]
+    },
+    {
+      "step": 4,
+      "name": "Run SID worker logic and write lcs.sid_output row",
+      "verdict": "PASS",
+      "data_written": {
+        "table": "lcs.sid_output",
+        "sid_id": "d44750f7-6031-4f7c-a9d3-b9c9b403e4f7",
+        "communication_id": "LCS-OUT-20260304-SMOKE0TEST01",
+        "construction_status": "CONSTRUCTED",
+        "template_id": "TPL-HAMMER-01-LITE-V1",
+        "recipient_email": "info@virginiagreen.com"
+      },
+      "issues": [
+        "No CEO name/email available — used company-level fallback (info@virginiagreen.com)",
+        "In production, SID worker would need doctrine library template resolution; smoke test used static content"
+      ]
+    },
+    {
+      "step": 5,
+      "name": "Run MID engine logic and write lcs.mid_sequence_state QUEUED row",
+      "verdict": "PASS",
+      "data_written": {
+        "table": "lcs.mid_sequence_state",
+        "mid_id": "c3400b98-5834-431c-b886-31d64158159a",
+        "message_run_id": "RUN-LCS-OUT-20260304-SMOKE0TEST01-MG-001",
+        "adapter_type": "MG",
+        "channel": "MG",
+        "delivery_status": "QUEUED",
+        "gate_verdict": "PASS"
+      },
+      "issues": [
+        "message_run_id format: ^RUN-LCS-(OUT|SAL|CLI)-\\d{8}-[A-Z0-9]{10,}-(MG|HR|SH)-\\d{3}$ — validated successfully",
+        "Stopped at QUEUED — no live Mailgun send triggered"
+      ]
+    },
+    {
+      "step": 6,
+      "name": "Verify Lovable pickup path via lcs.event",
+      "verdict": "PASS",
+      "data_written": {
+        "table": "lcs.event",
+        "communication_id": "LCS-OUT-20260304-SMOKE0TEST01",
+        "message_run_id": "RUN-LCS-OUT-20260304-SMOKE0TEST01-MG-001",
+        "event_type": "ADAPTER_CALLED",
+        "delivery_status": "PENDING"
+      },
+      "issues": [
+        "No LOVABLE adapter in adapter_registry — Lovable reads from lcs.event as a consumer, not an adapter",
+        "Lovable pickup query: SELECT * FROM lcs.event WHERE communication_id = 'LCS-OUT-20260304-SMOKE0TEST01'",
+        "Stopped before live Mailgun send — delivery_status=PENDING, not SENT"
+      ]
+    }
+  ],
+  "pipeline_trace": {
+    "signal_queue": "6d82b959-1437-402b-adc4-52f9a13fe6a0 → COMPLETED",
+    "cid": "LCS-OUT-20260304-SMOKE0TEST01 → COMPILED",
+    "sid_output": "d44750f7-6031-4f7c-a9d3-b9c9b403e4f7 → CONSTRUCTED",
+    "mid_sequence_state": "c3400b98-5834-431c-b886-31d64158159a → QUEUED",
+    "event": "LCS-OUT-20260304-SMOKE0TEST01 → PENDING (ADAPTER_CALLED)"
+  },
+  "overall_verdict": "PASS (5/6 steps — step 1 SKIP due to missing table)",
+  "live_send_triggered": false,
+  "blockers_discovered": [
+    "outreach.signal_output table does not exist (stub schema only)",
+    "source_hub constraint on signal_queue does not include 'outreach' as valid value",
+    "Virginia Green has tier 5 intelligence — no frame matches in production without people data enrichment"
+  ],
+  "timestamp": "2026-03-04T20:05:00Z"
+}

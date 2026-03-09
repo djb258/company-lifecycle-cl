@@ -1,0 +1,43 @@
+{
+  "report_id": "arch-pressure-wp-20260304-mid-egress-lovable-rewire",
+  "work_packet_id": "wp-20260304-mid-egress-lovable-rewire",
+  "report_type": "ARCH_PRESSURE",
+  "agent": "Builder v2.7.0",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T15:20:00Z",
+  "invariants": [
+    {
+      "id": "CANTONAL_CARDINALITY",
+      "name": "Cantonal cardinality — one adapter per canton",
+      "result": "PASS",
+      "evidence": "LovableDeliveryAdapter is single canonical adapter. Old per-channel adapters (MG, HR, SH) deprecated but retained as reference. No duplicate canton ownership."
+    },
+    {
+      "id": "REGISTRY_FIRST",
+      "name": "Registry-first — all adapters registered before use",
+      "result": "PASS",
+      "evidence": "adapter-resolver.ts instantiates LovableDeliveryAdapter. resolveAdapter() returns it for all channels. Adapter is registered at module load time."
+    },
+    {
+      "id": "ID_AUTHORITY",
+      "name": "ID authority — message_run_id minted by canonical id-minter",
+      "result": "PASS",
+      "evidence": "mid-engine.ts calls mintMessageRunId() from @/app/lcs/id-minter before passing to adapter. LovableDeliveryAdapter does not mint IDs."
+    },
+    {
+      "id": "NO_SIDEWAYS_CALLS",
+      "name": "No sideways calls — adapter does not call other adapters or pipeline components",
+      "result": "PASS",
+      "evidence": "LovableDeliveryAdapter imports only types.ts. No imports from pipeline/, gates/, or other adapters. Single fetch() to LOVABLE_DELIVERY_URL."
+    },
+    {
+      "id": "CONTRACTS_DECLARED",
+      "name": "Contracts declared — adapter payload contract typed and exported",
+      "result": "PASS",
+      "evidence": "AdapterPayload in types.ts declares all 16 fields including 5 new context fields (frame_id, lifecycle_phase, sovereign_company_id, company_name, agent_number). LovableDeliveryAdapter maps to LovableRequestPayload internally."
+    }
+  ],
+  "overall_result": "PASS",
+  "pass_count": 5,
+  "fail_count": 0
+}

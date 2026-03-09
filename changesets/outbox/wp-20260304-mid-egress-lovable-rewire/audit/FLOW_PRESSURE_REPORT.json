@@ -1,0 +1,43 @@
+{
+  "report_id": "flow-pressure-wp-20260304-mid-egress-lovable-rewire",
+  "work_packet_id": "wp-20260304-mid-egress-lovable-rewire",
+  "report_type": "FLOW_PRESSURE",
+  "agent": "Builder v2.7.0",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T15:20:00Z",
+  "invariants": [
+    {
+      "id": "INGRESS_CONTRACT_EXISTS",
+      "name": "Ingress contract — SID worker and MID engine have typed inputs",
+      "result": "PASS",
+      "evidence": "mid-engine.ts reads LcsSidOutputRow from lcs.sid_output (CONSTRUCTED). sid-worker.ts reads LcsCidRow from lcs.cid (COMPILED). Both typed via @/data/lcs imports."
+    },
+    {
+      "id": "EGRESS_CONTRACT_EXISTS",
+      "name": "Egress contract — adapter payload contract covers all Lovable request fields",
+      "result": "PASS",
+      "evidence": "AdapterPayload (16 fields) maps to LovableRequestPayload (15 fields) in lovable-delivery-adapter.ts. All lovable_contract.request_fields from WP covered: communication_id, message_run_id, channel, recipient_email, recipient_linkedin_url, subject_line, body_plain, body_html, sender_identity, frame_id, lifecycle_phase, sovereign_company_id, company_name, agent_number, metadata."
+    },
+    {
+      "id": "NO_ORPHAN_TABLES",
+      "name": "No orphan tables — no new tables introduced",
+      "result": "PASS",
+      "evidence": "No DB changes in this work packet. Adapter rewire is code-only."
+    },
+    {
+      "id": "NO_UNCONSUMED_EVENTS",
+      "name": "No unconsumed events — webhook return path verified",
+      "result": "PASS",
+      "evidence": "3 webhook functions (lcs-mailgun-webhook, lcs-heyreach-webhook, lcs-inbound-reply) all write to CET (lcs.event) at step 8/9 and emit engagement/reply signals to lcs.signal_queue. Return path intact and verified."
+    },
+    {
+      "id": "ID_PROPAGATION_INTACT",
+      "name": "ID propagation — communication_id and message_run_id flow through adapter to webhook",
+      "result": "PASS",
+      "evidence": "LovableDeliveryAdapter passes communication_id and message_run_id in request payload. Webhooks extract these from event data (Mailgun user-variables, HeyReach metadata) to correlate with original CET events."
+    }
+  ],
+  "overall_result": "PASS",
+  "pass_count": 5,
+  "fail_count": 0
+}

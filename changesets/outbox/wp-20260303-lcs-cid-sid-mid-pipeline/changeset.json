@@ -1,0 +1,149 @@
+{
+  "changeset_id": "cs-wp-20260303-lcs-cid-sid-mid-pipeline",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "execution_type": "standard",
+  "orbt_mode": "build",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T22:00:00Z",
+  "phases_executed": [
+    "Phase 1: Schema migrations (DB Agent lane — applied by DB Agent)",
+    "Phase 2: CID compiler worker with cron",
+    "Phase 3: SID message construction worker with DB trigger (pg_notify) + cron fallback",
+    "Phase 4: MID delivery engine with sequence logic, gate integration, adapter calls, and cron",
+    "Post-build: Deprecate existing pipeline orchestrator"
+  ],
+  "files": {
+    "created": [
+      {
+        "path": "src/data/lcs/types/cid.ts",
+        "change_type": "NEW",
+        "description": "TypeScript types for lcs.cid table — LcsCidRow, LcsCidInsert"
+      },
+      {
+        "path": "src/data/lcs/types/sid-output.ts",
+        "change_type": "NEW",
+        "description": "TypeScript types for lcs.sid_output table — LcsSidOutputRow, LcsSidOutputInsert"
+      },
+      {
+        "path": "src/data/lcs/types/mid-sequence-state.ts",
+        "change_type": "NEW",
+        "description": "TypeScript types for lcs.mid_sequence_state table — LcsMidSequenceStateRow, LcsMidSequenceStateInsert"
+      },
+      {
+        "path": "src/app/lcs/pipeline/cid-compiler.ts",
+        "change_type": "NEW",
+        "description": "CID Compiler — Phase 2. signal_queue → lcs.cid. Mints communication_id, runs capacity + freshness gates, matches frame."
+      },
+      {
+        "path": "src/app/lcs/pipeline/sid-worker.ts",
+        "change_type": "NEW",
+        "description": "SID Worker — Phase 3. lcs.cid (COMPILED) → lcs.sid_output. Dual mode: LISTEN (pg_notify real-time) + batch (cron fallback). Resolves audience, constructs message content."
+      },
+      {
+        "path": "migrations/lcs/005a_lcs_cid_notify_sid_worker.sql",
+        "change_type": "NEW",
+        "description": "Patch migration: pg_notify trigger on lcs.cid for SID worker. Fires on COMPILED CID inserts."
+      },
+      {
+        "path": "src/app/lcs/pipeline/mid-engine.ts",
+        "change_type": "NEW",
+        "description": "MID Engine — Phase 4. lcs.sid_output (CONSTRUCTED) → lcs.mid_sequence_state + lcs.event. Runs gates, calls adapter, logs CET."
+      },
+      {
+        "path": "src/runtime/lcs/cid-sid-mid-cron.ts",
+        "change_type": "NEW",
+        "description": "CID→SID→MID cron runner. Orchestrates three-phase pipeline in sequence."
+      },
+      {
+        "path": "src/sys/lcs/contracts/lcs_cid.schema.sql",
+        "change_type": "NEW",
+        "description": "SQL contract for lcs.cid table — schema, constraints, triggers, indexes, comments."
+      },
+      {
+        "path": "src/sys/lcs/contracts/lcs_sid_output.schema.sql",
+        "change_type": "NEW",
+        "description": "SQL contract for lcs.sid_output table — schema, constraints, triggers, indexes, comments."
+      },
+      {
+        "path": "src/sys/lcs/contracts/lcs_mid_sequence_state.schema.sql",
+        "change_type": "NEW",
+        "description": "SQL contract for lcs.mid_sequence_state table — schema, constraints, triggers, indexes, comments."
+      }
+    ],
+    "modified": [
+      {
+        "path": "src/data/lcs/types/enums.ts",
+        "change_type": "MODIFIED",
+        "description": "Added 8 new enum types: CompilationStatus, ConstructionStatus, GateVerdict, ThrottleStatus, MidDeliveryStatus, CidCompilationRule, MidSequenceType, LifecyclePhase."
+      },
+      {
+        "path": "src/data/lcs/types/frame-registry.ts",
+        "change_type": "MODIFIED",
+        "description": "Added 5 new columns matching migration 005 ALTER: cid_compilation_rule, sid_template_id, mid_sequence_type, mid_delay_hours, mid_max_attempts."
+      },
+      {
+        "path": "src/data/lcs/types/index.ts",
+        "change_type": "MODIFIED",
+        "description": "Added barrel exports for cid, sid-output, mid-sequence-state type modules."
+      },
+      {
+        "path": "src/app/lcs/pipeline/orchestrator.ts",
+        "change_type": "MODIFIED",
+        "description": "@deprecated notice added. Points to CID compiler, SID worker, MID engine as replacements."
+      },
+      {
+        "path": "src/runtime/lcs/cron-runner.ts",
+        "change_type": "MODIFIED",
+        "description": "@deprecated notice added. Points to cid-sid-mid-cron.ts as replacement."
+      },
+      {
+        "path": "src/sys/lcs/contracts/lcs_frame_registry.schema.sql",
+        "change_type": "MODIFIED",
+        "description": "Added 5 new CID/SID/MID pipeline columns with CHECK constraints and comments. Version bumped 2.2.0 → 2.3.0."
+      },
+      {
+        "path": "column_registry.yml",
+        "change_type": "MODIFIED",
+        "description": "Applied column_registry_patch.yml: Section A (SH-LCS-PIPELINE sub-hub with 3 tables) + Section B (5 new frame_registry columns)."
+      },
+      {
+        "path": "src/sys/lcs/doctrine/LCS_DATA_MODEL.md",
+        "change_type": "MODIFIED",
+        "description": "Bumped v2.2.0 → v2.3.0. Added CID/SID/MID pipeline tables + signal_queue to inventory, pipeline data flow diagram, ID minting contracts, updated mutability rules and relationships."
+      },
+      {
+        "path": "docs/schema/CL_SCHEMA_INDEX.md",
+        "change_type": "MODIFIED",
+        "description": "Added pipeline tables, CTB/doctrine tables, pipeline ERD navigation entries. Updated schema statistics."
+      }
+    ],
+    "created_by_db_agent": [
+      {
+        "path": "docs/schema/LCS_CID_SID_MID.md",
+        "change_type": "NEW",
+        "description": "Full Type B documentation for SH-LCS-PIPELINE: column dictionaries for lcs.cid (14 cols), lcs.sid_output (14 cols), lcs.mid_sequence_state (14 cols), frame_registry ALTER columns, immutability enforcement, doctrine sections."
+      },
+      {
+        "path": "docs/schema/LCS_PIPELINE_ERD.md",
+        "change_type": "NEW",
+        "description": "Mermaid ERD for SH-LCS-PIPELINE: 8 entities, 9 relationships, per DOCUMENTATION_ERD_DOCTRINE v1.0.0."
+      },
+      {
+        "path": "docs/schema/CTB_DOCTRINE_TABLES.md",
+        "change_type": "NEW",
+        "description": "Type B documentation for ctb.table_registry, doctrine.doctrine_library, doctrine.doctrine_key, doctrine.doctrine_library_error. Includes current registry contents (20 entries), domain coverage, semantic search examples."
+      }
+    ]
+  },
+  "db_changeset_ref": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/db_changeset.json",
+  "migrations_applied": true,
+  "migrations_note": "Migration 005 + 005a applied to Neon. Tables lcs.cid, lcs.sid_output, lcs.mid_sequence_state exist. frame_registry has 5 new columns. notify_sid_worker trigger active on lcs.cid.",
+  "column_registry_applied": true,
+  "column_registry_note": "column_registry_patch.yml applied to column_registry.yml — SH-LCS-PIPELINE sub-hub added (Section A), 5 frame_registry columns added (Section B).",
+  "deviations": [],
+  "pre_deploy_blockers": [],
+  "pressure_test_required": true,
+  "architectural_flag": true
+}

@@ -1,0 +1,32 @@
+{
+  "report_id": "arch-pr-wp-20260303-ctb-doctrine-db-scope-correction",
+  "work_packet_id": "wp-20260303-ctb-doctrine-db-scope-correction",
+  "report_type": "ARCH_PRESSURE_REPORT",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:40:00Z",
+  "invariants": {
+    "cantonal_cardinality": {
+      "verdict": "PASS",
+      "evidence": "SYSTEM_CORE/DOCTRINE_MGMT sub-hub contains 1 CANONICAL (doctrine.doctrine_library) + 1 ERROR (doctrine.doctrine_library_error) + 2 REGISTRY (doctrine.doctrine_key, ctb.table_registry). Within cardinality limit of 1 CANONICAL + 1 ERROR + 0-2 SUPPORTING per sub-hub."
+    },
+    "registry_first": {
+      "verdict": "PASS",
+      "evidence": "All 4 tables (ctb.table_registry, doctrine.doctrine_library, doctrine.doctrine_key, doctrine.doctrine_library_error) are registered in ctb.table_registry with correct hub_id, subhub_id, and leaf_type. No unregistered tables in ctb or doctrine schemas."
+    },
+    "id_authority": {
+      "verdict": "PASS",
+      "evidence": "doctrine.doctrine_library uses UUID PK (gen_random_uuid) + TEXT UNIQUE doctrine_id (format: {DOMAIN}-{MAJOR}.{MINOR}-{SEQ}). doctrine.doctrine_key uses BIGINT GENERATED ALWAYS AS IDENTITY. ctb.table_registry uses BIGINT GENERATED ALWAYS AS IDENTITY. doctrine.doctrine_library_error uses BIGINT GENERATED ALWAYS AS IDENTITY. All IDs are system-minted, no external ID authority."
+    },
+    "no_sideways_calls": {
+      "verdict": "PASS",
+      "evidence": "ctb and doctrine schemas have no foreign keys to other schemas. All cross-schema references are by-value only (ctb.table_registry.table_schema/table_name reference other schemas' tables by value, not FK). No triggers that write to other schemas."
+    },
+    "contracts_declared": {
+      "verdict": "PASS",
+      "evidence": "DDL contract: migrations/006_ctb_doctrine_tables.sql. Column dictionaries: docs/schema/CTB_DOCTRINE_TABLES.md. Schema diff: changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/db/schema_diff.json. All constraints, indexes, and triggers declared in migration file."
+    }
+  },
+  "overall_verdict": "PASS",
+  "failures": 0,
+  "total": 5
+}

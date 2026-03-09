@@ -1,5 +1,6 @@
 import type {
-  Channel, DeliveryStatus, EntityType, LifecyclePhase, Lane
+  Channel, DeliveryStatus, EntityType, LifecyclePhase, Lane,
+  GateVerdict, ThrottleStatus, MidDeliveryStatus
 } from './enums';
 
 /**
@@ -24,3 +25,38 @@ export interface MidSequenceStateRow {
   step_number: number;
   created_at: string;
 }
+
+/**
+ * LCS MID Delivery Sequence State — lcs.mid_sequence_state
+ * Classification: STAGING (APPEND-ONLY)
+ * Sub-hub: SH-LCS-PIPELINE
+ *
+ * Tracks delivery sequencing, gate verdicts, adapter routing decisions,
+ * and attempt lifecycle per message_run_id. Each attempt = new row.
+ * Downstream of SID, feeds into CET (lcs.event).
+ */
+export interface LcsMidSequenceStateRow {
+  mid_id: string;                    // UUID PK, auto-generated
+  message_run_id: string;            // format: RUN-LCS-{PHASE}-{YYYYMMDD}-{ULID}-{CHANNEL}-{ATTEMPT}
+  communication_id: string;          // by value ref to lcs.cid
+  adapter_type: string;              // by value ref to adapter_registry
+  channel: Channel;
+  sequence_position: number;
+  attempt_number: number;            // 1-10, default 1
+  gate_verdict: GateVerdict;
+  gate_reason: string | null;
+  throttle_status: ThrottleStatus | null;
+  delivery_status: MidDeliveryStatus;
+  scheduled_at: string | null;       // ISO 8601, for DELAYED sequences
+  attempted_at: string | null;       // ISO 8601
+  created_at: string;                // ISO 8601 timestamptz
+}
+
+/**
+ * Insert type — what you provide to INSERT into lcs.mid_sequence_state.
+ * mid_id and created_at are optional (auto-generated).
+ */
+export type LcsMidSequenceStateInsert = Omit<LcsMidSequenceStateRow, 'mid_id' | 'created_at'> & {
+  mid_id?: string;
+  created_at?: string;
+};

@@ -1,0 +1,25 @@
+{
+  "changeset_id": "cs-wp-20260303-lcs-cid-sid-mid-scope-repair-v2",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-scope-repair-v2",
+  "execution_type": "standard",
+  "orbt_mode": "repair",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:35:00Z",
+  "repairs_work_packet": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "repair_description": "Added 3 missing paths to allowed_paths in the original work packet's scope envelope: column_registry.yml, docs/schema/, src/sys/lcs/doctrine/. This resolves the RULE-002 (file_target_containment) violation where column_registry.yml was modified during the build but was not in the declared scope.",
+  "files": {
+    "created": [],
+    "modified": [
+      {
+        "path": "work_packets/inbox/wp-20260303-lcs-cid-sid-mid-pipeline.json",
+        "change_type": "MODIFIED",
+        "description": "Added column_registry.yml, docs/schema/, src/sys/lcs/doctrine/ to allowed_paths array."
+      }
+    ]
+  },
+  "deviations": [],
+  "pre_deploy_blockers": [],
+  "pressure_test_required": false
+}

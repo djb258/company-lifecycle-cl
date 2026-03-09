@@ -2,6 +2,13 @@
 
 **Sovereign Intake Engine v2.0**
 
+## Scope Note
+
+This `pipeline/` directory is the CL identity intake and verification pipeline.
+It is still active.
+
+For LCS communication delivery, use the CID→SID→MID pipeline under `src/app/lcs/pipeline/` and `src/runtime/lcs/cid-sid-mid-cron.ts`. The legacy LCS monolithic orchestrator is deprecated.
+
 ## Doctrine
 
 ```

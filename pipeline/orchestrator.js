@@ -1,4 +1,17 @@
 /**
+ * NOTE (LCS migration):
+ * This orchestrator belongs to the CL identity ingestion pipeline
+ * (`cl.company_candidate` -> verification -> minting) and remains active.
+ *
+ * For LCS communications, the legacy monolithic orchestrator has been
+ * deprecated in favor of CID→SID→MID:
+ *   - src/app/lcs/pipeline/cid-compiler.ts
+ *   - src/app/lcs/pipeline/sid-worker.ts
+ *   - src/app/lcs/pipeline/mid-engine.ts
+ *   - src/runtime/lcs/cid-sid-mid-cron.ts
+ *
+ * Work packet: wp-20260303-lcs-cid-sid-mid-pipeline
+ *
  * Multi-State Orchestrator
  *
  * SOVEREIGN INTAKE ENGINE - ORCHESTRATION LAYER

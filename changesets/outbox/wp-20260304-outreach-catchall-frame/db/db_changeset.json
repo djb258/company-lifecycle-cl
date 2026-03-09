@@ -1,0 +1,50 @@
+{
+  "changeset_id": "db-cs-20260304-catchall-frame-001",
+  "work_packet_id": "wp-20260304-outreach-catchall-frame",
+  "db_system": "neon",
+  "db_targets": ["lcs.frame_registry"],
+  "migrations": [
+    {
+      "file": "migrations/008_outreach_catchall_frame.sql",
+      "direction": "forward",
+      "description": "Insert catch-all OUTREACH frame OUT-GENERAL-V1 (tier 5, no required_fields, POND type, LITE compilation, IMMEDIATE delivery). Ensures low-tier companies match during CID compilation."
+    },
+    {
+      "file": "migrations/008_outreach_catchall_frame_rollback.sql",
+      "direction": "rollback",
+      "description": "Delete OUT-GENERAL-V1 from frame_registry."
+    }
+  ],
+  "schema_diff_artifact": "changesets/outbox/wp-20260304-outreach-catchall-frame/db/schema_diff.json",
+  "rollback_plan": {
+    "strategy": "migration_reverse",
+    "migrations": ["migrations/008_outreach_catchall_frame_rollback.sql"],
+    "verification": "SELECT count(*) FROM lcs.frame_registry WHERE frame_id = 'OUT-GENERAL-V1'; — should return 0."
+  },
+  "validation_steps": [
+    {
+      "step": "SELECT frame_id, frame_name, tier, is_active FROM lcs.frame_registry WHERE frame_id = 'OUT-GENERAL-V1';",
+      "expected": "Returns 1 row: OUT-GENERAL-V1, Outreach General — Catch-All, tier 5, active."
+    },
+    {
+      "step": "SELECT required_fields FROM lcs.frame_registry WHERE frame_id = 'OUT-GENERAL-V1';",
+      "expected": "Returns [] (empty array — no required fields)."
+    },
+    {
+      "step": "SELECT cid_compilation_rule, sid_template_id, mid_sequence_type, mid_max_attempts FROM lcs.frame_registry WHERE frame_id = 'OUT-GENERAL-V1';",
+      "expected": "Returns LITE, TPL-GENERAL-OUTREACH-V1, IMMEDIATE, 3."
+    }
+  ],
+  "pre_generation_checks": {
+    "registry_first": "PASS — lcs.frame_registry already registered",
+    "cardinality": "N/A — no new tables",
+    "migration_ordering": "PASS — 008 follows 007",
+    "raw_immutability": "N/A — frame_registry is CONFIG (INSERT/UPDATE allowed)",
+    "vendor_json_containment": "PASS — required_fields JSONB is a registry column (pre-existing)",
+    "bridge_versioning": "N/A",
+    "application_role": "N/A"
+  },
+  "risk_class": "LOW",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T20:15:00Z"
+}

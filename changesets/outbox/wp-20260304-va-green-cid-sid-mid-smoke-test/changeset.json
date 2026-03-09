@@ -1,0 +1,74 @@
+{
+  "changeset_id": "cs-wp-20260304-va-green-cid-sid-mid-smoke-test",
+  "work_packet_id": "wp-20260304-va-green-cid-sid-mid-smoke-test",
+  "change_type": "feature",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "execution_agent": "builder",
+  "execution_status": "FAILED_AT_GATE",
+  "timestamp": "2026-03-04T20:20:00Z",
+  "summary": "Virginia Green CID→SID→MID smoke test halted at Step 1. The table outreach.signal_output referenced in the test plan does not exist. Hard gate triggered per execution requirements: stop on first failure.",
+  "files_modified": [],
+  "files_created": [],
+  "db_changes": [],
+  "smoke_test_results": [
+    {
+      "step": 1,
+      "name": "Insert signal into outreach.signal_output",
+      "result": "FAIL",
+      "data_written": null,
+      "issues": "Table outreach.signal_output does not exist. Outreach schema contains only: blog, dol, outreach. This table was listed in db_targets but has never been created."
+    },
+    {
+      "step": 2,
+      "name": "Insert bridged signal into lcs.signal_queue directly",
+      "result": "NOT_REACHED",
+      "data_written": null,
+      "issues": "Gated by Step 1 failure"
+    },
+    {
+      "step": 3,
+      "name": "Run CID compiler logic and write lcs.cid COMPILED row",
+      "result": "NOT_REACHED",
+      "data_written": null,
+      "issues": "Gated by Step 1 failure"
+    },
+    {
+      "step": 4,
+      "name": "Run SID worker logic and write lcs.sid_output row",
+      "result": "NOT_REACHED",
+      "data_written": null,
+      "issues": "Gated by Step 1 failure"
+    },
+    {
+      "step": 5,
+      "name": "Run MID engine logic and write lcs.mid_sequence_state QUEUED row",
+      "result": "NOT_REACHED",
+      "data_written": null,
+      "issues": "Gated by Step 1 failure"
+    },
+    {
+      "step": 6,
+      "name": "Verify Lovable pickup path via lcs.event delivery record",
+      "result": "NOT_REACHED",
+      "data_written": null,
+      "issues": "Gated by Step 1 failure"
+    }
+  ],
+  "test_subject": {
+    "company_domain": "virginiagreen.com",
+    "sovereign_company_id": "0817f0f1-1f4f-438d-bd6c-2817582c206d",
+    "company_name": "Virginia Green",
+    "signal_type": "D-04 Renewal Proximity",
+    "magnitude": 80
+  },
+  "root_cause": "outreach.signal_output is referenced in the smoke test work packet db_targets and Step 1, but the table has never been created in the Neon database. The outreach schema only contains: outreach (sovereign_id mapping), blog, and dol. A migration to create outreach.signal_output is needed before this smoke test can proceed.",
+  "recommended_action": "Route a work packet to DB Agent to create outreach.signal_output with appropriate schema, then re-execute this smoke test.",
+  "deviations": [
+    {
+      "type": "STRUCTURAL_GAP",
+      "detail": "outreach.signal_output listed in db_targets does not exist — Planner assumed table existence"
+    }
+  ],
+  "doctrine_version": "3.5.0"
+}

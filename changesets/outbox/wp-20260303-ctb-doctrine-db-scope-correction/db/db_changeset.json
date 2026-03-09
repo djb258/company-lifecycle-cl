@@ -1,0 +1,96 @@
+{
+  "changeset_id": "db-cs-20260303-ctb-doctrine-001",
+  "work_packet_id": "wp-20260303-ctb-doctrine-db-scope-correction",
+  "db_system": "neon",
+  "db_targets": [
+    "ctb.table_registry",
+    "doctrine.doctrine_library",
+    "doctrine.doctrine_key",
+    "doctrine.doctrine_library_error"
+  ],
+  "migrations": [
+    {
+      "file": "migrations/006_ctb_doctrine_tables.sql",
+      "direction": "forward",
+      "description": "Create ctb and doctrine schemas; ctb.table_registry for registry-first enforcement; doctrine.doctrine_library with pgvector embeddings (1536-dim, IVFFlat index); doctrine.doctrine_key with full-text GIN index; doctrine.doctrine_library_error; updated_at trigger on doctrine_library."
+    },
+    {
+      "file": "migrations/006_ctb_doctrine_tables_rollback.sql",
+      "direction": "rollback",
+      "description": "Drop all ctb/doctrine tables, triggers, functions, and schemas. Does not drop pgvector extension."
+    }
+  ],
+  "schema_diff_artifact": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/db/schema_diff.json",
+  "rollback_plan": {
+    "strategy": "migration_reverse",
+    "migrations": [
+      "migrations/006_ctb_doctrine_tables_rollback.sql"
+    ],
+    "verification": "Verify ctb.table_registry, doctrine.doctrine_library, doctrine.doctrine_key, doctrine.doctrine_library_error are absent. Verify ctb and doctrine schemas are absent."
+  },
+  "validation_steps": [
+    {
+      "step": "SELECT to_regclass('ctb.table_registry'), to_regclass('doctrine.doctrine_library'), to_regclass('doctrine.doctrine_key'), to_regclass('doctrine.doctrine_library_error');",
+      "expected": "All four values are non-null."
+    },
+    {
+      "step": "SELECT count(*) FROM ctb.table_registry;",
+      "expected": "Returns 20 (all registered tables across cl, lcs, ctb, doctrine schemas)."
+    },
+    {
+      "step": "SELECT count(*) FROM doctrine.doctrine_library WHERE status = 'ACTIVE';",
+      "expected": "Returns 668 (active doctrine chunks across 9 domains)."
+    },
+    {
+      "step": "SELECT count(DISTINCT domain) FROM doctrine.doctrine_library;",
+      "expected": "Returns 9 (CLIENT, COMP, FIN, GOV, OPS, PROD, RPT, SALES, SYS)."
+    },
+    {
+      "step": "SELECT count(*) FROM doctrine.doctrine_key;",
+      "expected": "Returns 335 (section index entries)."
+    },
+    {
+      "step": "SELECT count(*) FROM doctrine.doctrine_library_error;",
+      "expected": "Returns 0 (clean error table)."
+    },
+    {
+      "step": "SELECT indexname FROM pg_indexes WHERE schemaname = 'doctrine' AND tablename = 'doctrine_library' AND indexname = 'idx_dl_embedding';",
+      "expected": "Returns 1 row confirming IVFFlat vector index exists."
+    },
+    {
+      "step": "SELECT tgname FROM pg_trigger WHERE tgname = 'trg_set_updated_at';",
+      "expected": "Returns 1 row confirming updated_at trigger exists on doctrine.doctrine_library."
+    },
+    {
+      "step": "SELECT indexname FROM pg_indexes WHERE schemaname = 'doctrine' AND tablename = 'doctrine_key' AND indexname = 'idx_dk_title_search';",
+      "expected": "Returns 1 row confirming GIN full-text index exists on doctrine.doctrine_key."
+    },
+    {
+      "step": "SELECT table_schema, table_name, leaf_type FROM ctb.table_registry WHERE table_schema IN ('ctb', 'doctrine') ORDER BY table_schema, table_name;",
+      "expected": "Returns 4 rows: ctb.table_registry (REGISTRY), doctrine.doctrine_key (REGISTRY), doctrine.doctrine_library (CANONICAL), doctrine.doctrine_library_error (ERROR)."
+    }
+  ],
+  "data_migration": {
+    "source": "Research database (ep-young-block-aii5nj6b)",
+    "target": "CL Neon (ep-empty-queen-ai0gmyqg)",
+    "method": "CSV export/import via psql \\copy",
+    "tables_migrated": [
+      {"table": "ctb.table_registry", "rows": 3, "note": "Original 3 rows from research DB; 17 additional rows registered post-migration for CL/LCS tables"},
+      {"table": "doctrine.doctrine_library", "rows": 668, "note": "Full doctrine corpus with 1536-dim embeddings"},
+      {"table": "doctrine.doctrine_key", "rows": 335, "note": "Section index for all 9 domains"},
+      {"table": "doctrine.doctrine_library_error", "rows": 0, "note": "Clean — no errors in source"}
+    ]
+  },
+  "pre_generation_checks": {
+    "registry_first": "PASS — all 4 tables registered in ctb.table_registry",
+    "cardinality": "PASS — SYSTEM_CORE/DOCTRINE_MGMT: 1 CANONICAL (doctrine_library) + 1 ERROR (doctrine_library_error) + 2 REGISTRY (doctrine_key, table_registry)",
+    "migration_ordering": "PASS — 006 follows 005/005a, no gap",
+    "raw_immutability": "N/A — doctrine tables are CONFIG (updatable status/version), not RAW append-only",
+    "vendor_json_containment": "PASS — doctrine_library_error.offending_payload is JSONB but is an ERROR table (error tables are exempt from vendor JSON law)",
+    "bridge_versioning": "N/A",
+    "application_role": "N/A"
+  },
+  "risk_class": "MED",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:35:00Z"
+}

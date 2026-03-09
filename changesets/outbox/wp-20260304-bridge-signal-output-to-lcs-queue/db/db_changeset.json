@@ -1,0 +1,70 @@
+{
+  "changeset_id": "db-cs-20260304-bridge-signal-output-001",
+  "work_packet_id": "wp-20260304-bridge-signal-output-to-lcs-queue",
+  "db_system": "neon",
+  "db_targets": [
+    "lcs.bridge_signal_output",
+    "lcs.signal_queue",
+    "lcs.signal_registry",
+    "outreach.signal_output",
+    "cl.company_identity"
+  ],
+  "migrations": [
+    {
+      "file": "migrations/009_bridge_signal_output.sql",
+      "direction": "forward",
+      "description": "Create lcs.bridge_signal_output() function. Bridges outreach.signal_output into lcs.signal_queue with dual duplicate detection (sovereign_company_id + source_signal_id OR signal_set_hash + run_month) and signal_code->signal_set_hash mapping via lcs.signal_registry. Includes runtime guard for missing source table."
+    },
+    {
+      "file": "migrations/009_bridge_signal_output_rollback.sql",
+      "direction": "rollback",
+      "description": "Drop lcs.bridge_signal_output() function."
+    }
+  ],
+  "schema_diff_artifact": "changesets/outbox/wp-20260304-bridge-signal-output-to-lcs-queue/db/schema_diff.json",
+  "rollback_plan": {
+    "strategy": "migration_reverse",
+    "migrations": ["migrations/009_bridge_signal_output_rollback.sql"],
+    "verification": "SELECT count(*) FROM pg_proc WHERE proname = 'bridge_signal_output' AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'lcs'); — should return 0."
+  },
+  "validation_steps": [
+    {
+      "step": "SELECT proname, pronamespace::regnamespace FROM pg_proc WHERE proname = 'bridge_signal_output';",
+      "expected": "Returns 1 row: bridge_signal_output in lcs schema."
+    },
+    {
+      "step": "SELECT * FROM lcs.bridge_signal_output();",
+      "expected": "Returns 1 row: OUTREACH, 0, 0, 0, 'BLOCKED — outreach.signal_output does not exist...' (until source table exists)."
+    },
+    {
+      "step": "SELECT obj_description(oid) FROM pg_proc WHERE proname = 'bridge_signal_output' AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'lcs');",
+      "expected": "Returns function comment describing bridge behavior and duplicate detection."
+    }
+  ],
+  "blockers": [
+    {
+      "type": "MISSING_SOURCE_TABLE",
+      "table": "outreach.signal_output",
+      "description": "outreach.signal_output does not exist in Neon. The outreach hub has tables (outreach.blog, outreach.dol, outreach.outreach) but signal_output has not been migrated. Bridge function includes runtime guard and returns blocker notice until resolved.",
+      "resolution": "Outreach hub must create and populate outreach.signal_output. Expected columns: id (UUID PK), sovereign_company_id (UUID), signal_code (TEXT), signal_category (TEXT), lifecycle_phase (TEXT), preferred_channel (TEXT), preferred_lane (TEXT), signal_data (JSONB), run_month (TEXT), priority (INTEGER).",
+      "severity": "HIGH"
+    }
+  ],
+  "flow_contract": {
+    "ingress": ["outreach.signal_output"],
+    "middle": ["lcs.bridge_signal_output()", "lcs.signal_registry"],
+    "egress": ["lcs.signal_queue"]
+  },
+  "pre_generation_checks": {
+    "registry_first": "PASS — lcs.signal_queue and lcs.signal_registry already registered",
+    "cardinality": "N/A — no new tables (function only)",
+    "migration_ordering": "PASS — 009 follows 008",
+    "raw_immutability": "N/A — bridge_signal_output is a FUNCTION, not a table mutation",
+    "vendor_json_containment": "N/A",
+    "bridge_versioning": "PASS — new function lcs.bridge_signal_output() does not modify existing lcs.bridge_pressure_signals()",
+    "application_role": "N/A"
+  },
+  "risk_class": "MED",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T20:30:00Z"
+}

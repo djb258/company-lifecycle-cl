@@ -1,0 +1,56 @@
+{
+  "report_type": "ARCH_PRESSURE_REPORT",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "changeset_id": "cs-wp-20260303-lcs-cid-sid-mid-pipeline",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T22:30:00Z",
+  "invariants": {
+    "cantonal_cardinality": {
+      "verdict": "PASS",
+      "evidence": "SH-LCS-PIPELINE sub-hub defines 1 CANONICAL table (lcs.cid) and 2 SUPPORTING tables (lcs.sid_output, lcs.mid_sequence_state). Error logging routes through parent SUBHUB-CL-LCS error table (lcs.err0) — shared error table per existing LCS architecture. No new error table needed at sub-hub level.",
+      "tables_audited": [
+        { "table": "lcs.cid", "classification": "CANONICAL", "sub_hub": "SH-LCS-PIPELINE" },
+        { "table": "lcs.sid_output", "classification": "SUPPORTING", "sub_hub": "SH-LCS-PIPELINE" },
+        { "table": "lcs.mid_sequence_state", "classification": "SUPPORTING", "sub_hub": "SH-LCS-PIPELINE" },
+        { "table": "lcs.err0", "classification": "ERROR", "sub_hub": "SUBHUB-CL-LCS", "note": "Shared by SH-LCS-PIPELINE" }
+      ]
+    },
+    "registry_first": {
+      "verdict": "PASS",
+      "evidence": "All 3 new tables declared in DB_CHANGESET and column_registry_patch.yml before schema creation. column_registry_patch.yml APPLIED to column_registry.yml (SH-LCS-PIPELINE sub-hub + 5 frame_registry columns). SQL contracts declared in src/sys/lcs/contracts/. Migration 005 applied to Neon.",
+      "registry_artifacts": [
+        "column_registry.yml (patched — SH-LCS-PIPELINE sub-hub added, frame_registry columns added)",
+        "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/db_changeset.json",
+        "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/column_registry_patch.yml",
+        "src/sys/lcs/contracts/lcs_cid.schema.sql",
+        "src/sys/lcs/contracts/lcs_sid_output.schema.sql",
+        "src/sys/lcs/contracts/lcs_mid_sequence_state.schema.sql"
+      ]
+    },
+    "id_authority": {
+      "verdict": "PASS",
+      "evidence": "communication_id minted by hub-level mintCommunicationId() in src/app/lcs/id-minter.ts. message_run_id minted by hub-level mintMessageRunId() in src/app/lcs/id-minter.ts. No identity minting at spoke or external level. Both ID formats enforced by CHECK constraints in migration 005.",
+      "minting_functions": [
+        { "id": "communication_id", "function": "mintCommunicationId()", "location": "src/app/lcs/id-minter.ts", "format": "LCS-{PHASE}-{YYYYMMDD}-{ULID}" },
+        { "id": "message_run_id", "function": "mintMessageRunId()", "location": "src/app/lcs/id-minter.ts", "format": "RUN-{COMM_ID}-{CHANNEL}-{ATTEMPT}" }
+      ]
+    },
+    "no_sideways_calls": {
+      "verdict": "PASS",
+      "evidence": "CID→SID→MID pipeline is entirely within the LCS sub-hub (SUBHUB-CL-LCS). No direct hub-to-hub data flow. Signal ingress comes from spoke signal bridges (lcs.signal_queue). Egress goes through declared adapter layer (src/app/lcs/adapters/). Intelligence read from v_company_intelligence (materialized view within LCS schema). No cross-hub writes.",
+      "data_flow": "signal_queue → CID compiler → lcs.cid → SID worker → lcs.sid_output → MID engine → lcs.mid_sequence_state + lcs.event → adapter egress"
+    },
+    "contracts_declared": {
+      "verdict": "PASS",
+      "evidence": "All structural contracts explicitly declared as SQL contract files in src/sys/lcs/contracts/. TypeScript type contracts declared in src/data/lcs/types/. All 3 new tables + 1 altered table have both SQL and TypeScript contracts.",
+      "contracts": [
+        { "table": "lcs.cid", "sql": "src/sys/lcs/contracts/lcs_cid.schema.sql", "ts": "src/data/lcs/types/cid.ts" },
+        { "table": "lcs.sid_output", "sql": "src/sys/lcs/contracts/lcs_sid_output.schema.sql", "ts": "src/data/lcs/types/sid-output.ts" },
+        { "table": "lcs.mid_sequence_state", "sql": "src/sys/lcs/contracts/lcs_mid_sequence_state.schema.sql", "ts": "src/data/lcs/types/mid-sequence-state.ts" },
+        { "table": "lcs.frame_registry", "sql": "src/sys/lcs/contracts/lcs_frame_registry.schema.sql", "ts": "src/data/lcs/types/frame-registry.ts" }
+      ]
+    }
+  },
+  "overall_verdict": "PASS",
+  "failures": []
+}

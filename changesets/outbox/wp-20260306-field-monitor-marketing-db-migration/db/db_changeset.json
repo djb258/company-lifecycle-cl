@@ -1,0 +1,63 @@
+{
+  "changeset_id": "db-cs-20260306-field-monitor-marketing-001",
+  "work_packet_id": "wp-20260306-field-monitor-marketing-db-migration",
+  "db_system": "neon",
+  "db_instance": "marketing (ep-ancient-waterfall-a42vy0du)",
+  "db_targets": [
+    "field_monitor.url_registry",
+    "field_monitor.field_state",
+    "field_monitor.check_log",
+    "field_monitor.error_log",
+    "field_monitor.rate_state",
+    "ctb.table_registry"
+  ],
+  "migrations": [
+    {
+      "file": "templates/snap-on/field-monitor/migrations/001_initial_schema.sql",
+      "direction": "forward",
+      "description": "Create field_monitor schema with 5 tables, 4 triggers, 3 functions, 20 indexes on marketing DB. Required CTB registry-first registration before DDL."
+    }
+  ],
+  "ctb_registration": {
+    "tables_registered": 5,
+    "leaf_types": {
+      "url_registry": "REGISTRY",
+      "field_state": "CANONICAL",
+      "check_log": "CANONICAL",
+      "error_log": "SUPPORTING",
+      "rate_state": "SYSTEM"
+    },
+    "registered_by": "db_agent",
+    "note": "Marketing DB enforces CTB_DDL_GATE — tables must be registered in ctb.table_registry BEFORE CREATE TABLE."
+  },
+  "seed_results": {
+    "linkedin_seed": {
+      "script": "barton-outreach-core/hubs/people-intelligence/scripts/seed_linkedin_urls.sql",
+      "url_registry_inserted": 100,
+      "field_state_inserted": 100,
+      "field_name": "title",
+      "check_interval": "1440 minutes (daily)",
+      "source": "people.people_master (linkedin_url)"
+    },
+    "blog_seed": {
+      "script": "adapted from barton-outreach-core/hubs/blog-content/scripts/seed_blog_urls.sql",
+      "url_registry_inserted": 99,
+      "field_state_inserted": 99,
+      "field_name": "content_hash",
+      "check_interval": "60 minutes (hourly)",
+      "source": "vendor.blog (domain, domain_reachable=true)",
+      "adaptation_note": "Marketing DB vendor.blog has no 'path' column (has 'source_url' instead). Adapted to use domain + '/' as path. Original seed script references vb.path which fails on marketing schema."
+    }
+  },
+  "verification": {
+    "tables": "5/5 — check_log, error_log, field_state, rate_state, url_registry",
+    "triggers": "4/4 — trg_ctb_promotion_enforcement, trg_check_log_no_update, trg_check_log_no_delete, trg_error_log_no_delete",
+    "vendor_blog_exists": true,
+    "people_master_linkedin_url_exists": true,
+    "total_urls_seeded": 199,
+    "total_field_states_seeded": 199
+  },
+  "risk_class": "MED",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-06T15:00:00Z"
+}

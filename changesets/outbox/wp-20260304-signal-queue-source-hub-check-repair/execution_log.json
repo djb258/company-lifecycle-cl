@@ -1,0 +1,41 @@
+{
+  "execution_id": "exec-wp-20260304-signal-queue-source-hub-check-repair",
+  "work_packet_id": "wp-20260304-signal-queue-source-hub-check-repair",
+  "agent": "builder",
+  "agent_version": "2.7.0",
+  "started_at": "2026-03-04T20:12:00Z",
+  "completed_at": "2026-03-04T20:15:00Z",
+  "status": "COMPLETED",
+  "outcome": "VERIFIED_IDEMPOTENT",
+  "execution_type": "standard",
+  "orbt_mode": "build",
+  "steps": [
+    {
+      "step": 1,
+      "action": "Query pg_constraint for lcs.signal_queue CHECK constraints",
+      "tool": "psql via Neon",
+      "result": "Found 5 CHECK constraints including chk_sq_source_hub",
+      "status": "PASS"
+    },
+    {
+      "step": 2,
+      "action": "Verify chk_sq_source_hub values match required set",
+      "result": "Current: PEOPLE, DOL, BLOG, MANUAL, OUTREACH, SYSTEM — exact match to required set",
+      "status": "PASS"
+    },
+    {
+      "step": 3,
+      "action": "Locate existing migration",
+      "result": "migrations/007_signal_queue_source_hub_repair.sql found — DB Agent already produced and applied",
+      "status": "PASS"
+    },
+    {
+      "step": 4,
+      "action": "Verify DB_CHANGESET artifacts",
+      "result": "db_changeset.json, schema_diff.json, worker_briefing.md present in outbox/db/",
+      "status": "PASS"
+    }
+  ],
+  "notes": "Constraint was already in desired state. DB Agent handled migration creation and application. Builder role limited to verification and artifact production.",
+  "doctrine_version": "3.5.0"
+}

@@ -1,0 +1,78 @@
+{
+  "mount_receipt_id": "mr-wp-20260303-lcs-cid-sid-mid-pipeline",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "repair_packet_id": "wp-20260303-lcs-cid-sid-mid-mount-receipt-repair",
+  "agent": "Builder v2.7.0",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:55:00Z",
+  "commit_sha_at_mount": "7d6bafc6f9947d97680896ff008a9766a14037cf",
+  "commit_sha_at_completion": "7d6bafc6f9947d97680896ff008a9766a14037cf",
+  "mount_context": "Re-execution mount via repair packet wp-20260303-lcs-cid-sid-mid-mount-receipt-repair. Original build artifacts exist uncommitted in working tree. HEAD is pre-build baseline.",
+  "modified_files_with_integrity_hashes": {
+    "created": [
+      { "path": "src/data/lcs/types/cid.ts", "sha256": "aaa44cf7f5b6ef53e3f4e1c6d48dd5db8b5ffdc24daf67377964411441c6c034" },
+      { "path": "src/data/lcs/types/sid-output.ts", "sha256": "bbbbb0b3cbda17551cf5b34b4c91640d21a3e53bde4f3714807e163bd7422bf0" },
+      { "path": "src/data/lcs/types/mid-sequence-state.ts", "sha256": "2f1d8ce73d86696172141681a9a78d507f24e439aabafd5a1b2572929804d2c3" },
+      { "path": "src/app/lcs/pipeline/cid-compiler.ts", "sha256": "616a143cededc3bce309d903b5b3274af5a20033269e94e6d840366750e34f6a" },
+      { "path": "src/app/lcs/pipeline/sid-worker.ts", "sha256": "f95f077bdc91893c5d4224fc91ab3a64f6826b565a58bb667e5d035d1ca27aed" },
+      { "path": "src/app/lcs/pipeline/mid-engine.ts", "sha256": "75330a917e5548b8e29e24d8db795cd343df1ec6fe03c677d6e0939ad5449fe6" },
+      { "path": "src/runtime/lcs/cid-sid-mid-cron.ts", "sha256": "7f523d93f94a7b0e430d38650ab0282b4a75bff6eb0504fe7f4a26185e190e61" },
+      { "path": "src/sys/lcs/contracts/lcs_cid.schema.sql", "sha256": "01e7c56411f6cd799e87c70999a8c626a85778bcb17b64aebe38156c3c6d6927" },
+      { "path": "src/sys/lcs/contracts/lcs_sid_output.schema.sql", "sha256": "70f590ca5c2c513fead04ab9e76e7ba69b3b195db83ef90eaab9cede66b2a98e" },
+      { "path": "src/sys/lcs/contracts/lcs_mid_sequence_state.schema.sql", "sha256": "8feb0662c595140ae0f75a6c5f84f92f5885282ac2172e19dd1820afc72477cf" },
+      { "path": "migrations/lcs/005_lcs_cid_sid_mid.sql", "sha256": "c60fb80f51c06f58ec59fdc4d2c6e1fa6f0784fa0df71dd62f6832c74c1bdd84" },
+      { "path": "migrations/lcs/005_lcs_cid_sid_mid_rollback.sql", "sha256": "b73fc3ea00040ed06337e7a3fcb32fbb957ac53e732097227d33813bfe51df56" },
+      { "path": "migrations/lcs/005a_lcs_cid_notify_sid_worker.sql", "sha256": "b2d8576891a06b05885bf9f54dcfa757a53ab0961ba479661c90880a5a224afe" },
+      { "path": "docs/schema/LCS_CID_SID_MID.md", "sha256": "57f009a75eff765e90b8ea74a2b878f6efa145b4e1ebd5b9d2076adbfeeece34" },
+      { "path": "docs/schema/LCS_PIPELINE_ERD.md", "sha256": "791a147a07254d76db0b26cb34e4a6a46a994a0c578c697836017ab9b81452f5" },
+      { "path": "docs/schema/CTB_DOCTRINE_TABLES.md", "sha256": "13658f5ab133e6bad5f3cf01d18b7dc3ee59c8cb26f0744237b3c0a0856b8c26" }
+    ],
+    "modified": [
+      { "path": "src/data/lcs/types/enums.ts", "sha256": "5e7ab709133b2ef04245ff5fd876ab4e8e2b51977e488824b462f2564ba3d5e9" },
+      { "path": "src/data/lcs/types/frame-registry.ts", "sha256": "cdd256bd2e4e81a363f8dcc865c06cfd93292fcbd660fcd83e704876222d9c9b" },
+      { "path": "src/data/lcs/types/index.ts", "sha256": "ded06445d43f2148dbe5b0803019c0ece43330ee0c3ddbabbf3aabddaaeefe24" },
+      { "path": "src/app/lcs/pipeline/orchestrator.ts", "sha256": "42caeea55d47148ce466e947a2823161e33713eb6dd200554a81514e98d06c49" },
+      { "path": "src/app/lcs/pipeline/index.ts", "sha256": "30d7200d3125b7915f28c0146ade3c70cf7cba615b2132edbfe1c38025897a49" },
+      { "path": "src/runtime/lcs/cron-runner.ts", "sha256": "5377f420891f3d902e7fa35a29f82d78df07a9d3252dcda77ed94987caa45413" },
+      { "path": "src/runtime/lcs/index.ts", "sha256": "ea5a0c22cc273d822aa3897034b0db816cc287b931a6e6a89de40ad2204c7358" },
+      { "path": "src/sys/lcs/contracts/lcs_frame_registry.schema.sql", "sha256": "5c846bdae564da47022f1432ee59eb70fc784ed8a97eceb3cafbba4438f1a319" },
+      { "path": "column_registry.yml", "sha256": "c0e538031fd7420520dc6f806ba0b45709f19f89a071f8f8a3c5ce3c51335a03" },
+      { "path": "src/sys/lcs/doctrine/LCS_DATA_MODEL.md", "sha256": "fb90eae187624bc6d09018a71509295450ee779142d7de90e1beecc9a9f9bb66" },
+      { "path": "docs/schema/CL_SCHEMA_INDEX.md", "sha256": "915e13c4c792cf65839f74e51d22c21e27bd6e4baae30339cfc76324bb08f864" },
+      { "path": "pipeline/orchestrator.js", "sha256": "41aab059a30b76c8bb7a01b3bc8c2e323376f216a6371878ecc36c57c83d5661" },
+      { "path": "pipeline/README.md", "sha256": "bc7f6ec9e02b28da8e2fc9fad866e018e2d95ea0482fad90b9e1a6bd5bd5b1fe" }
+    ]
+  },
+  "heir_validation_result": {
+    "status": "PASS",
+    "heir_file": "heir.doctrine.yaml",
+    "schema_version": "HEIR/1.0",
+    "checks": [
+      {
+        "check": "heir_present",
+        "result": "PASS",
+        "detail": "heir.doctrine.yaml exists at repo root (386 lines)"
+      },
+      {
+        "check": "lcs_subhub_declared",
+        "result": "PASS",
+        "detail": "SUBHUB-CL-LCS declared with schema ownership for lcs.event, lcs.err0, lcs.signal_queue, lcs.signal_registry, lcs.frame_registry, lcs.adapter_registry"
+      },
+      {
+        "check": "scope_containment",
+        "result": "PASS",
+        "detail": "All 29 modified/created files fall within work packet allowed_paths (post scope-repair-v2)"
+      },
+      {
+        "check": "id_model_integrity",
+        "result": "PASS",
+        "detail": "CID format LCS-{PHASE}-{YYYYMMDD}-{ULID} and MID format RUN-{COMM_ID}-{CHANNEL}-{ATTEMPT} match heir declarations"
+      },
+      {
+        "check": "schema_ownership_respected",
+        "result": "PASS",
+        "detail": "New tables lcs.cid, lcs.sid_output, lcs.mid_sequence_state are within lcs schema owned by SUBHUB-CL-LCS"
+      }
+    ]
+  }
+}

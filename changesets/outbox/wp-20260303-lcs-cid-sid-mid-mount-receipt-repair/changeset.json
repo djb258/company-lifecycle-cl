@@ -1,0 +1,25 @@
+{
+  "changeset_id": "cs-wp-20260303-lcs-cid-sid-mid-mount-receipt-repair",
+  "work_packet_id": "wp-20260303-lcs-cid-sid-mid-mount-receipt-repair",
+  "execution_type": "standard",
+  "orbt_mode": "repair",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:55:00Z",
+  "repairs_work_packet": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "repair_description": "Produced mount_receipt.json for the original CID-SID-MID pipeline build. Mount receipt includes commit-at-mount, commit-at-completion, SHA256 integrity hashes for all 29 source files (16 created + 13 modified), and HEIR validation result (5/5 checks PASS).",
+  "files": {
+    "created": [
+      {
+        "path": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/mount_receipt.json",
+        "change_type": "CREATED",
+        "description": "Mount receipt with commit-level integrity proof and HEIR validation for the CID-SID-MID pipeline build."
+      }
+    ],
+    "modified": []
+  },
+  "deviations": [],
+  "pre_deploy_blockers": [],
+  "pressure_test_required": false
+}

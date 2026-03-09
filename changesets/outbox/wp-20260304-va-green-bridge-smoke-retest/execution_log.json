@@ -1,0 +1,52 @@
+{
+  "execution_id": "exec-wp-20260304-va-green-bridge-smoke-retest-v2",
+  "work_packet_id": "wp-20260304-va-green-bridge-smoke-retest",
+  "agent": "builder",
+  "agent_version": "2.7.0",
+  "started_at": "2026-03-04T20:33:00Z",
+  "completed_at": "2026-03-04T20:35:00Z",
+  "status": "COMPLETED",
+  "outcome": "VERIFIED",
+  "execution_type": "standard",
+  "orbt_mode": "operate",
+  "attempt": 2,
+  "prior_attempt": {
+    "execution_id": "exec-wp-20260304-va-green-bridge-smoke-retest",
+    "outcome": "FAILED_AT_GATE",
+    "reason": "outreach.signal_output did not exist"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "action": "Read DB Agent completion receipt from work_packets/outbox/",
+      "result": "DB_COMPLETE, smoke test 5/5 PASS, outreach.signal_output created, signal bridged",
+      "status": "PASS"
+    },
+    {
+      "step": 2,
+      "action": "Verify outreach.signal_output exists in Neon",
+      "result": "Table present with 11 columns matching bridge function expectations",
+      "status": "PASS"
+    },
+    {
+      "step": 3,
+      "action": "Verify signal_queue row from bridge",
+      "result": "Row 0fc3e627... PENDING with all validation fields confirmed",
+      "status": "PASS"
+    },
+    {
+      "step": 4,
+      "action": "Verify outreach.signal_output source row",
+      "result": "D-04 signal da040000... present for Virginia Green",
+      "status": "PASS"
+    },
+    {
+      "step": 5,
+      "action": "Cross-check DB Agent smoke test report against live state",
+      "result": "All 5 reported steps verified against live Neon data",
+      "status": "PASS"
+    }
+  ],
+  "notes": "DB Agent resolved the blocker (created outreach.signal_output) and executed the full bridge smoke test. Builder verified live Neon state matches DB Agent reports. Virginia Green D-04 signal is now PENDING in signal_queue ready for CID→SID→MID processing.",
+  "doctrine_version": "3.5.0"
+}

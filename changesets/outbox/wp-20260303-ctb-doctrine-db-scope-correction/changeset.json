@@ -1,0 +1,30 @@
+{
+  "changeset_id": "cs-wp-20260303-ctb-doctrine-db-scope-correction",
+  "work_packet_id": "wp-20260303-ctb-doctrine-db-scope-correction",
+  "execution_type": "standard",
+  "orbt_mode": "build",
+  "target_repo": "company-lifecycle-cl",
+  "target_branch": "main",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T15:10:00Z",
+  "correction_type": "retroactive_db_scope_authorization",
+  "files": {
+    "created": [],
+    "modified": []
+  },
+  "db_lane": {
+    "db_changeset_path": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/db/db_changeset.json",
+    "migration_forward": "migrations/006_ctb_doctrine_tables.sql",
+    "migration_rollback": "migrations/006_ctb_doctrine_tables_rollback.sql",
+    "status": "ALL_APPLIED",
+    "validation_result": "10/10 PASS"
+  },
+  "pressure_tests": {
+    "arch": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/audit/ARCH_PRESSURE_REPORT.json",
+    "flow": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/audit/FLOW_PRESSURE_REPORT.json",
+    "result": "5/5 ARCH PASS, 5/5 FLOW PASS"
+  },
+  "deviations": [],
+  "pre_deploy_blockers": [],
+  "pressure_test_required": true
+}

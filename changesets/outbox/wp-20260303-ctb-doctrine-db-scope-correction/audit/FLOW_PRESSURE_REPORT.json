@@ -1,0 +1,32 @@
+{
+  "report_id": "flow-pr-wp-20260303-ctb-doctrine-db-scope-correction",
+  "work_packet_id": "wp-20260303-ctb-doctrine-db-scope-correction",
+  "report_type": "FLOW_PRESSURE_REPORT",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-03T23:40:00Z",
+  "invariants": {
+    "ingress_contract_exists": {
+      "verdict": "PASS",
+      "evidence": "Ingress is the data migration from research database (ep-young-block-aii5nj6b) via CSV export/import. Migration DDL is declared in migrations/006_ctb_doctrine_tables.sql. Data source documented in db_changeset.json data_migration section. Schema diff declares baseline (absent) → target (present) state."
+    },
+    "egress_contract_exists": {
+      "verdict": "PASS",
+      "evidence": "Egress is docs/schema/CTB_DOCTRINE_TABLES.md (read-only documentation) and semantic search queries against doctrine.doctrine_library (consumed by SID worker via embedding similarity). Query contract documented in CTB_DOCTRINE_TABLES.md §4 Semantic Search Example and worker_briefing.md Doctrine Library Access section."
+    },
+    "no_orphan_tables": {
+      "verdict": "PASS",
+      "evidence": "All 4 tables are registered in ctb.table_registry. ctb.table_registry is self-registering (row 4 registers itself). doctrine.doctrine_library is consumed by SID worker for template resolution. doctrine.doctrine_key is consumed by full-text section lookup. doctrine.doctrine_library_error is consumed by error triage. No orphan tables."
+    },
+    "no_unconsumed_events": {
+      "verdict": "PASS",
+      "evidence": "These tables do not emit events. doctrine.doctrine_library has a trg_set_updated_at trigger but it is an infrastructure trigger (auto-sets updated_at), not a business event. No pg_notify channels. No event emission from ctb or doctrine schemas."
+    },
+    "id_propagation_intact": {
+      "verdict": "PASS",
+      "evidence": "doctrine_id propagates from doctrine.doctrine_library to doctrine.doctrine_key via first_doctrine_id field (by value). doctrine.doctrine_key sections map back to doctrine_library chunks via domain + major_section + minor_section. ctb.table_registry tracks tables via (table_schema, table_name) composite — propagated by value to any schema enforcement queries. No broken ID chains."
+    }
+  },
+  "overall_verdict": "PASS",
+  "failures": 0,
+  "total": 5
+}

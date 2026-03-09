@@ -1,0 +1,45 @@
+{
+  "id": "wp-20260303-ctb-doctrine-db-scope-correction-db-changeset",
+  "parent_work_packet": "wp-20260303-ctb-doctrine-db-scope-correction",
+  "lane": "db",
+  "agent": "db_agent",
+  "status": "COMPLETE",
+  "changeset_path": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/db/db_changeset.json",
+  "migration_files": [
+    "migrations/006_ctb_doctrine_tables.sql",
+    "migrations/006_ctb_doctrine_tables_rollback.sql"
+  ],
+  "documentation_files": [
+    "docs/schema/CTB_DOCTRINE_TABLES.md"
+  ],
+  "pressure_test_reports": {
+    "arch": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/audit/ARCH_PRESSURE_REPORT.json",
+    "flow": "changesets/outbox/wp-20260303-ctb-doctrine-db-scope-correction/audit/FLOW_PRESSURE_REPORT.json"
+  },
+  "risk_class": "MED",
+  "validation_step_count": 10,
+  "pre_generation_checks": {
+    "registry_first": "PASS — all 4 tables registered in ctb.table_registry",
+    "cardinality": "PASS — DOCTRINE_MGMT: 1 CANONICAL + 1 ERROR + 2 REGISTRY",
+    "migration_ordering": "PASS — 006 follows 005a, no gap",
+    "raw_immutability": "N/A — doctrine tables are CONFIG, not RAW append-only",
+    "vendor_json_containment": "PASS — JSONB only in error table (exempt)",
+    "bridge_versioning": "N/A",
+    "application_role": "N/A"
+  },
+  "neon_state": {
+    "migration_applied": true,
+    "tables_verified": [
+      "ctb.table_registry",
+      "doctrine.doctrine_library",
+      "doctrine.doctrine_key",
+      "doctrine.doctrine_library_error"
+    ],
+    "data_migrated": true,
+    "source_db": "ep-young-block-aii5nj6b (research)",
+    "target_db": "ep-empty-queen-ai0gmyqg (CL)"
+  },
+  "process_id": "e328ee12-c379-4508-9c76-a2998008bb0a",
+  "operational_id": "d8e34a52-1c96-4f7b-b2d4-6a59f1c83e27",
+  "timestamp": "2026-03-03T23:45:00Z"
+}

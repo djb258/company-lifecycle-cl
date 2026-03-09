@@ -1,0 +1,26 @@
+{
+  "id": "wp-20260303-lcs-cid-sid-mid-db-changeset",
+  "parent_work_packet": "wp-20260303-lcs-cid-sid-mid-pipeline",
+  "lane": "db",
+  "agent": "db_agent",
+  "status": "COMPLETE",
+  "changeset_path": "changesets/outbox/wp-20260303-lcs-cid-sid-mid-pipeline/db/db_changeset.json",
+  "migration_files": [
+    "migrations/lcs/005_lcs_cid_sid_mid.sql",
+    "migrations/lcs/005_lcs_cid_sid_mid_rollback.sql"
+  ],
+  "risk_class": "LOW",
+  "validation_step_count": 10,
+  "pre_generation_checks": {
+    "registry_first": "PENDING — Worker must update column_registry.yml before applying",
+    "cardinality": "PASS — new sub-hub SH-LCS-PIPELINE: 1 CANONICAL + 2 SUPPORTING",
+    "migration_ordering": "PASS — 005 follows 004, no gap",
+    "raw_immutability": "PASS — all new tables append-only with triggers",
+    "vendor_json_containment": "PASS — zero JSONB columns on new tables",
+    "bridge_versioning": "N/A",
+    "application_role": "N/A"
+  },
+  "process_id": "d6cccd55-ec64-4caa-b380-1b7ee047a783",
+  "operational_id": "a1f3c8e7-4b29-4d6a-9e01-7f5c3d2b8a64",
+  "timestamp": "2026-03-03T20:50:00Z"
+}

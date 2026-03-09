@@ -1,0 +1,46 @@
+{
+  "report_type": "FLOW_PRESSURE_TEST",
+  "work_packet_id": "wp-20260304-bridge-signal-output-to-lcs-queue",
+  "changeset_id": "db-cs-20260304-bridge-signal-output-001",
+  "doctrine_version": "3.5.0",
+  "timestamp": "2026-03-04T20:30:00Z",
+  "result": "PASS",
+  "score": "5/5",
+  "invariants": [
+    {
+      "id": "FLOW-1",
+      "name": "Ingress→Egress Data Flow",
+      "description": "Flow contract: outreach.signal_output → lcs.bridge_signal_output() → lcs.signal_queue.",
+      "result": "PASS",
+      "evidence": "Function reads from outreach.signal_output (ingress), joins with cl.company_identity and lcs.signal_registry (middle), inserts into lcs.signal_queue (egress). Flow contract matches WP flow_contract specification exactly."
+    },
+    {
+      "id": "FLOW-2",
+      "name": "Duplicate Detection — Identity Path",
+      "description": "Constraint: sovereign_company_id + source_signal_id deduplication.",
+      "result": "PASS",
+      "evidence": "NOT EXISTS subquery checks lcs.signal_queue for matching source_hub='OUTREACH' AND source_signal_id AND status IN ('PENDING','COMPLETED'). Additionally, ON CONFLICT (source_hub, source_signal_id) DO NOTHING as safety net."
+    },
+    {
+      "id": "FLOW-3",
+      "name": "Duplicate Detection — Temporal Path",
+      "description": "Constraint: signal_set_hash + run_month deduplication.",
+      "result": "PASS",
+      "evidence": "Second NOT EXISTS subquery checks lcs.signal_queue for matching signal_set_hash + sovereign_company_id within run_month date range (date_trunc month boundaries). Prevents same signal type for same company being bridged twice in same month."
+    },
+    {
+      "id": "FLOW-4",
+      "name": "Signal Registry Mapping",
+      "description": "signal_code from outreach.signal_output must map to signal_set_hash via lcs.signal_registry.",
+      "result": "PASS",
+      "evidence": "JOIN lcs.signal_registry sr ON sr.signal_name = so.signal_code AND sr.is_active = true. Unmapped signal codes are excluded (INNER JOIN). Only active registry entries are used."
+    },
+    {
+      "id": "FLOW-5",
+      "name": "Blocker Guard — Missing Source Table",
+      "description": "Function must handle missing outreach.signal_output gracefully.",
+      "result": "PASS",
+      "evidence": "IF NOT EXISTS check on information_schema.tables at runtime. Returns blocker_note column: 'BLOCKED — outreach.signal_output does not exist. Source: outreach hub migration required.' Verified: SELECT * FROM lcs.bridge_signal_output() returns blocker row with 0 signals."
+    }
+  ]
+}

@@ -1,3 +1,8 @@
+/**
+ * @deprecated Use cid-sid-mid-cron.ts instead.
+ * This runner calls the monolithic orchestrator which is superseded by the
+ * CID→SID→MID pipeline (wp-20260303-lcs-cid-sid-mid-pipeline).
+ */
 import { runPipeline } from '@/app/lcs';
 import type { SignalInput } from '@/app/lcs';
 import { resolveAdapter } from '@/app/lcs/adapters';
