@@ -348,9 +348,9 @@ imo:
       type: "spoke"
       description: "Client activation confirmation"
   middle:
-    - name: "Neon (Primary DB)"
+    - name: "CF D1/KV (Working DB) + Neon (Vault)"
       type: "database"
-      doctrine_id: "DB-NEON-01"
+      doctrine_id: "DB-CFD1-01"
     - name: "Event Validator"
       type: "validation"
       doctrine_id: "EVT-VALID-01"

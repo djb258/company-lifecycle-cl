@@ -424,10 +424,10 @@ banned:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 infrastructure:
-  ui: {name: "Lovable.dev", role: "UI + Edge Functions", cost: "Subscription"}
-  compute: {name: "Supabase Edge Functions", role: "Fast serverless compute", cost: "Free tier"}
-  database: {name: "Neon", role: "Vault - source of truth", cost: "Free tier"}
-  orchestration: {name: "n8n", role: "Workflow automation", cost: "Self-hosted @ Hostinger"}
+  ui: {name: "Figma UI", role: "UI design + component system", cost: "Subscription"}
+  compute: {name: "CF Workers", role: "Edge compute + serverless", cost: "Free tier"}
+  database: {name: "CF D1/KV (working) + Neon (vault)", role: "Working database + vault archive", cost: "Free tier"}
+  orchestration: {name: "CF Workers + Queues", role: "Workflow automation + job scheduling", cost: "Free tier"}
   integrations: {name: "Composio", role: "500+ app router", cost: "$30/month fixed"}
   secrets: {name: "Doppler", role: "Secrets management", cost: "Free tier"}
   ci_cd: {name: "GitHub Actions", role: "CI/CD pipelines", cost: "Free tier"}

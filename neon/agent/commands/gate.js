@@ -122,6 +122,6 @@ export class GateChecker {
 
     console.log('\nGATE: Sales → Client');
     console.log('-'.repeat(40));
-    console.log('  (Managed by Lovable.dev)');
+    console.log('  (Managed by CF Workers)');
   }
 }

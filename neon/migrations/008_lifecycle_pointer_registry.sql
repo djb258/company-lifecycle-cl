@@ -62,7 +62,7 @@ CREATE TRIGGER trg_write_once_pointers
   FOR EACH ROW
   EXECUTE FUNCTION cl.enforce_write_once_pointers();
 
--- 4. READ-ONLY VIEW FOR UI CONSUMERS (Lovable.DAVE)
+-- 4. READ-ONLY VIEW FOR UI CONSUMERS (Figma UI)
 CREATE OR REPLACE VIEW cl.v_company_lifecycle_status AS
 SELECT
   company_unique_id,

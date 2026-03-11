@@ -76,8 +76,8 @@ Before suggesting ANY tool, library, or vendor:
 
 - **Frontend**: React 18 + TypeScript + Vite (port 8080)
 - **UI**: Radix UI (shadcn/ui) + Tailwind CSS
-- **Database**: PostgreSQL (Neon) — schema `cl`
-- **Auth**: Supabase
+- **Database**: CF D1/KV (working) + Neon PostgreSQL (vault/archive) — schema `cl`
+- **Auth**: CF Workers (auth layer)
 - **State**: TanStack React Query
 - **Secrets**: Doppler
 - **CI**: GitHub Actions
@@ -87,7 +87,7 @@ Before suggesting ANY tool, library, or vendor:
 ```
 src/
 ├── sys/      → System infrastructure (main.tsx entry point)
-├── data/     → Supabase client, generated types
+├── data/     → CF D1 client, generated types
 ├── app/      → Hooks, business logic
 ├── runtime/  → LCS runtime services (cron, webhooks, signal bridge)
 ├── ai/       → AI components (empty)

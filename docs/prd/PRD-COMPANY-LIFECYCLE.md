@@ -136,7 +136,7 @@ All tools are scoped **only to this hub's M layer**.
 
 | Tool              | Doctrine ID  | Scoped To    | ADR     |
 | ----------------- | ------------ | ------------ | ------- |
-| Neon (Primary DB) | DB-NEON-01   | CL (M layer) | ADR-001 |
+| CF D1/KV (Working DB) + Neon (Vault) | DB-CFD1-01   | CL (M layer) | ADR-001 |
 | Event Validator   | EVT-VALID-01 | CL (M layer) | ADR-001 |
 
 ---

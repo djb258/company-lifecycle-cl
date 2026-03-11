@@ -163,7 +163,7 @@ async function main() {
       schema_hash: schemaHash,
       pipeline_intent_hash: pipelineHash,
       generated_at: new Date().toISOString().split('T')[0],
-      source_of_truth: 'Neon + Doctrine Docs',
+      source_of_truth: 'CF D1 (working) + Neon (vault) + Doctrine Docs',
       verification_mode: VERIFY_MODE ? 'CI_VERIFY' : 'GENERATE',
       schema_stats: {
         tables: [...new Set(schemaRows.map(r => r.table_name))].length,

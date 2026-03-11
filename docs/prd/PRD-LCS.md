@@ -143,8 +143,8 @@ LCS is the **canonical event ledger and communication orchestration engine** for
 |------|---------------|----------|-----------|-----------|
 | Mailgun API | Deterministic | CC-03 | O | Adapter spoke O-010 |
 | HeyReach API | Deterministic | CC-03 | O | Adapter spoke O-011 |
-| Supabase PostgREST | Deterministic | CC-03 | M | Database access via `.schema('lcs')` |
-| pg_cron | Deterministic | CC-03 | I | Signal bridge, matview refresh, queue cleanup |
+| CF D1/Workers | Deterministic | CC-03 | M | Working database access via CF D1 bindings |
+| CF Workers Cron Triggers | Deterministic | CC-03 | I | Signal bridge, matview refresh, queue cleanup |
 | Web Crypto API (HMAC) | Deterministic | CC-03 | I | Webhook signature validation |
 | Doppler (imo-creator) | Deterministic | CC-03 | M | Secret management — all env vars |
 
@@ -181,8 +181,8 @@ LCS is the **canonical event ledger and communication orchestration engine** for
 | G2 | ADR | CC-03 | Architecture decision: dual-ID model, ORBT protocol |
 | G3 | Schema Migration | CC-04 | 001-004 migrations executed on Neon |
 | G4 | Registry Seed | CC-04 | 22 seed rows (3 adapters + 9 signals + 10 frames) |
-| G5 | Edge Functions | CC-04 | Mailgun + HeyReach webhook handlers deployed |
-| G6 | Cron Schedule | CC-04 | 7 pg_cron jobs activated via Supabase SQL Editor |
+| G5 | CF Workers | CC-04 | Mailgun + HeyReach webhook handlers deployed |
+| G6 | Cron Schedule | CC-04 | Cron triggers activated via CF Workers wrangler.toml |
 
 ---
 

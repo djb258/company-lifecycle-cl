@@ -108,7 +108,7 @@ All relationships are **by value**, not by foreign key constraint. This ensures:
 |------|------------|
 | Schema name | `lcs` — confirmed |
 | Registry DELETE policy | NO DELETE. Soft-deactivate only via `is_active = false`. Registries are append-forward. Old entries are deactivated, never removed. This preserves CET referential integrity by value. |
-| Materialized view refresh strategy | Scheduled via Supabase cron. `v_company_intelligence` at 2:00 AM, entity/company views at 2:30 AM. REFRESH MATERIALIZED VIEW CONCURRENTLY (non-blocking). |
+| Materialized view refresh strategy | Scheduled via CF Workers cron triggers. `v_company_intelligence` at 2:00 AM, entity/company views at 2:30 AM. REFRESH MATERIALIZED VIEW CONCURRENTLY (non-blocking) on Neon vault. |
 | Index strategy for CET | Monthly RANGE partition on `created_at`. 7 standard indexes + 2 partial indexes (failed deliveries, pending deliveries). All defined in DDL migration, not retrofitted. PostgreSQL 11+ auto-creates per-partition indexes. |
 | Retention/archival policy | All partitions retained in v1 (append-only). Partitions older than 12 months are candidates for DETACH + archive to cold storage if cost is a factor. ERR0 not partitioned (volume is 100-1000x smaller than CET). |
 

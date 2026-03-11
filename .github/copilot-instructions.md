@@ -38,7 +38,7 @@ This repository follows the **Hub & Spoke Architecture** defined in `templates/d
 ### DO:
 - Place logic in the M (Middle) layer only
 - Keep UI components dumb (I layer receives, O layer displays)
-- Use Supabase for persistence
+- Use CF D1/KV for working persistence, Neon for vault/archive
 - Follow existing patterns in the codebase
 - Reference PRD when making architectural decisions
 - Use TypeScript with strict typing
@@ -58,7 +58,7 @@ This repository follows the **Hub & Spoke Architecture** defined in `templates/d
 ```
 40k (Doctrine):     templates/doctrine/, templates/config/
                     ↓
-40k (System):       supabase/, src/lib/supabase/, src/integrations/
+40k (System):       src/data/, src/lib/d1/, src/integrations/
                     ↓
 20k (IMO):          src/lib/lifecycle/, src/lib/validation/
                     ↓

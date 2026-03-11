@@ -28,7 +28,7 @@ export class PromotionRunner {
     console.log(`Promotion from ${from} to ${to} not yet implemented`);
     console.log('CL manages: cl → outreach eligibility');
     console.log('Outreach manages: outreach → sales');
-    console.log('Lovable manages: sales → client');
+    console.log('CF Workers manages: sales → client');
   }
 
   async promoteOne(sovereignId, options) {

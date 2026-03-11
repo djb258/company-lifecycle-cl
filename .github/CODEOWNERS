@@ -11,9 +11,9 @@
 /docs/adr/ @djb258
 
 # System layer (40k altitude)
-/supabase/ @djb258
-/src/lib/supabase/ @djb258
-/src/integrations/supabase/ @djb258
+/src/data/ @djb258
+/src/lib/d1/ @djb258
+/src/integrations/ @djb258
 
 # IMO layer (20k altitude)
 /src/lib/lifecycle/ @djb258

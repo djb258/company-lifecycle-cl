@@ -2,7 +2,7 @@
 -- Authority: HUB-CL-001, SUBHUB-CL-LCS
 -- Version: 2.2.0
 --
--- Called by: matview-refresh.ts via supabase.rpc('refresh_lcs_matview')
+-- Called by: matview-refresh.ts via CF Workers RPC call
 -- Schedule: Intelligence at 2:00 AM, Entity+Company at 2:30 AM
 
 CREATE OR REPLACE FUNCTION lcs.refresh_lcs_matview(matview_name TEXT)
@@ -26,5 +26,5 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION lcs.refresh_lcs_matview(TEXT) IS 'Refresh a named LCS matview CONCURRENTLY. Whitelisted to 3 known matviews only.';
 
--- Grant to supabase service role (for Edge Function / cron calls)
--- GRANT EXECUTE ON FUNCTION lcs.refresh_lcs_matview(TEXT) TO service_role;
+-- Grant to application role (for CF Workers / cron calls)
+-- GRANT EXECUTE ON FUNCTION lcs.refresh_lcs_matview(TEXT) TO ctb_app_role;

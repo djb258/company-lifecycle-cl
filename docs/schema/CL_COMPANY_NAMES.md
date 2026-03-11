@@ -1,6 +1,6 @@
 # cl.company_names — Schema Documentation
 
-> **Source of Truth:** Neon PostgreSQL
+> **Source of Truth:** CF D1 (working) / Neon PostgreSQL (vault)
 > **Verification Mode:** Read-Only
 > **Verification Date:** 2026-01-25
 

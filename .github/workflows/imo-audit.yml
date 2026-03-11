@@ -5,7 +5,7 @@
 # - No manual override
 # - One red X blocks merge
 #
-# Source of Truth: Neon (schema), Doctrine Docs (intent)
+# Source of Truth: CF D1 (working schema) + Neon (vault schema), Doctrine Docs (intent)
 # Authority: CONSTITUTIONAL
 
 name: IMO Audit Gate

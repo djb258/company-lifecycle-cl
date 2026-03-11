@@ -119,11 +119,11 @@ doppler run -- npm start
     DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
 ```
 
-### Vercel
+### CF Workers / Pages
 
 ```bash
-# Sync to Vercel
-doppler secrets download --no-file --format env | vercel env add
+# Sync to Cloudflare Workers
+doppler secrets download --no-file --format env | wrangler secret bulk
 ```
 
 ---

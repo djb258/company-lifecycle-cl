@@ -545,11 +545,11 @@ files:
       required: false
 
     - path: "templates/integrations/hostinger/integrations.yaml"
-      purpose: "Hostinger integration config"
+      purpose: "Hostinger integration config (RETIRED — replaced by CF Workers + Queues)"
       required: false
 
     - path: "templates/integrations/hostinger/README.md"
-      purpose: "Hostinger integration guide"
+      purpose: "Hostinger integration guide (RETIRED — replaced by CF Workers + Queues)"
       required: false
 
     - path: "templates/integrations/abacus-ai/integrations.yaml"

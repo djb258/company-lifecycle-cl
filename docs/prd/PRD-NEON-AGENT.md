@@ -36,8 +36,8 @@ Manual database operations are error-prone and lack auditability.
 ```
 Hub 1: company_cl     → Sovereign identity, verification
 Hub 2: outreach       → Engagement, DOL, people, blog
-Hub 3: sales          → Pipeline (shell, Lovable vault)
-Hub 4: client         → Customers (shell, Lovable vault)
+Hub 3: sales          → Pipeline (shell, CF D1 working + Neon vault)
+Hub 4: client         → Customers (shell, CF D1 working + Neon vault)
 ```
 
 ### Agent Responsibilities
@@ -116,7 +116,7 @@ neon-agent sync --force     # Re-sync all records
 |------|-----------|-------------|
 | CL → Outreach | `identity_status = 'PASS'` | Database trigger + agent check |
 | Outreach → Sales | Human signal | Outreach repo |
-| Sales → Client | Contract executed | Lovable |
+| Sales → Client | Contract executed | CF Workers |
 
 ## Data Model
 

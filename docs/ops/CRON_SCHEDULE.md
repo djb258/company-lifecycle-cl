@@ -1,28 +1,24 @@
 # LCS Cron Schedule
 
 > **Authority:** HUB-CL-001, SUBHUB-CL-LCS
-> **Edge Functions:** `lcs-pipeline-runner`, `lcs-domain-reset`
+> **Workers:** `lcs-pipeline-runner`, `lcs-domain-reset`
 
 ---
 
-## Supabase Cron Job Configuration
+## CF Workers Cron Trigger Configuration
 
-pg_cron is not available on Neon. This job must be configured manually in the **Supabase Dashboard** under **Database > Cron Jobs**.
+Cron triggers are configured via `wrangler.toml` on Cloudflare Workers.
 
-```
-Job Name:    lcs-pipeline-runner
-Schedule:    */15 8-17 * * 1-5
-Method:      POST
-URL:         https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/lcs-pipeline-runner
-Headers:     Authorization: Bearer <SUPABASE_ANON_KEY>
-Description: Fires pipeline runner every 15 min during business hours Mon-Fri 8AM-5PM ET
+```toml
+[triggers]
+crons = ["*/15 8-17 * * 1-5"]  # Every 15 min during business hours Mon-Fri 8AM-5PM ET
 ```
 
 ---
 
 ## Timezone Notes
 
-The schedule above uses **local server time**. Supabase cron runs in UTC, so adjust accordingly:
+The schedule above uses **UTC time**. Adjust accordingly:
 
 | Season | Eastern Time | UTC Equivalent |
 |--------|-------------|----------------|
@@ -53,15 +49,15 @@ Each invocation:
 The pipeline runner also accepts GET requests for manual triggering:
 
 ```bash
-curl -X POST https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/lcs-pipeline-runner \
-  -H "Authorization: Bearer <SUPABASE_ANON_KEY>"
+curl -X POST https://<worker-name>.<account>.workers.dev/lcs-pipeline-runner \
+  -H "Authorization: Bearer <CF_API_TOKEN>"
 ```
 
 ---
 
 ## Kill Switch
 
-Set `FOUNDER_CALENDAR_AVAILABLE=false` in Supabase Edge Function environment to block all sends globally. The capacity gate checks this flag on every invocation.
+Set `FOUNDER_CALENDAR_AVAILABLE=false` in CF Workers environment to block all sends globally. The capacity gate checks this flag on every invocation.
 
 ---
 
@@ -69,12 +65,15 @@ Set `FOUNDER_CALENDAR_AVAILABLE=false` in Supabase Edge Function environment to 
 
 Resets `sent_today` counter on all sending domains at midnight ET.
 
+```toml
+# In wrangler.toml — second cron trigger
+[triggers]
+crons = ["*/15 8-17 * * 1-5", "0 5 * * *"]  # pipeline-runner + domain-reset
 ```
-Job Name:    lcs-domain-reset
-Schedule:    0 5 * * *
-Method:      POST
-URL:         https://<SUPABASE_PROJECT_REF>.supabase.co/functions/v1/lcs-domain-reset
-Headers:     Authorization: Bearer <SUPABASE_ANON_KEY>
+
+```
+Worker:      lcs-domain-reset
+Schedule:    0 5 * * * (UTC)
 Description: Resets sent_today counter for all domains at midnight ET
 ```
 

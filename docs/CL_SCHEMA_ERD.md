@@ -1,6 +1,6 @@
 # CL Schema ERD
 
-> **Source of Truth:** Neon PostgreSQL
+> **Source of Truth:** CF D1 (working) / Neon PostgreSQL (vault)
 > **Verification Mode:** Read-Only
 > **Verification Date:** 2026-02-04
 > **Tables:** 25 (cl) + 5 (lcs) | **Columns:** 290+ | **Active Records:** 106,086
@@ -206,7 +206,7 @@ cl.identity_confidence.company_unique_id -> cl.company_identity.company_unique_i
 | View | Rows | Purpose |
 |------|------|---------|
 | v_company_promotable | 106,065 | Canonical source for Outreach |
-| v_company_lifecycle_status | 106,065 | Lifecycle stage + pointers (for UI/Lovable.DAVE) |
+| v_company_lifecycle_status | 106,065 | Lifecycle stage + pointers (for UI/Figma) |
 | v_company_identity_eligible | 106,065 | Eligible companies |
 | v_identity_gate_summary | 1 | Gate audit summary |
 

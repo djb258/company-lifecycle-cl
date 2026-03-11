@@ -9,7 +9,7 @@
 --   No writes back to base tables
 --   Derived strictly from CET
 --
--- Refresh schedule: Nightly at 2:30 AM via Supabase cron
+-- Refresh schedule: Nightly at 2:30 AM via CF Workers cron trigger
 -- REFRESH MATERIALIZED VIEW CONCURRENTLY lcs.v_latest_by_company;
 
 CREATE MATERIALIZED VIEW lcs.v_latest_by_company AS

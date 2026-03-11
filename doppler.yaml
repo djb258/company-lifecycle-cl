@@ -13,15 +13,16 @@ setup:
 #   - stg: Staging environment
 #   - prd: Production environment
 #
-# Required Secrets (Neon PostgreSQL):
+# Required Secrets:
 #   - HUB_ID: Unique hub identifier (HUB-CL-001)
-#   - VITE_NEON_HOST: Neon database host
-#   - VITE_NEON_DATABASE: Database name (Marketing DB)
-#   - VITE_NEON_USER: Database user
-#   - VITE_NEON_PASSWORD: Database password
-#   - VITE_DATABASE_URL: Full connection string
+#   - CF_D1_DATABASE_ID: Cloudflare D1 database ID (working database)
+#   - CF_ACCOUNT_ID: Cloudflare account ID
+#   - CF_API_TOKEN: Cloudflare API token
+#   - VITE_NEON_HOST: Neon database host (vault/archive only)
+#   - VITE_DATABASE_URL: Neon vault connection string
 #
-# Database: Neon PostgreSQL (shared with Barton Outreach Core)
+# Working Database: CF D1/KV (Cloudflare)
+# Vault/Archive: Neon PostgreSQL (shared with Barton Outreach Core)
 #   Host: ep-ancient-waterfall-a42vy0du-pooler.us-east-1.aws.neon.tech
 #   Database: Marketing DB
 #

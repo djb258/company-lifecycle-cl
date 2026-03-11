@@ -1,6 +1,6 @@
 # cl.company_identity — Schema Documentation
 
-> **Source of Truth:** Neon PostgreSQL
+> **Source of Truth:** CF D1 (working) / Neon PostgreSQL (vault)
 > **Verification Mode:** Read-Only
 > **Verification Date:** 2026-02-04
 > **Row Count:** 106,065
@@ -258,7 +258,7 @@ COMMENT ON COLUMN cl.company_identity.outreach_id IS
 
 | Field | Value |
 |-------|-------|
-| **Source of Truth** | Neon PostgreSQL |
+| **Source of Truth** | CF D1 (working) / Neon PostgreSQL (vault) |
 | **Verification Mode** | Read-Only |
 | **Verification Date** | 2026-02-07 |
 | **Column Count** | 33 |
