@@ -90,7 +90,7 @@ This is startup, not a ceremony. Do not expand it.
 
 | Field | Value |
 |-------|-------|
-| Created | 2026-02-16 |
-| Last Modified | 2026-02-16 |
+| Created | [YYYY-MM-DD] |
+| Last Modified | [YYYY-MM-DD] |
 | Status | ACTIVE |
 | Authority | imo-creator (Constitutional) |

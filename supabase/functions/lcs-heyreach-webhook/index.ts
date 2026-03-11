@@ -38,6 +38,7 @@ function validateHeyReachAuth(req: Request): boolean {
 // ─── HeyReach event type → CET mapping ──────────────────
 const EVENT_MAP: Record<string, { event_type: string; delivery_status: string }> = {
   connection_accepted: { event_type: 'DELIVERY_SUCCESS', delivery_status: 'DELIVERED' },
+  connection_rejected: { event_type: 'DELIVERY_FAILED',  delivery_status: 'FAILED' },
   message_sent:        { event_type: 'DELIVERY_SENT',    delivery_status: 'SENT' },
   replied:             { event_type: 'CLICKED',           delivery_status: 'CLICKED' },
 };
@@ -154,6 +155,32 @@ serve(async (req: Request) => {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // ─── Suppression writes ──────────────────────────────
+    // Rejected connections suppress the LinkedIn profile
+    if (eventName === 'connection_rejected') {
+      const linkedinUrl = body?.data?.linkedin_url
+        ?? body?.linkedin_profile_url
+        ?? body?.data?.recipient
+        ?? null;
+
+      if (linkedinUrl) {
+        await supabase
+          .schema('lcs')
+          .from('suppression')
+          .upsert({
+            email: null,
+            entity_id: originalEvent.entity_id ?? null,
+            sovereign_company_id: originalEvent.sovereign_company_id ?? null,
+            suppression_state: 'SUPPRESSED',
+            suppression_source: 'HEYREACH_REJECTED',
+            source_event_id: communicationId,
+            channel: 'HR',
+            domain: null,
+            updated_at: new Date().toISOString(),
+          }, { onConflict: 'email,suppression_source', ignoreDuplicates: false });
+      }
     }
 
     // ─── LinkedIn reply → engagement signal ──────────

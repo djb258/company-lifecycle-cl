@@ -1,570 +1,778 @@
-# Hub Compliance Checklist — Company Lifecycle Hub
-
-> **NOTE:** The multi-pass enrichment pipeline (pass-2 through pass-5) referenced below
-> has been QUARANTINED. See `meta/legacy_quarantine/README.md`.
-> The canonical pipeline is now: `cl.company_candidate → lifecycle_worker → mintIdentity`
+# Hub Compliance Checklist
 
 This checklist must be completed before any hub can ship.
 No exceptions. No partial compliance.
 
----
+**This is NOT a one-time audit.** Compliance is continuous — revalidate after every change.
 
-## Hub Identity
+**This checklist MUST be referenced by an attestation document.**
+See: `templates/audit/CONSTITUTIONAL_AUDIT_ATTESTATION.md`
 
-- [x] Hub ID assigned (unique, immutable): **HUB-CL-001**
-- [x] Process ID assigned (execution / trace ID): **CL-PROC-001**
-- [x] Hub Name defined: **Company Lifecycle Hub**
-- [x] Hub Owner assigned: **Supreme Headquarters (SHQ)**
+## Conformance
 
----
-
-## CTB Placement
-
-- [x] CTB path defined: **sys/company-lifecycle**
-- [x] Branch level specified: **sys / ui / data / app / ai**
-- [x] No forbidden folders (utils, helpers, common, shared, lib, misc): **Verified 2026-02-06**
-- [x] CTB Governance document exists: `templates/config/CTB_GOVERNANCE.md`
-- [x] Parent hub identified: **None (Root Hub)**
+| Field | Value |
+|-------|-------|
+| **Doctrine Version** | |
+| **CC Layer** | CC-02 |
+| **Last Validated** | |
+| **Validated By** | |
 
 ---
 
-## Altitude Scope
+## Priority Definitions
 
-- [x] Altitude level declared: **20k**
-- [x] Scope appropriate for declared altitude
+| Priority | Meaning | Ship Without? |
+|----------|---------|---------------|
+| **CRITICAL** | Blocks ship | NO — must be checked |
+| **HIGH** | Blocks compliance | NO — must fix or downgrade with ADR |
+| **MEDIUM** | Nice to have | Yes, but document why |
+| **LOW** | Optional | Yes |
 
 ---
 
-## IMO Structure
+## COMPLIANCE GATE (MANDATORY)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      ZERO-TOLERANCE ENFORCEMENT RULE                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  You CANNOT mark a hub as COMPLIANT if:                                       ║
+║                                                                               ║
+║    1. ANY CRITICAL items are unchecked                                        ║
+║    2. ANY HIGH violations exist (unfixed)                                     ║
+║                                                                               ║
+║  HIGH violations are NOT "fix later" items.                                   ║
+║  HIGH violations BLOCK compliance.                                            ║
+║                                                                               ║
+║  The ONLY path forward is:                                                    ║
+║    → FIX the violation, OR                                                    ║
+║    → DOWNGRADE to MEDIUM with documented justification + ADR                  ║
+║                                                                               ║
+║  NEVER mark COMPLIANT with open HIGH/CRITICAL violations.                     ║
+║  This is a HARD RULE. No exceptions.                                          ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Common Mistake (DO NOT DO THIS)
+
+```
+❌ WRONG: "5 HIGH violations found. Status: COMPLIANT"
+   This is INVALID. HIGH violations block compliance.
+
+✅ RIGHT: "5 HIGH violations found. Status: NON-COMPLIANT"
+   Then fix the violations and re-audit.
+
+✅ RIGHT: "0 HIGH/CRITICAL violations. 3 MEDIUM. Status: COMPLIANT WITH NOTES"
+   Medium violations are documented but don't block.
+```
+
+**Constitutional Authority**: See CONSTITUTION.md §Violation Zero Tolerance
+
+---
+
+### AI Agent Compliance Rule (MANDATORY)
+
+**AI agents filling out this checklist are bound by CONSTITUTION.md §Violation Zero Tolerance.**
+
+| Prohibited Action | Consequence |
+|-------------------|-------------|
+| Marking COMPLIANT when CRITICAL items are unchecked | AUDIT INVALIDATED |
+| Marking COMPLIANT when HIGH violations exist (unfixed) | AUDIT INVALIDATED |
+| Downgrading violations to skip the gate | DOCTRINE VIOLATION |
+| Using "partial pass" or "conditional compliance" | NO SUCH STATUS EXISTS |
+| Proceeding past violations without human approval | WORK INVALIDATED |
+
+**Required behavior when violations exist:**
+
+```
+CHECKLIST FAILED
+────────────────
+Hub: [HUB-ID]
+Status: NON-COMPLIANT
+
+CRITICAL unchecked: [count]
+HIGH violations: [count]
+
+Violations:
+1. §[section] — [description]
+2. §[section] — [description]
+
+HUMAN ACTION REQUIRED:
+- Review violations above
+- Fix violations OR downgrade with ADR justification
+- Re-run checklist after remediation
+
+This hub CANNOT ship until violations are resolved.
+```
+
+**There is no "continue anyway" option. AI agents must STOP and report.**
+
+---
+
+# PART A — CONSTITUTIONAL VALIDITY
+
+These sections verify the hub satisfies the Transformation Law.
+Failure in Part A invalidates the hub regardless of Part B status.
+
+**Section Anchors**: §A.1 through §A.6
+
+---
+
+## Constitutional Validity (CONST → VAR) {#section-a1}
+<!-- §A.1 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Hub purpose can be stated as a CONST → VAR transformation |
+| CRITICAL | [ ] All constants are explicitly declared and bounded |
+| CRITICAL | [ ] All variables are explicitly declared and necessary |
+| CRITICAL | [ ] Hub exists because of value transformation, not convenience |
+
+**Validity Test**: Complete this statement:
+
+> "This hub transforms _________________ (constants) into _________________ (variables)."
+
+If this statement cannot be completed, the hub is invalid.
+
+---
+
+## PRD Compliance (Behavioral Proof) {#section-a2}
+<!-- §A.2 -->
+
+### HSS — Hub-and-Spoke Set Up (MANDATORY)
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] HSS section exists at top of PRD |
+| CRITICAL | [ ] Idea/Need field is completed |
+| CRITICAL | [ ] Hub Justification (CONST → VAR) is completed |
+| CRITICAL | [ ] Hub-Spoke Decision is explicitly IMPLEMENTED or DECLINED |
+| CRITICAL | [ ] Candidate Constants are listed |
+| CRITICAL | [ ] Candidate Variables are listed |
+| CRITICAL | [ ] Candidate Tools reference SNAP-ON TOOLBOX only |
+
+**PRD without completed HSS section = INVALID**
+
+### HSS Validator (HARD FAIL)
+
+```
+IF PRD exists AND HSS section missing → FAIL
+IF PRD exists AND HSS section incomplete → FAIL
+
+There is no "PRD exists, skip HSS" path.
+This validator has no exceptions.
+```
+
+### PRD Body (Authoritative)
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] PRD exists for this hub |
+| CRITICAL | [ ] PRD explains WHY the hub exists |
+| CRITICAL | [ ] PRD explains HOW transformation occurs |
+| CRITICAL | [ ] PRD declares constants (inputs) |
+| CRITICAL | [ ] PRD declares variables (outputs) |
+| CRITICAL | [ ] PRD declares pass structure (CAPTURE / COMPUTE / GOVERN) |
+| CRITICAL | [ ] PRD §6 Hub-Spoke Status matches HSS section |
+| CRITICAL | [ ] PRD §§1-15 restate all HSS decisions (no deferrals) |
+| HIGH | [ ] PRD explicitly states what is IN scope |
+| HIGH | [ ] PRD explicitly states what is OUT of scope |
+
+**PRD must remain accurate as behavior changes.**
+
+| Field | Value |
+|-------|-------|
+| PRD Location | |
+| PRD Version | |
+| Governing ERD | |
+
+---
+
+## ERD Compliance (Structural Proof) {#section-a3}
+<!-- §A.3 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] ERD exists for this hub |
+| CRITICAL | [ ] All tables represent declared variables |
+| CRITICAL | [ ] All tables depend on declared constants |
+| CRITICAL | [ ] Each table has a producing pass (CAPTURE / COMPUTE / GOVERN) |
+| CRITICAL | [ ] Lineage to constants is enforced |
+| CRITICAL | [ ] No orphan tables (not referenced in PRD) |
+| CRITICAL | [ ] ERD aligns with OSAM (all joins declared) |
+| HIGH | [ ] No speculative tables (for future use) |
+| HIGH | [ ] No convenience tables (not serving transformation) |
+
+| Field | Value |
+|-------|-------|
+| ERD Location | |
+| ERD Version | |
+| Governing OSAM | |
+
+---
+
+## ERD Pressure Test (Static) {#section-a4}
+<!-- §A.4 -->
+
+For **each table**, all four questions must pass:
+
+| # | Question | Failure Condition |
+|---|----------|-------------------|
+| Q1 | What constant(s) does this table depend on? | No constant = ILLEGAL |
+| Q2 | What variable does this table represent? | No variable = ILLEGAL |
+| Q3 | Which pass produced this table? | No pass = ILLEGAL |
+| Q4 | How is lineage enforced? | No mechanism = ILLEGAL |
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] All tables pass Q1 (constant dependency explicit) |
+| CRITICAL | [ ] All tables pass Q2 (variable output explicit) |
+| CRITICAL | [ ] All tables pass Q3 (pass ownership declared) |
+| CRITICAL | [ ] All tables pass Q4 (lineage mechanism defined) |
+
+**Partial pass = FAIL. Failure on any table invalidates the hub.**
+
+---
+
+## ERD Upstream Flow Test (Simulated) {#section-a5}
+<!-- §A.5 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Flow testing begins at declared constants (never at tables) |
+| CRITICAL | [ ] Declared passes traversed sequentially (CAPTURE → COMPUTE → GOVERN) |
+| CRITICAL | [ ] Data can reach all declared variables |
+| CRITICAL | [ ] Lineage survives end-to-end |
+| CRITICAL | [ ] No unreachable tables exist |
+
+**Flow tests must be re-evaluated after any ERD change.**
+
+---
+
+## OSAM Compliance (Semantic Access Map) {#section-a6}
+<!-- §A.6 -->
+
+**OSAM is the authoritative query-routing contract. Violations are BLOCKING.**
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] OSAM exists for this hub (`doctrine/OSAM.md`) |
+| CRITICAL | [ ] OSAM declares universal join key |
+| CRITICAL | [ ] OSAM declares spine table |
+| CRITICAL | [ ] All ERD joins are declared in OSAM |
+| CRITICAL | [ ] No queries target SOURCE tables |
+| CRITICAL | [ ] No queries target ENRICHMENT tables as primary query surface |
+| CRITICAL | [ ] PRD questions are routable via OSAM |
+| HIGH | [ ] All tables classified (QUERY/SOURCE/ENRICHMENT/AUDIT) |
+| HIGH | [ ] Query routing table is complete |
+
+### OSAM Alignment Verification
+
+| Check | Result |
+|-------|--------|
+| ERD joins in OSAM | ______ / ______ aligned |
+| Undeclared joins | ______ (must be 0) |
+| SOURCE table queries | ______ (must be 0) |
+| Unroutable PRD questions | ______ (must be 0) |
+
+### OSAM Violation Detection
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         OSAM VIOLATIONS ARE BLOCKING                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  IF OSAM is missing                        → FAIL (constitutional violation)  ║
+║  IF ERD contains joins not in OSAM         → FAIL (alignment violation)       ║
+║  IF PRD requires unanswered questions      → FAIL (routing violation)         ║
+║  IF agent references undocumented paths    → FAIL (agent violation)           ║
+║  IF queries touch SOURCE/ENRICHMENT tables → FAIL (surface violation)         ║
+║                                                                               ║
+║  OSAM violations BLOCK compliance. There are no warnings.                     ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+| Field | Value |
+|-------|-------|
+| OSAM Location | |
+| OSAM Version | |
+
+---
+
+## Process Compliance (Execution Declaration) {#section-a7}
+<!-- §A.7 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Process declaration exists |
+| CRITICAL | [ ] Process references governing PRD |
+| CRITICAL | [ ] Process references governing ERD |
+| CRITICAL | [ ] Process introduces no new constants |
+| CRITICAL | [ ] Process introduces no new variables |
+| CRITICAL | [ ] Pass sequence matches PRD and ERD |
+| HIGH | [ ] Process is tool-agnostic (remains valid if tools change) |
+
+| Field | Value |
+|-------|-------|
+| Process Location | |
+| Governing PRD | |
+| Governing ERD | |
+
+---
+
+# PART B — OPERATIONAL COMPLIANCE
+
+These sections verify the hub is ready to ship.
+Part B assumes Part A passes.
+
+**Part B governs ship-readiness, not existence legitimacy.**
+Items marked CRITICAL define minimum operational safety, not architectural purity.
+
+**Section Anchors**: §B.1 through §B.12
+
+---
+
+## Canonical Chain (CC) Compliance {#section-b1}
+<!-- §B.1 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Sovereign declared (CC-01 reference) |
+| CRITICAL | [ ] Hub ID assigned (unique, immutable) (CC-02) |
+| CRITICAL | [ ] Authorization matrix honored (no upward writes) |
+| CRITICAL | [ ] Doctrine version declared |
+| HIGH | [ ] All child contexts scoped to CC-03 |
+| HIGH | [ ] All processes scoped to CC-04 |
+
+---
+
+## Hub Identity (CC-02) {#section-b2}
+<!-- §B.2 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Hub ID assigned (unique, immutable) |
+| CRITICAL | [ ] Process ID pattern defined (CC-04 execution scope) |
+| HIGH | [ ] Hub Name defined |
+| HIGH | [ ] Hub Owner assigned |
+
+---
+
+## CTB Placement {#section-b3}
+<!-- §B.3 -->
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] CTB path defined (Trunk / Branch / Leaf) |
+| CRITICAL | [ ] No forbidden folders (utils, helpers, common, shared, lib, misc) |
+| HIGH | [ ] Branch level specified (sys / ui / ai / data / app) |
+| HIGH | [ ] CTB Governance document exists (`docs/CTB_GOVERNANCE.md`) |
+| MEDIUM | [ ] Parent hub identified (if nested hub) |
+
+---
+
+## IMO Structure {#section-b4}
+<!-- §B.4 -->
 
 ### Ingress (I Layer)
 
-- [x] Ingress points defined (UI Forms, API Gateway, Webhooks)
-- [x] Ingress contains no logic
-- [x] Ingress contains no state
-- [x] UI (if present) is dumb ingress only
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Ingress contains no logic |
+| CRITICAL | [ ] Ingress contains no state |
+| HIGH | [ ] Ingress points defined |
+| MEDIUM | [ ] UI (if present) is dumb ingress only |
 
 ### Middle (M Layer)
 
-- [x] All logic resides in M layer
-- [x] All state resides in M layer
-- [x] All decisions occur in M layer
-- [x] Tools scoped to M layer only
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] All logic resides in M layer |
+| CRITICAL | [ ] All state resides in M layer |
+| CRITICAL | [ ] All decisions occur in M layer |
+| CRITICAL | [ ] Tools scoped to M layer only |
 
 ### Egress (O Layer)
 
-- [x] Egress points defined (Database, Notifications, Event Bus, Dashboard)
-- [x] Egress contains no logic
-- [x] Egress contains no state
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Egress contains no logic |
+| CRITICAL | [ ] Egress contains no state |
+| HIGH | [ ] Egress points defined |
 
 ---
 
-## Spokes
+## Spokes {#section-b5}
+<!-- §B.5 -->
 
-- [x] All spokes typed as I or O only
-- [x] No spoke contains logic
-- [x] No spoke contains state
-- [x] No spoke owns tools
-- [x] No spoke performs decisions
-
----
-
-## Tools
-
-- [x] All tools scoped inside this hub (see PRD Section 9)
-- [x] All tools have Doctrine ID: CL-TOOL-001 through CL-TOOL-004
-- [x] All tools have ADR reference: ADR-001
-- [x] No tools exposed to spokes
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] All spokes typed as I or O only |
+| CRITICAL | [ ] No spoke contains logic |
+| CRITICAL | [ ] No spoke contains state |
+| CRITICAL | [ ] No spoke owns tools |
+| CRITICAL | [ ] No spoke performs decisions |
 
 ---
 
-## Connectors
+## Tools {#section-b6}
+<!-- §B.6 -->
 
-- [x] Connectors (API / CSV / Event) defined
-- [x] Connector direction specified (Inbound / Outbound)
-- [x] Connector contracts documented (see PRD Section 8)
-
----
-
-## Cross-Hub Isolation
-
-- [x] No sideways hub-to-hub calls
-- [x] No cross-hub logic
-- [x] No shared mutable state between hubs
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] All tools scoped inside this hub or accessed via approved platform boundary |
+| CRITICAL | [ ] No tools exposed to spokes |
+| HIGH | [ ] All tools have Doctrine ID |
+| HIGH | [ ] All tools have ADR reference |
 
 ---
 
-## Guard Rails
+## Cross-Hub Isolation {#section-b7}
+<!-- §B.7 -->
 
-- [x] Rate limits defined: 1000 identity mints per hour
-- [x] Timeouts defined: 30 seconds for identity resolution
-- [x] Validation implemented: Identity uniqueness, immutability
-- [x] Permissions enforced: SHQ approval for overrides
-
----
-
-## Kill Switch
-
-- [x] Kill switch endpoint defined: `POST /api/cl/kill-switch`
-- [x] Kill switch activation criteria documented (duplicate detection, unauthorized promotion, data integrity violation)
-- [x] Kill switch tested and verified
-- [x] Emergency contact assigned: SHQ Admin
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] No sideways hub-to-hub calls |
+| CRITICAL | [ ] No cross-hub logic |
+| CRITICAL | [ ] No shared mutable state between hubs |
 
 ---
 
-## Rollback
+## Guard Rails {#section-b8}
+<!-- §B.8 -->
 
-- [x] Rollback plan documented (see ADR-001)
-- [x] Rollback tested and verified
-
----
-
-## Observability
-
-- [x] Logging implemented: All state changes to cl.audit_trail
-- [x] Metrics implemented: Identities minted/day, promotions/stage, gate satisfaction rate
-- [x] Alerts configured: Duplicate mint, promotion gate failure, kill switch activation
-- [x] Shipping without observability is forbidden
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Rate limits defined |
+| CRITICAL | [ ] Timeouts defined |
+| HIGH | [ ] Validation implemented |
+| HIGH | [ ] Permissions enforced |
 
 ---
 
-## Gate Zero Stage
+## Kill Switch {#section-b9}
+<!-- §B.9 -->
 
-### Pre-Sovereign Verification
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Kill switch endpoint defined |
+| CRITICAL | [ ] Kill switch activation criteria documented |
+| HIGH | [ ] Kill switch tested and verified |
+| HIGH | [ ] Emergency contact assigned |
 
-- [x] Gate Zero uses `intake_id` only (never `sovereign_company_id`)
-- [x] Binary existence verification (pass/fail only)
-- [x] Gate Zero never enriches authoritative tables
-- [x] Failures route to recovery table with throttles
+---
 
-### Recovery Throttles
+## Rollback {#section-b10}
+<!-- §B.10 -->
 
-- [x] Max attempts defined: 3
-- [x] Backoff schedule defined: 24h → 72h → 168h
-- [x] Recovery window defined: 14 days post-batch
-- [x] Recovery success creates new intake (never mutates failed row)
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Rollback plan documented |
+| HIGH | [ ] Rollback tested and verified |
 
-### AIR Integration
+---
 
-- [x] AIR doctrine defined: docs/doctrine/AIR_DOCTRINE.md
-- [x] Gate Zero AIR table defined: docs/schema/GATE_ZERO_AIR.md
-- [x] Event types documented: ATTEMPT, PASS, FAIL, AUTH, EXHAUSTED, REENTER
-- [x] Reason codes documented per event type
-- [x] Gate Zero emits AUTH on success (not MINT)
-- [x] Mint Worker subscribes to Gate Zero AIR for AUTH events
+## Observability {#section-b11}
+<!-- §B.11 -->
 
-### Gate Zero Kill Switch
-
-- [x] Kill switch endpoint defined: `/cl/gate-zero/kill-switch`
-- [x] Batch-level pause supported
-- [x] Emergency contact assigned: SHQ Admin
-
-### Hardening Requirements
-
-- [x] Promotion Contract defined (PRD Section 19)
-- [x] Promotion rule documented: `company_name AND (domain OR linkedin)`
-- [x] Non-blocking fields documented: `company_state`, `source_system`, `industry`, `employee_count`
-- [x] Idempotency Guard implemented (PRD Section 20)
-- [x] Company fingerprint formula defined: `LOWER(domain) || '|' || LOWER(linkedin)`
-- [x] Unique index on `company_fingerprint` enforced
-- [x] Lifecycle Run Versioning implemented (PRD Section 21)
-- [x] `lifecycle_run_id` stamped on all lifecycle tables
-- [x] Prior runs never overwritten
-
-### Bootstrap Scripts
-
-- [x] `neon/verify-companies.js` - Phase 1 diagnostics
-- [x] `neon/phase-d-error-routing.js` - Error routing
-- [x] `neon/phase-e-audit.js` - Audit and rollback
-- [x] `neon/hardening-bootstrap.js` - Apply hardening
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] Logging implemented |
+| HIGH | [ ] Metrics implemented |
+| HIGH | [ ] Alerts configured |
+| CRITICAL | [ ] Shipping without observability is forbidden |
 
 ---
 
 ## Failure Modes
 
-- [x] Failure modes documented (see PRD Section 13)
-- [x] Severity levels assigned: CRITICAL, HIGH, MEDIUM
-- [x] Remediation steps defined
+| Priority | Check |
+|----------|-------|
+| HIGH | [ ] Failure modes documented |
+| HIGH | [ ] Severity levels assigned |
+| MEDIUM | [ ] Remediation steps defined |
 
 ---
 
 ## Human Override
 
-- [x] Override conditions defined: Force promotion, identity merge, identity retirement
-- [x] Override approvers assigned: SHQ Admin
+| Priority | Check |
+|----------|-------|
+| HIGH | [ ] Override conditions defined |
+| HIGH | [ ] Override approvers assigned |
 
 ---
 
 ## Traceability
 
-- [x] PRD exists and is current: **docs/prd/PRD_COMPANY_LIFECYCLE.md**
-- [x] PRD for Gate Zero: **docs/prd/PRD-GATE-ZERO.md**
-- [x] ADR exists (if decisions required): **docs/adr/ADR-001-lifecycle-state-machine.md**
-- [x] ADR for Gate Zero: **docs/adr/ADR-002-gate-zero-pre-sovereign-verification.md**
-- [x] Linear issue linked: **CL-001**, **CL-002**
-- [x] PR linked: Initial schema migration, Gate Zero documentation
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] PRD exists and is current (CC-02) |
+| CRITICAL | [ ] ADR exists for each decision (CC-03) |
+| HIGH | [ ] Work item linked |
+| HIGH | [ ] PR linked (CC-04) |
+| HIGH | [ ] Canonical Doctrine referenced |
 
 ---
 
-## ERD & Data Flow
+## Documentation Alignment (MANDATORY) {#section-b12}
+<!-- §B.12 -->
 
-- [x] ERD document exists: `docs/schema/CL_ERD.md`
-- [x] Canonical data flow documented in CL_DOCTRINE.md
-- [x] Flow rules enforced: COPY-NEVER-MOVE, READ-ONLY-SOURCE, ONE-WAY-FLOW
-- [x] No backward writes to source tables
-- [x] ERROR → repair → re-entry loop documented
-- [x] Idempotent identity minting (fingerprint)
-- [x] Bridge table as only join surface for consumers
-
-### Flow Tables
-
-- [x] `cl.company_lifecycle_identity_staging` documented
-- [x] `cl.company_identity` documented
-- [x] `cl.company_identity_bridge` documented
-- [x] `cl.company_lifecycle_error` documented
-
----
-
-## Identity Anchor & State Expansion (ADR-003)
-
-### Identity Anchor Doctrine
-
-- [x] Identity anchor rule documented: domain OR LinkedIn (not AND)
-- [x] `website_url` nullable (not required)
-- [x] `linkedin_url` nullable (not required)
-- [x] `chk_identity_anchor` constraint enforces at least one anchor
-- [x] ADR-003 authorizes identity anchor doctrine
-
-### State Expansion Governance
-
-- [x] `chk_state_valid` expanded via ADR authorization
-- [x] Current states documented: PA, VA, MD, OH, WV, KY, DE, OK, NC
-- [x] State expansion requires ADR (no silent changes)
-- [x] NC added via ADR-003 (2026-01-01)
-
-### Constraint Modification Rules
-
-- [x] No constraints modified without ADR authorization
-- [x] Post-run formalization permitted within 24h
-- [x] All constraint changes documented in CL_ERD.md
-
----
-
-## Identity Funnel (ADR-004)
-
-### Funnel Architecture
-
-- [x] 5-pass funnel implemented (existence, name, domain, collision, firmographic)
-- [x] Cost-first, accuracy-second approach
-- [x] All passes deterministic ($0 cost)
-- [x] LLM usage feature-flagged and disabled by default
-- [x] Unified error table with pass discriminator
-
-### Funnel Passes
-
-- [x] Pass 1: Existence Verification (domain resolution)
-- [x] Pass 2: Name Canonicalization (regex-based normalization)
-- [x] Pass 3: Domain-Name Coherence (token matching)
-- [x] Pass 4: Collision Detection (deterministic resolution)
-- [x] Pass 5: Firmographic Coherence (validation only, no enrichment)
-
-### Confidence Envelope
-
-- [x] `cl.identity_confidence` table created
-- [x] Scoring formula documented in CL_PASS_CONTRACTS.md
-- [x] Buckets defined: HIGH (70+), MEDIUM (40-69), LOW (20-39), UNVERIFIED (0-19)
-- [x] Recomputation script: `recompute-confidence.js`
-
-### Funnel Scripts
-
-- [x] `existence-verification-worker.js` implemented
-- [x] `pass-2-name-canonicalization.js` implemented
-- [x] `pass-3-domain-coherence.js` implemented
-- [x] `pass-4-collision-detection.js` implemented
-- [x] `pass-5-firmographic-coherence.js` implemented
-- [x] `recompute-confidence.js` implemented
-
-### Kill Switches
-
-- [x] Error rate kill switch: >50% triggers pause
-- [x] LLM usage gate: >5% disables LLM, continues deterministic
-- [x] Timeout threshold: >30s/record avg triggers pause
-
-### Documentation
-
-- [x] Pass contracts documented: `docs/CL_PASS_CONTRACTS.md`
-- [x] Funnel report generated: `docs/CL_FUNNEL_REPORT.md`
-- [x] ADR-004 created and accepted
-
----
-
-## Four-Hub Architecture (ADR-005)
-
-### Hub Structure
-
-- [x] Hub 1: company_cl (Sovereign Identity) - This repo
-- [x] Hub 2: outreach (Engagement) - Outreach repo
-- [x] Hub 3: sales (Pipeline) - Lovable vault
-- [x] Hub 4: client (Customers) - Lovable vault
-
-### Schema Migration
-
-- [x] Single table approach for company_identity
-- [x] Status sync: existence_verified → identity_status
-- [x] Error data migrated to unified cl_errors
-- [x] Bloat tables dropped (v1 error tables, staging)
-- [x] Eligibility view: v_company_identity_eligible
-- [x] Summary view: v_identity_gate_summary
-
-### Gate Enforcement
-
-- [x] CL → Outreach gate: identity_status = 'PASS'
-- [x] Database trigger on outreach.outreach (outreach repo)
-- [x] Agent pre-check before promotion
-
-### Data Preserved
-
-- [x] 71,823 company_identity records
-- [x] 63,911 PASS status (88.98%)
-- [x] 7,912 FAIL status
-- [x] 59,812 company_candidate (audit log)
-- [x] Error records migrated (7,985 + legacy)
-
----
-
-## Neon Agent
-
-### Agent Commands
-
-- [x] `neon-agent migrate` - Schema migrations
-- [x] `neon-agent audit` - Data quality checks
-- [x] `neon-agent gate` - Gate eligibility
-- [x] `neon-agent promote` - Stage promotions
-- [x] `neon-agent health` - System health
-- [x] `neon-agent sync` - Status sync
-
-### Agent Doctrine
-
-- [x] Agent enforces structure and movement
-- [x] Agent does not invent business logic
-- [x] Agent does not guess intent
-- [x] Agent does not rewrite identity
-- [x] Agent does not run enrichment
-
-### Agent Documentation
-
-- [x] PRD: docs/prd/PRD-NEON-AGENT.md
-- [x] ADR: docs/adr/ADR-005-four-hub-architecture.md
-- [x] Migration Guide: docs/OUTREACH_MIGRATION_GUIDE.md
-
----
-
-## Multi-State Intake Doctrine Lock (ADR-006)
-
-### StateCsvSourceAdapter Base Class
-
-- [x] Base class created: `pipeline/adapters/state_csv_adapter.js`
-- [x] All adapters must extend `StateCsvSourceAdapter`
-- [x] Constructor enforces `state_code` declaration
-- [x] Constructor enforces `source_system` declaration
-- [x] Adapter registry prevents duplicate state_code
-- [x] Adapter registry prevents duplicate source_system
-
-### CSV Contract (Global)
-
-- [x] `Name` field required
-- [x] `Domain OR LinkedIn URL` required (at least one)
-- [x] Admission gate: `domain IS NOT NULL OR linkedin IS NOT NULL`
-- [x] Optional fields go to raw_payload only
-- [x] Identity is NEVER inferred from optional fields
-
-### Identity Field Allowlist
-
-- [x] Allowlist defined: `company_name, company_domain, linkedin_url`
-- [x] Allowlist is frozen (`Object.freeze`)
-- [x] No fields may be added without ADR
-
-### Compile-Time Guards
-
-- [x] `assertAdapterInheritance()` guard implemented
-- [x] `assertIdentityFieldAllowlist()` guard implemented
-- [x] Guards execute at module load time
-- [x] Guards fail with `process.exit(1)` on violation
-
-### Registered Adapters
-
-- [x] NC: `NCExcelSourceAdapter` (SS-001) - Active
-- [x] DE: `DECsvSourceAdapter` (SS-002) - Active
-
-### State Handling
-
-- [x] `state_code` injected by adapter (never parsed from CSV)
-- [x] State-specific logic isolated to adapters only
-- [x] No state parsing from Location field
-
-### Documentation
-
-- [x] ADR-006 created and accepted
-- [x] PRD-MULTI-STATE-INTAKE.md created
-- [x] COMPANY_LIFECYCLE_LOCK.md created
-- [x] GATE_ZERO_INTAKE.md updated (OR logic)
-
----
-
-## Lifecycle Pointer Registry (ADR-008)
-
-### Schema Extension
-
-- [x] `outreach_id` column added (UUID, nullable)
-- [x] `sales_process_id` column added (UUID, nullable)
-- [x] `client_id` column added (UUID, nullable)
-- [x] `outreach_attached_at` timestamp added
-- [x] `sales_opened_at` timestamp added
-- [x] `client_promoted_at` timestamp added
-
-### Write-Once Enforcement
-
-- [x] Trigger `trg_write_once_pointers` created
-- [x] Trigger blocks overwrite of non-NULL pointers
-- [x] Trigger blocks setting pointers to NULL
-- [x] Trigger allows same-value writes (no-op)
-- [x] Timestamps auto-set on first write
-
-### UI View
-
-- [x] `v_company_lifecycle_status` view created
-- [x] View exposes `has_outreach`, `has_sales`, `is_client` booleans
-- [x] View derives `lifecycle_stage` (PROSPECT/OUTREACH/SALES/CLIENT)
-- [x] View is read-only
-
-### Indexes
-
-- [x] Partial index on `outreach_id` (WHERE NOT NULL)
-- [x] Partial index on `sales_process_id` (WHERE NOT NULL)
-- [x] Partial index on `client_id` (WHERE NOT NULL)
-
-### Documentation
-
-- [x] ADR-008 created and accepted
-- [x] Migration 008 documented
-- [x] ERD updated with new columns
-- [x] Test script created (`test-write-once.js`)
-
----
-
-## OSAM Compliance (Operational Semantic Access Map)
-
-- [x] OSAM template exists: `templates/semantic/OSAM.md`
-- [x] Universal join key declared: `company_unique_id` (UUID)
-- [x] Spine table identified: `cl.company_identity`
-- [x] All ERD joins declared in schema docs: `docs/schema/CL_ERD.md`
-- [x] No queries target SOURCE tables (raw CSV data is ingestion-only)
-- [x] No queries target ENRICHMENT tables as primary query surface
-- [x] PRD questions routable via semantic schema: `docs/schema/CL_SCHEMA_INDEX.md`
-- [x] All tables classified (QUERY/SOURCE/ENRICHMENT/AUDIT)
-- [x] Query routing documented in schema documentation
-
----
-
-## HEIR Compliance (Hierarchy, Enforcement, Integration, Reporting)
-
-- [x] `heir.doctrine.yaml` exists at hub root
-- [x] Sovereign reference present (CC-01): `imo-creator`
-- [x] Hub identity complete (CC-02): `HUB-CL-001`
-- [x] Meta section complete: app_name, repo_slug, stack
-- [x] Doctrine version and IDs defined: `CL-CORE`, `HUB-CL-001-${TIMESTAMP}-${RANDOM_HEX}`
-- [x] Services defined (CC-03): Intake engine, lifecycle worker
-- [x] Environment variables reference secrets provider (Doppler)
-- [x] IMO structure documented in heir.doctrine.yaml (I/M/O sections)
-- [x] Guard rails and kill switches declared in heir.doctrine.yaml
-
----
-
-## ORBT Compliance (Operate, Repair, Build, Train)
-
-### Operate
-- [x] Pipeline operational: `pipeline/ingest.js`, `pipeline/orchestrator.js`
-- [x] Neon Agent operational: 6 commands (migrate, audit, gate, promote, health, sync)
-- [x] CI gate operational: `.github/workflows/imo-audit.yml`, `.github/workflows/pipeline_guard.yml`
-
-### Repair
-- [x] Error routing implemented: `cl.company_lifecycle_error` table
-- [x] ERROR → repair → re-entry loop documented in CL_DOCTRINE.md
-- [x] Recovery throttles defined: 3 attempts, backoff schedule, 14-day window
-- [x] Kill switches auto-pause on anomaly detection
-
-### Build
-- [x] Build passes clean: `npx vite build` (1673 modules, 0 errors)
-- [x] Compile-time guards enforce invariants at module load
-- [x] Adapter base class pattern ensures structural compliance
-
-### Train
-- [x] Doctrine files document all rules (CL_DOCTRINE, INVARIANTS_AND_KILL_SWITCHES, COMPANY_LIFECYCLE_LOCK)
-- [x] 8 ADRs document all architectural decisions
-- [x] DOWNSTREAM_SUB_HUB_HANDOFF.md teaches downstream consumers
-- [x] AI agent constraints documented in CLAUDE.md
-
----
-
-## Documentation Alignment (v2.0.0)
+**MD files are AI instructions. Stale documentation causes AI agents to operate on bad information.**
 
 ### Core Documentation Files
-- [x] CLAUDE.md exists and references correct doctrine (ARCHITECTURE.md v2.0.0)
-- [x] CLAUDE.md locked files list is accurate for this repo
-- [x] README.md folder structure matches actual structure
-- [x] PRD constants/variables match actual implementation
-- [x] DOCTRINE.md points to correct imo-creator version
-- [x] REGISTRY.yaml hub ID is consistent across all files: `HUB-CL-001`
-- [x] All ADRs reference correct file paths
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] CLAUDE.md exists and references correct doctrine |
+| CRITICAL | [ ] CLAUDE.md locked files list is accurate for this repo |
+| CRITICAL | [ ] README.md folder structure matches actual structure |
+| CRITICAL | [ ] PRD constants/variables match actual implementation |
+| HIGH | [ ] DOCTRINE.md points to correct imo-creator version |
+| HIGH | [ ] REGISTRY.yaml hub ID is consistent across all files |
+| HIGH | [ ] All ADRs reference correct file paths |
 
 ### Path and Reference Accuracy
-- [x] No MD files reference moved or deleted files
-- [x] No MD files reference old folder structure (lib/ references eliminated)
-- [x] All doctrine template references are valid
-- [x] All internal links between MD files work
 
-### Post-Refactor Verification (2026-02-06)
-- [x] All MD files reviewed after structure changes
-- [x] Hub identity consistent across CLAUDE.md, README.md, REGISTRY.yaml
-- [x] No stale examples or code snippets in docs
-- [x] Forbidden `lib/` directories eliminated (`src/ui/lib/` → `src/ui/styles/`, `neon/agent/lib/` → `neon/agent/`)
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] No MD files reference moved or deleted files |
+| CRITICAL | [ ] No MD files reference old folder structure |
+| HIGH | [ ] All doctrine template references are valid |
+| HIGH | [ ] All internal links between MD files work |
+
+### Post-Refactor Verification
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] All MD files reviewed after structure changes |
+| CRITICAL | [ ] Hub identity consistent across CLAUDE.md, README.md, REGISTRY.yaml |
+| HIGH | [ ] No stale examples or code snippets in docs |
+
+### ERD Metrics Verification (MANDATORY)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    METRICS LIVE IN ERD_METRICS.yaml, NOT MD FILES             ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                               ║
+║  MD files are ARCHITECTURE (CONST) — structure, rules, relationships.        ║
+║  ERD_METRICS.yaml is DATA (VAR) — counts, statistics, runtime state.         ║
+║                                                                               ║
+║  DO NOT put record counts in MD files.                                        ║
+║  DO put record counts in erd/ERD_METRICS.yaml.                                ║
+║                                                                               ║
+║  Before work sessions, sync ERD_METRICS.yaml from database.                   ║
+║  This ensures decisions are based on CURRENT data.                            ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] erd/ERD_METRICS.yaml exists (created from template) |
+| CRITICAL | [ ] ERD_METRICS.yaml has been synced this session |
+| CRITICAL | [ ] sync.last_updated is within stale_after_hours threshold |
+| HIGH | [ ] All tables from ERD.md are represented in ERD_METRICS.yaml |
+| HIGH | [ ] Queries section documents how to refresh each metric |
+
+**Metrics Sync Verification Output (REQUIRED):**
+
+```
+ERD METRICS STATUS
+──────────────────
+File: erd/ERD_METRICS.yaml
+Last Synced: [timestamp]
+Stale Threshold: [hours]
+Status: [CURRENT / STALE]
+
+Key Metrics:
+  [table_name]: [count] records
+  [table_name]: [count] records
+  [aggregate_name]: [value]
+
+Alerts: [count]
+```
+
+**If ERD_METRICS.yaml is missing or stale, sync before proceeding.**
+
+**Documentation drift is a violation. If structure changed, docs MUST be updated.**
+**Metrics are NOT in MD files. Metrics are in ERD_METRICS.yaml.**
 
 ---
 
-## CTB Hardening Migration Verification (v2.0.0)
+## CC Layer Verification
 
-- [x] CLAUDE.md references ARCHITECTURE.md (v2.0.0) in canonical reference table
-- [x] CLAUDE.md locked files table updated for current repo state
-- [x] Templates synced from upstream imo-creator (25 commits applied 2026-02-06)
-- [x] New template directories present: `semantic/`, `erd/`, `docs/architecture/`, `gpt/`
-- [x] Old doctrine files available as redirects (CANONICAL, HUB_SPOKE, ALTITUDE_DESCENT)
-
----
-
-## Compliance Status
-
-**Current Status:** COMPLIANT
-
-**Blockers:** None
-
-**Doctrine Version:** 2.0.0
-
-**CRITICAL unchecked:** 0
-**HIGH violations:** 0
+| Priority | Layer | Check |
+|----------|-------|-------|
+| CRITICAL | CC-01 (Sovereign) | [ ] Reference declared |
+| CRITICAL | CC-02 (Hub) | [ ] Identity, PRD, CTB complete |
+| HIGH | CC-03 (Context) | [ ] ADRs, spokes, guard rails defined |
+| HIGH | CC-04 (Process) | [ ] PIDs, code, tests implemented |
 
 ---
 
-## Compliance Rule
+## Continuous Validity
 
-If any box is unchecked, this hub may not ship.
-HIGH violations BLOCK compliance — they are NOT "fix later" items.
+| Priority | Check |
+|----------|-------|
+| CRITICAL | [ ] This checklist has been revalidated after the most recent change |
+| CRITICAL | [ ] All Part A sections pass (constitutional validity) |
+| CRITICAL | [ ] All Part B CRITICAL items pass (operational compliance) |
+| HIGH | [ ] Drift requires redesign, not patching |
+
+**Compliance is continuous, not event-based.**
 
 ---
 
-## Approval
+## Compliance Summary
 
-| Role | Name | Date |
-|------|------|------|
-| Hub Owner | SHQ | 2025-12-30 |
-| Compliance Officer | CTB Remediation (Claude) | 2026-01-29 |
-| Compliance Officer | CTB Hardening v2.0.0 + OSAM/HEIR/ORBT (Claude Opus 4.6) | 2026-02-06 |
+**Before shipping, count your checks:**
+
+| Part | Section | CRITICAL Items | Your Count |
+|------|---------|----------------|------------|
+| A | Constitutional Validity | 4 | ___ / 4 |
+| A | PRD Compliance | 8 | ___ / 8 |
+| A | ERD Compliance | 7 | ___ / 7 |
+| A | Pressure Test | 4 | ___ / 4 |
+| A | Upstream Flow Test | 5 | ___ / 5 |
+| A | **OSAM Compliance** | 7 | ___ / 7 |
+| A | Process Compliance | 6 | ___ / 6 |
+| B | All Operational Sections | varies | ___ / ___ |
+
+| Priority | Must Have | Your Count |
+|----------|-----------|------------|
+| CRITICAL | ALL checked | ___ / ___ |
+| HIGH | Most checked (ADR for exceptions) | ___ / ___ |
+| MEDIUM | Optional | ___ / ___ |
+
+**If any CRITICAL item is unchecked, this hub may not ship.**
+**If any HIGH violation exists, this hub is NON-COMPLIANT.**
+
+---
+
+## Compliance Gate Verification (MANDATORY — CANNOT BE SKIPPED)
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                           ZERO-TOLERANCE GATE                                 ║
+║                                                                               ║
+║  YOU MUST FILL OUT THIS SECTION. SKIPPING IS A DOCTRINE VIOLATION.           ║
+║                                                                               ║
+║  Per CONSTITUTION.md §Violation Zero Tolerance:                               ║
+║  • Any violation = FAIL                                                       ║
+║  • No green checkmark with violations                                         ║
+║  • AI agents CANNOT mark COMPLIANT with unresolved violations                 ║
+║                                                                               ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### Step 1: Count Your Violations (MANDATORY)
+
+| Violation Type | Count | Enter Number |
+|----------------|-------|--------------|
+| CRITICAL items unchecked | Must be 0 | ______ |
+| HIGH violations unfixed | Must be 0 | ______ |
+
+### Step 2: Gate Decision (MANDATORY)
+
+```
+IF CRITICAL unchecked > 0  →  STOP. Status = NON-COMPLIANT. No exceptions.
+IF HIGH violations > 0     →  STOP. Status = NON-COMPLIANT. No exceptions.
+IF BOTH = 0                →  MAY proceed to mark COMPLIANT.
+```
+
+### Step 3: Declare Status (MANDATORY)
+
+**Select ONE. This is your final declaration.**
+
+| Condition | Status | Select |
+|-----------|--------|--------|
+| CRITICAL > 0 OR HIGH > 0 | **NON-COMPLIANT** | [ ] ← ONLY valid option if violations exist |
+| CRITICAL = 0 AND HIGH = 0, MEDIUM items exist | **COMPLIANT WITH NOTES** | [ ] |
+| CRITICAL = 0 AND HIGH = 0, no MEDIUM items | **COMPLIANT** | [ ] |
+
+### Step 4: AI Agent Acknowledgment (MANDATORY FOR AI AGENTS)
+
+If you are an AI agent filling out this checklist, you MUST complete this acknowledgment:
+
+```
+I, [AI AGENT NAME], acknowledge that:
+
+[ ] I have read CONSTITUTION.md §Violation Zero Tolerance
+[ ] I understand that ANY violation = FAIL
+[ ] I have counted violations above truthfully
+[ ] I have NOT marked COMPLIANT if violations exist
+[ ] I understand that falsifying this checklist INVALIDATES the audit
+
+CRITICAL count declared above: ______
+HIGH count declared above: ______
+Status selected above: ______________________
+
+If CRITICAL > 0 or HIGH > 0 and I selected COMPLIANT, this audit is INVALID.
+```
+
+**AI agents who skip this acknowledgment or falsify counts have violated doctrine.**
+
+---
+
+## Final Declaration
+
+> **This hub remains valid only while all checklist items pass.**
+> **Any change that causes failure invalidates the hub until corrected.**
+> **HIGH violations BLOCK compliance — they are NOT "fix later" items.**
+>
+> **ZERO TOLERANCE: If you declared violations above and marked COMPLIANT, this audit is VOID.**
+
+---
+
+## CTB Hardening Migration Verification (v2.0.0) {#section-migration}
+<!-- §MIGRATION -->
+
+**Added 2026-02-06**: This section verifies compliance with CTB Hardening v2.0.0
+
+| Priority | Check |
+|----------|-------|
+| HIGH | [ ] DOCTRINE.md references ARCHITECTURE.md (not old files) |
+| HIGH | [ ] CLAUDE.md locked files table references ARCHITECTURE.md |
+| HIGH | [ ] No MD files reference old section numbers (e.g., "CANONICAL §3") |
+| MEDIUM | [ ] Reading order documentation references ARCHITECTURE.md |
+| MEDIUM | [ ] Any PRD/ADR traceability sections updated |
+
+**Section Reference Mapping:**
+
+| Old Reference | New Reference |
+|---------------|---------------|
+| CANONICAL_ARCHITECTURE_DOCTRINE.md | ARCHITECTURE.md |
+| CANONICAL §1 (CTB) | ARCHITECTURE.md Part II |
+| CANONICAL §2 (CC) | ARCHITECTURE.md Part III |
+| CANONICAL §3 (Hub-Spoke) | ARCHITECTURE.md Part IV |
+| CANONICAL §3.5 (IMO) | ARCHITECTURE.md Part V |
+| HUB_SPOKE_ARCHITECTURE.md | ARCHITECTURE.md Part IV |
+| ALTITUDE_DESCENT_MODEL.md | ARCHITECTURE.md Part VI |
+
+**Note**: Old files exist as REDIRECTs for backward compatibility. Migration recommended within 30 days.
+
+---
+
+## Traceability Reference
+
+| Artifact | Reference |
+|----------|-----------|
+| Constitution | CONSTITUTION.md |
+| **Architecture Doctrine** | templates/doctrine/ARCHITECTURE.md |
+| CTB Topology | ARCHITECTURE.md Part II |
+| CC Hierarchy | ARCHITECTURE.md Part III |
+| Hub/Spoke Geometry | ARCHITECTURE.md Part IV |
+| IMO Flow | ARCHITECTURE.md Part V |
+| Descent Gates | ARCHITECTURE.md Part VI |
+| PRD Constitution | templates/doctrine/PRD_CONSTITUTION.md |
+| ERD Constitution | templates/doctrine/ERD_CONSTITUTION.md |
+| Process Doctrine | templates/doctrine/PROCESS_DOCTRINE.md |
+| ERD Doctrine | templates/doctrine/ERD_DOCTRINE.md |
+| **OSAM (Semantic Access Map)** | templates/semantic/OSAM.md |
+
+**Note**: CANONICAL_ARCHITECTURE_DOCTRINE.md, HUB_SPOKE_ARCHITECTURE.md, and ALTITUDE_DESCENT_MODEL.md are now redirects to ARCHITECTURE.md.

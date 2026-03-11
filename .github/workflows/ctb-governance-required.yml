@@ -1,0 +1,66 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# CTB GOVERNANCE REQUIRED — Mandatory Enforcement Pipeline
+# ═══════════════════════════════════════════════════════════════════════════════
+# Authority: imo-creator (Constitutional)
+# Purpose: Run ALL reusable governance gates on every PR and push.
+#          All gates must pass. No continue-on-error. Fail-closed.
+# Doctrine: FAIL_CLOSED_CI_CONTRACT.md §1, §2, §3
+# ═══════════════════════════════════════════════════════════════════════════════
+
+name: CTB Governance Required
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────
+  # GATE 1: Fail-Closed Gate (structural enforcement)
+  # ─────────────────────────────────────────────────────────────────
+  fail-closed-gate:
+    name: "Gate 1: Fail-Closed Enforcement"
+    uses: ./.github/workflows/reusable-fail-closed-gate.yml
+    with:
+      enforcement_mode: strict
+      allowed_execution_dirs: "scripts,templates/scripts,pipeline,neon"
+
+  # ─────────────────────────────────────────────────────────────────
+  # COMBINED RESULT — gate must pass
+  # ─────────────────────────────────────────────────────────────────
+  governance-result:
+    name: "Governance Result"
+    runs-on: ubuntu-latest
+    needs: [fail-closed-gate]
+    if: always()
+
+    steps:
+      - name: Evaluate governance gates
+        run: |
+          echo "═══════════════════════════════════════════════════════════════"
+          echo "  CTB GOVERNANCE REQUIRED — COMBINED RESULT"
+          echo "═══════════════════════════════════════════════════════════════"
+          echo ""
+          echo "  Gate 1 (Fail-Closed):  ${{ needs.fail-closed-gate.result }}"
+          echo ""
+
+          if [ "${{ needs.fail-closed-gate.result }}" != "success" ]; then
+            echo "::error::Gate 1 (Fail-Closed Enforcement) did not pass: ${{ needs.fail-closed-gate.result }}"
+            echo ""
+            echo "═══════════════════════════════════════════════════════════════"
+            echo "  GOVERNANCE FAILED — gate did not pass"
+            echo "═══════════════════════════════════════════════════════════════"
+            echo ""
+            echo "Doctrine: FAIL_CLOSED_CI_CONTRACT.md"
+            exit 1
+          fi
+
+          echo "═══════════════════════════════════════════════════════════════"
+          echo "  GOVERNANCE PASSED — all gates passed"
+          echo "═══════════════════════════════════════════════════════════════"

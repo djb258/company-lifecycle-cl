@@ -304,7 +304,7 @@ ctb_doctrine:
       enabled: true
     - doctrine_id: "04.04.13"
       name: Hostinger
-      enabled: true
+      enabled: false  # RETIRED — replaced by CF Workers + Queues (BAR-100)
     - doctrine_id: "04.04.14"
       name: Abacus_AI
       enabled: true
@@ -456,45 +456,13 @@ mcp_integration:
     visual_dev: true
 
   # ============================================================
-  # HOSTINGER VPS & N8N INTEGRATION (Added 2025-12-01)
+  # HOSTINGER VPS & N8N INTEGRATION (RETIRED — replaced by CF Workers + Queues)
   # ============================================================
   hostinger:
-    enabled: true
+    enabled: false
+    retired: true
+    retired_reason: "BAR-100 architecture shift — orchestration moved to CF Workers + Queues"
     doctrine_id: "04.04.13"
-    mcp_server:
-      command: "npx"
-      args: ["hostinger-api-mcp@latest"]
-      env:
-        API_TOKEN: "${HOSTINGER_API_TOKEN}"
-    vps_instance:
-      hostname: "[VPS_HOSTNAME]"
-      ip: "[VPS_IP_ADDRESS]"
-      os: "Ubuntu 24.04 with n8n"
-      plan: "KVM 2"
-      specs:
-        cpu_cores: 2
-        memory_gb: 8
-        disk_gb: 100
-      location: "United States - Boston"
-    n8n:
-      url: "${N8N_HOSTINGER_URL}"
-      port: 5678
-      webhook_base: "${N8N_HOSTINGER_URL}/webhook/"
-    toolkit_tools:
-      - HOSTINGER_VPS_LIST
-      - HOSTINGER_VPS_START
-      - HOSTINGER_VPS_STOP
-      - HOSTINGER_VPS_RESTART
-      - HOSTINGER_VPS_STATUS
-      - HOSTINGER_DOMAIN_LIST
-      - HOSTINGER_SSL_STATUS
-      - HOSTINGER_DNS_MANAGE
-    required_env_vars:
-      - HOSTINGER_API_TOKEN
-      - N8N_HOSTINGER_URL
-    integration_files:
-      - "global-config/integrations/hostinger/integrations.yaml"
-      - "global-config/integrations/hostinger/README.md"
 
   # ============================================================
   # ABACUS.AI ENTERPRISE AI PLATFORM (Added 2025-12-01)
@@ -598,7 +566,7 @@ deployment:
       enabled: true
       auto_deploy: true
       environment: production
-    vercel:
+    cloudflare_pages:
       enabled: true
       auto_deploy: true
       environment: production
@@ -1142,7 +1110,7 @@ error_log_registry:
       - all_agents
     read:
       - repo-dashboard
-      - lovable
+      - figma-ui
       - deepwiki
   enforcement:
     required_on_repo_build: true

@@ -177,6 +177,40 @@ serve(async (req: Request) => {
       });
     }
 
+    // ─── Suppression writes ──────────────────────────────
+    // Bounce and complaint events permanently suppress the recipient
+    if (eventName === 'bounced') {
+      await supabase
+        .schema('lcs')
+        .from('suppression')
+        .upsert({
+          email: eventData.recipient,
+          suppression_state: 'SUPPRESSED',
+          hard_bounced: true,
+          suppression_source: 'MAILGUN_BOUNCE',
+          source_event_id: communicationId,
+          channel: 'MG',
+          domain: eventData['sending-domain'] ?? null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email,suppression_source', ignoreDuplicates: false });
+    }
+
+    if (eventName === 'complained') {
+      await supabase
+        .schema('lcs')
+        .from('suppression')
+        .upsert({
+          email: eventData.recipient,
+          suppression_state: 'SUPPRESSED',
+          complained: true,
+          suppression_source: 'MAILGUN_COMPLAINT',
+          source_event_id: communicationId,
+          channel: 'MG',
+          domain: eventData['sending-domain'] ?? null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email,suppression_source', ignoreDuplicates: false });
+    }
+
     // ─── Engagement signal → signal_queue ────────────
     // Opens and clicks are engagement signals that can re-trigger pipeline
     if (eventName === 'opened' || eventName === 'clicked') {

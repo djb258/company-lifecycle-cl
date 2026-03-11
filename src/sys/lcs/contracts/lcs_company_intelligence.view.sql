@@ -7,11 +7,11 @@
 --   Eliminates 60K+ runtime queries by pre-joining People, DOL, Blog, Sitemap.
 --   Morning batch reads from this view only — zero runtime cross-schema joins.
 --
--- Refresh: Nightly at 2:00 AM via Supabase cron (CONCURRENTLY)
+-- Refresh: Nightly at 2:00 AM via CF Workers cron trigger (CONCURRENTLY)
 -- Doctrine: LCS reads sub-hub data. LCS never writes to sub-hub tables.
 --   This matview is a read-only snapshot. Sub-hubs remain sovereign.
 --
--- RECONCILED against production Neon schemas (2026-02-12).
+-- RECONCILED against production Neon vault schemas (2026-02-12).
 -- Source verification: barton-outreach-core/hubs/*/SCHEMA.md
 -- People: people.people_master + people.company_slot
 -- DOL: outreach.dol (via outreach.outreach)
@@ -182,5 +182,5 @@ COMMENT ON MATERIALIZED VIEW lcs.v_company_intelligence IS
     'LCS reads only. Sub-hubs remain sovereign. '
     'Runtime reads this view — zero cross-schema joins at send time.';
 
--- Refresh schedule: Nightly at 2:00 AM via Supabase cron
+-- Refresh schedule: Nightly at 2:00 AM via CF Workers cron trigger
 -- REFRESH MATERIALIZED VIEW CONCURRENTLY lcs.v_company_intelligence;

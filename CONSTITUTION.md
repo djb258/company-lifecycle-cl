@@ -12,7 +12,7 @@ It defines invariants, gates, and authority boundaries for all derived systems.
 - **Descent order** — CC layers define authority hierarchy
 - **Flow ownership** — IMO defines ingress/middle/egress within hubs
 - **Hub/Spoke geometry** — Hubs own logic, spokes carry data
-- **Enforcement mechanisms** — Pre-commit, CI, Claude Code, Lovable.dev
+- **Enforcement mechanisms** — Pre-commit, CI, Claude Code, Figma UI
 
 ---
 
@@ -71,7 +71,7 @@ See **DECLARE_STRUCTURE_AND_RENDER_TREE.prompt.md** for the execution protocol.
 | Claude Code | `APPLY_DOCTRINE.prompt.md` — reads doctrine, audits structure, blocks violations |
 | Pre-commit | `scripts/hooks/pre-commit` — validates on every commit |
 | CI | `.github/workflows/doctrine-enforcement.yml` — fails PR on violations |
-| Lovable.dev | `LOVABLE_CONTROL.json` — gates UI builds on structure compliance |
+| Figma UI | `FIGMA_CONTROL.json` — gates UI builds on structure compliance |
 | Audit | `scripts/apply_doctrine_audit.sh` — generates compliance reports |
 
 ---
@@ -79,7 +79,7 @@ See **DECLARE_STRUCTURE_AND_RENDER_TREE.prompt.md** for the execution protocol.
 ## How Downstream Repos Inherit This Constitution
 
 1. Copy `IMO_CONTROL.json` to repository root
-2. Copy `LOVABLE_CONTROL.json` if UI exists
+2. Copy `FIGMA_CONTROL.json` if UI exists
 3. Run `scripts/install-hooks.sh` to install pre-commit
 4. Create `DOCTRINE.md` pointing to imo-creator
 5. Follow CTB structure exactly

@@ -1,6 +1,6 @@
 # CL Schema Documentation Index
 
-> **Source of Truth:** Neon PostgreSQL
+> **Source of Truth:** CF D1 (working) / Neon PostgreSQL (vault)
 > **Last Updated:** 2026-02-04
 > **Schema Statistics:** 21 tables (cl) + 5 tables (lcs) | 275+ columns | 44 constraints | 3 FKs | 106,086 active records
 

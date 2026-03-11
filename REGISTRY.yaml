@@ -103,7 +103,7 @@ spokes:
 
     - spoke_id: "SPOKE-CL-I-014"
       name: "Reply Ingestion"
-      description: "Prospect replies and engagement signals from Instantly/HeyReach polling"
+      description: "Prospect replies and engagement signals from Mailgun/HeyReach polling"
       contract: "src/sys/lcs/contracts/spoke_i014_reply_ingestion.ts"
       status: "PLANNED"
 

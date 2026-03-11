@@ -8,8 +8,8 @@ Execute in order. Each phase depends on the previous one completing successfully
 
 - [ ] `npx tsc --noEmit` passes with zero errors
 - [ ] All Prompts 1–14 committed to Git
-- [ ] Neon database accessible via connection string
-- [ ] Supabase project active and accessible
+- [ ] CF D1 database accessible (working database)
+- [ ] Neon vault database accessible via connection string (archive only)
 - [ ] imo-creator Doppler project configured with all required variables (see ENV_MANIFEST.md)
 
 ## Phase 1 — Schema Deployment
@@ -43,10 +43,10 @@ doppler run -- psql -f migrations/lcs/001_lcs_schema_v2.2.0.sql
 - [ ] Verify: `SELECT lcs.bridge_pressure_signals();` — should return 3 rows (PEOPLE, DOL, BLOG)
 - [ ] Check signal_queue: `SELECT count(*) FROM lcs.signal_queue WHERE status = 'PENDING';`
 
-## Phase 4 — PostgREST Schema Exposure
+## Phase 4 — D1 Schema Exposure
 
-- [ ] In Supabase dashboard → Settings → API → Exposed schemas: add `lcs`
-- [ ] Verify: Supabase client `.schema('lcs').from('event').select('*').limit(1)` succeeds
+- [ ] Verify CF D1 tables created for working data access
+- [ ] Verify Neon vault tables remain accessible for archive queries
 
 ## Phase 5 — External Service Configuration
 
@@ -64,41 +64,40 @@ doppler run -- psql -f migrations/lcs/001_lcs_schema_v2.2.0.sql
   WHERE adapter_type = 'MG';
   ```
 - [ ] Webhook URL configured in Mailgun → Webhooks:
-  `https://<project>.supabase.co/functions/v1/lcs-mailgun-webhook`
+  `https://<worker-name>.<account>.workers.dev/lcs-mailgun-webhook`
 
 ### HeyReach
 - [ ] API key set in imo-creator Doppler: `HEYREACH_API_KEY`
 - [ ] Webhook secret set: `HEYREACH_WEBHOOK_SECRET`
 - [ ] LinkedIn account connected in HeyReach dashboard
 - [ ] Webhook URL configured (if available):
-  `https://<project>.supabase.co/functions/v1/lcs-heyreach-webhook`
+  `https://<worker-name>.<account>.workers.dev/lcs-heyreach-webhook`
 
-### Edge Function Secrets (synced from imo-creator Doppler)
+### CF Worker Secrets (synced from imo-creator Doppler)
 ```bash
-# Sync from Doppler to Supabase Edge Function secrets
-supabase secrets set MAILGUN_API_KEY=key-xxxx
-supabase secrets set MAILGUN_WEBHOOK_SIGNING_KEY=key-xxxx
-supabase secrets set HEYREACH_API_KEY=hr_xxxx
-supabase secrets set HEYREACH_WEBHOOK_SECRET=secret_xxxx
+# Sync from Doppler to CF Worker secrets
+wrangler secret put MAILGUN_API_KEY
+wrangler secret put MAILGUN_WEBHOOK_SIGNING_KEY
+wrangler secret put HEYREACH_API_KEY
+wrangler secret put HEYREACH_WEBHOOK_SECRET
 ```
 
-## Phase 6 — Edge Function Deployment
+## Phase 6 — CF Worker Deployment
 
 ```bash
-supabase functions deploy lcs-mailgun-webhook --no-verify-jwt
-supabase functions deploy lcs-heyreach-webhook --no-verify-jwt
+wrangler deploy
 ```
 
-- [ ] Mailgun webhook deployed
-- [ ] HeyReach webhook deployed
+- [ ] Mailgun webhook worker deployed
+- [ ] HeyReach webhook worker deployed
 - [ ] Test Mailgun webhook: send test event from Mailgun dashboard
 - [ ] Verify CET event logged: `SELECT * FROM lcs.event WHERE step_number = 8 LIMIT 1;`
 
 ## Phase 7 — Cron Activation
 
-- [ ] `004_lcs_cron_schedule.sql` — pg_cron jobs
-- [ ] Verify jobs scheduled: `SELECT * FROM cron.job ORDER BY jobid;` → 7 jobs
-- [ ] Configure pipeline runner in Supabase cron (Edge Function trigger)
+- [ ] Cron triggers configured in `wrangler.toml`
+- [ ] Verify CF Workers cron triggers active via Cloudflare dashboard
+- [ ] Configure pipeline runner cron trigger on CF Workers
 - [ ] Wait for first matview refresh (2:00 AM ET)
 - [ ] Verify intelligence matview populated:
   `SELECT count(*), avg(intelligence_tier) FROM lcs.v_company_intelligence;`
@@ -144,8 +143,8 @@ DROP SCHEMA lcs CASCADE;
 SELECT cron.unschedule(jobname) FROM cron.job WHERE jobname LIKE 'lcs-%';
 ```
 
-Edge Functions:
+CF Workers:
 ```bash
-supabase functions delete lcs-mailgun-webhook
-supabase functions delete lcs-heyreach-webhook
+wrangler delete lcs-mailgun-webhook
+wrangler delete lcs-heyreach-webhook
 ```
