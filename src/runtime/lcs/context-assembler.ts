@@ -1,3 +1,4 @@
+// TODO: BAR-112 — rewrite supabase queries to CF Worker/D1 endpoints
 import { supabase } from '@/data/integrations/supabase/client';
 import type { CapacityGateContext, SuppressionContext, FreshnessGateContext, SuppressionState } from '@/sys/lcs/gates';
 import type { LifecyclePhase, Channel, IntelligenceTier } from '@/data/lcs';

@@ -1,3 +1,4 @@
+# TODO: BAR-112 INVESTIGATE — update Neon env declarations after D1 migration
 meta:
   app_name: "company-lifecycle-cl"
   repo_slug: "djb258/company-lifecycle-cl"

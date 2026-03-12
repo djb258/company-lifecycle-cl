@@ -1,3 +1,4 @@
+// TODO: BAR-112 — rewrite supabase calls to CF Worker endpoints
 import { createHmac } from 'crypto';
 import { logCetEvent } from '@/app/lcs';
 import type { LcsEventInsert, EventType, DeliveryStatus } from '@/data/lcs';

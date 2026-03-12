@@ -1,3 +1,4 @@
+// TODO: BAR-112 — rewrite supabase RPC calls to CF Worker/Hyperdrive endpoints
 import { supabase } from '@/data/integrations/supabase/client';
 
 /**

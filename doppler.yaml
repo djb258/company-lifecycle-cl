@@ -1,3 +1,4 @@
+# TODO: BAR-112 INVESTIGATE — update secrets after CF migration (remove SUPABASE_* if still present)
 setup:
   project: company-lifecycle-cl
   config: dev

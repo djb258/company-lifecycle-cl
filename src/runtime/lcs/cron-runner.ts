@@ -1,3 +1,4 @@
+// TODO: BAR-112 — rewrite supabase-dependent calls to CF Worker/D1 endpoints
 import { runPipeline } from '@/app/lcs';
 import type { SignalInput } from '@/app/lcs';
 import { resolveAdapter } from '@/app/lcs/adapters';

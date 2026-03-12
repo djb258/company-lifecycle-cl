@@ -1,10 +1,11 @@
+// TODO: BAR-112 — migrate from pg/Neon to CF Worker/D1 or Hyperdrive
 /**
  * LCS Registry Seed Runner
  *
  * Usage: npx ts-node scripts/lcs/seed-registries.ts
  *
  * Reads and executes 002_lcs_seed_registries.sql against Neon.
- * Requires NEON_CONNECTION_STRING or SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY.
+ * Requires NEON_CONNECTION_STRING.
  *
  * Authority: HUB-CL-001, SUBHUB-CL-LCS
  * Version: 2.2.0

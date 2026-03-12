@@ -1,3 +1,4 @@
+// TODO: BAR-112 — rewrite supabase insert to CF Worker/D1 endpoint
 import { supabase } from '@/data/integrations/supabase/client';
 import type { LcsEventInsert } from '@/data/lcs';
 

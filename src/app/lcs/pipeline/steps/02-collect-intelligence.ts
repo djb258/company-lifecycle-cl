@@ -1,3 +1,4 @@
+// TODO: BAR-112 — rewrite supabase queries to CF Worker/D1 endpoints
 import { supabase } from '@/data/integrations/supabase/client';
 import type { PipelineState, StepResult } from '../types';
 import type { IntelligenceTier } from '@/data/lcs';

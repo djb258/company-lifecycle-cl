@@ -1,3 +1,4 @@
+// TODO: BAR-112 INVESTIGATE — migrate pg/Neon to CF Worker/Hyperdrive
 // Quick verification status check
 const { Client } = require('pg');
 

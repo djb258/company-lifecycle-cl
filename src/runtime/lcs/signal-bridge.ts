@@ -1,8 +1,9 @@
+// TODO: BAR-112 — rewrite Supabase RPC to CF Worker/Hyperdrive
 /**
  * Signal Bridge Runner — TypeScript wrapper for lcs.bridge_pressure_signals().
  *
- * What triggers this? Supabase cron or manual invocation.
- * How do we get it? Calls the SQL function via Supabase RPC.
+ * What triggers this? CF cron or manual invocation.
+ * How do we get it? Calls the SQL function via CF Worker.
  *
  * This is a thin spoke — it calls the SQL function and logs results.
  * All bridge logic lives in the SQL function (Prompt 12, Part A).
