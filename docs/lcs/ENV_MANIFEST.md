@@ -1,6 +1,6 @@
 # LCS Environment Variable Manifest v2.2.0
 
-Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/ supabase/`
+Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/`
 
 ---
 
@@ -8,14 +8,14 @@ Generated from `grep -r 'process\.env\|Deno\.env\|import\.meta\.env' src/ supaba
 
 | Variable | Source File(s) | Description | Example |
 |---|---|---|---|
-| `VITE_SUPABASE_URL` | `data/integrations/supabase/client.ts` | Supabase project URL (Vite client) | `https://xxx.supabase.co` |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `data/integrations/supabase/client.ts` | Supabase anon key (Vite client) | `eyJhbGci...` |
-| `SUPABASE_URL` | Edge Functions (Deno) | Supabase project URL | `https://xxx.supabase.co` |
-| `SUPABASE_SERVICE_ROLE_KEY` | Edge Functions (Deno) | Supabase service role key | `eyJhbGci...` |
+| `CF_D1_DATABASE_ID` | `data/integrations/d1/client.ts` | Cloudflare D1 database ID (working DB) | `xxxx-xxxx-xxxx` |
+| `CF_ACCOUNT_ID` | `data/integrations/d1/client.ts` | Cloudflare account ID | `xxxx...` |
+| `CF_API_TOKEN` | CF Workers | Cloudflare API token | `xxxx...` |
+| `NEON_VAULT_URL` | Vault archive layer | Neon PostgreSQL vault connection string | `postgres://...` |
 | `MAILGUN_API_KEY` | `app/lcs/adapters/mailgun-adapter.ts` | Mailgun API key | `key-xxxx...` |
 | `MAILGUN_WEBHOOK_SIGNING_KEY` | `runtime/lcs/webhook-handler.ts`, Edge Functions | Mailgun webhook HMAC signing key | `key-xxxx...` |
 | `HEYREACH_API_KEY` | `app/lcs/adapters/heyreach-adapter.ts` | HeyReach API bearer token | `hr_xxxx...` |
-| `HEYREACH_WEBHOOK_SECRET` | `supabase/functions/lcs-heyreach-webhook/index.ts` | HeyReach webhook auth secret | `secret_xxxx...` |
+| `HEYREACH_WEBHOOK_SECRET` | `runtime/lcs/webhook-handler.ts` | HeyReach webhook auth secret | `secret_xxxx...` |
 
 ## Optional Variables (with defaults)
 
@@ -39,6 +39,6 @@ All variables are managed through **Doppler** under the **imo-creator** project.
 | Context | Method |
 |---|---|
 | Vite (client-side) | Doppler injects `VITE_*` vars at build time (from imo-creator) |
-| Edge Functions (Deno) | `supabase secrets set` (synced from imo-creator Doppler) |
+| CF Workers | Wrangler secrets / Doppler sync to Cloudflare |
 | Server-side (Node/ts-node) | `doppler run --project imo-creator --` prefix |
-| pg_cron (SQL context) | `current_setting('app.settings.xxx')` via Supabase dashboard |
+| Neon vault (SQL context) | Environment variables via Doppler |
