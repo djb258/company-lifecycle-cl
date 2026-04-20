@@ -590,6 +590,94 @@ IMPLEMENTATION (Year 1 → Year 2)
 
 ---
 
+## VIDEO PRODUCTION TABLE
+
+**Constants (structure — the slots exist, the sequence is locked):**
+- The video slots (V-01, V-02, C-00, C-01 through C-04, T-01, T-02, E-01 through E-05)
+- The gate sequence (1→2→3→4)
+- The purpose/altitude of each video
+- The personalization FIELDS (what data goes where)
+
+**Variables (fill — can change, improve, evolve):**
+- The scripts themselves (rewrite, refine, update as needed)
+- The prospect data filling the personalization fields
+- The rendering tool (InVideo, NotebookLM, Veo, Remotion)
+- The delivery method (email, LinkedIn, website)
+
+### Vendor-Facing Videos (2)
+
+| # | Video | Altitude | Duration | Script Status | Source |
+|---|-------|----------|----------|--------------|--------|
+| V-01 | Vendor Integration Pitch — why integrate with us, many-to-one, one-time setup, volume | 40K | 2-3 min | NEEDS WRITE | CF Pages video library (Google draft exists) |
+| V-02 | Vendor 10/85 Process — how the orchestrator + service rep work, where vendor fits, we don't replace their process | 20K | 3-4 min | NEEDS WRITE | CTB §10K Service Side |
+
+### Client-Facing Videos (1 + 4 gates)
+
+| # | Video | Altitude | Duration | Script Status | Source |
+|---|-------|----------|----------|--------------|--------|
+| C-00 | 50K Intro/Filter — what is insurance informatics, why me, the four videos coming, "you need me, I don't need you" | 50K | ~2 min | DONE | `hook-the-10-percent-problem.md` |
+| C-01 | Gate 1 — Factfinder ("We Know You") | 50K/40K | 5-6 min | DONE | `gate-1-source.md` + `gate-1-we-know-you.md` |
+| C-02 | Gate 2 — Education + Monte Carlo ("Your Numbers") | 30K/20K | 5-6 min | DONE | `gate-2-source.md` + `gate-2-your-numbers.md` |
+| C-03 | Gate 3 — Service ("What to Expect") | 10K/5K | 5-6 min | DONE | `gate-3-source.md` |
+| C-04 | Gate 4 — Quote + Dare ("What We Found") | 5K | 3-5 min | DONE | `gate-4-source.md` |
+
+### Internal Training Videos (2)
+
+| # | Video | Altitude | Duration | Script Status | Source |
+|---|-------|----------|----------|--------------|--------|
+| T-01 | Orchestrator Training — flags, intake, routing, babysitter mode, dashboards, what "done" looks like | 20K/10K | 5-8 min | NEEDS WRITE | CTB §10K Service Side |
+| T-02 | Service Rep Training — assigned clients, tickets, orchestrator handoff, closing the loop, measuring process not outcome | 10K/5K | 5-8 min | NEEDS WRITE | CTB §10K Service Side |
+
+### LinkedIn/Website Explainer Videos (general audience — not personalized)
+
+| # | Video | Altitude | Duration | Script Status | Source |
+|---|-------|----------|----------|--------------|--------|
+| E-01 | Self-Insured vs Fully-Insured — "you can't stop claims" | 50K/40K | 1-2 min | NEEDS WRITE | CTB §40K + Voice Library |
+| E-02 | The 90/15 and 10/85 — where the money goes | 30K | 1-2 min | NEEDS WRITE | CTB §20K + Four Constants |
+| E-03 | Hospital Bill Audit — hospitals overbill, here's how we catch it | 20K | 1-2 min | NEEDS WRITE | CTB §10K Hospital Flow |
+| E-04 | What Your Broker Can't See — the vendor silo problem | 30K | 1-2 min | NEEDS WRITE | CTB §10K The Blind Spot |
+| E-05 | The Duck — smooth on top, paddling like hell underneath | 50K | 1-2 min | NEEDS WRITE | CTB §The Duck |
+
+### Production Pipeline
+
+```
+VIDEO PRODUCTION PIPELINE
+│
+├── SCRIPT (constant — locked in gate-templates/)
+│   └── Personalization fields filled per prospect from D1 grid
+│
+├── RENDER (variable — tool choice)
+│   ├── InVideo AI — full script-to-video (primary)
+│   ├── NotebookLM — podcast/whiteboard style
+│   ├── Google Veo 3.1 — B-roll clips
+│   └── Remotion — data overlay personalization ($0/render)
+│
+├── PERSONALIZE (Remotion — prospect data stamped on base MP4)
+│   └── Company name, employee count, costs, Monte Carlo, savings
+│
+└── DELIVER (variable — channel)
+    ├── Gate videos → sent directly to prospect (email)
+    ├── Explainer videos → LinkedIn, website, YouTube
+    ├── Vendor videos → vendor onboarding package
+    └── Training videos → internal (orchestrator, service rep)
+```
+
+### Script Source Files
+
+All scripts live in: `workers/video-pipeline/gate-templates/`
+
+| File | Video | Status |
+|------|-------|--------|
+| `hook-the-10-percent-problem.md` | C-00 (50K intro) | DONE |
+| `gate-1-source.md` | C-01 (factfinder) | DONE |
+| `gate-1-we-know-you.md` | C-01 (alternate cut) | DONE |
+| `gate-2-source.md` | C-02 (education) | DONE |
+| `gate-2-your-numbers.md` | C-02 (alternate cut) | DONE |
+| `gate-3-source.md` | C-03 (service) | DONE |
+| `gate-4-source.md` | C-04 (quote/dare) | DONE |
+
+---
+
 ## CROSS-REFERENCE — LBB, R2, Voice Library by Altitude
 
 ### 50K — Positioning
