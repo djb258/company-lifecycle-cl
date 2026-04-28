@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Agency — Intelligence at Scale</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px;
+  }
+
+  .container {
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .header h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+
+  .header .subtitle {
+    font-size: 18px;
+    color: #94a3b8;
+    font-weight: 400;
+  }
+
+  /* Hero number */
+  .hero-single {
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  .hero-single .big-number {
+    font-size: 72px;
+    font-weight: 800;
+    color: #38bdf8;
+    line-height: 1;
+  }
+
+  .hero-single .big-label {
+    font-size: 20px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .hero-sub {
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 48px;
+  }
+
+  /* Funnel */
+  .funnel {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 48px;
+    align-items: center;
+  }
+
+  .funnel-step {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 32px;
+    border-radius: 10px;
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+  }
+
+  .funnel-step.level-0 {
+    background: #0c2d48;
+    border: 1px solid #1e6091;
+    max-width: 900px;
+  }
+
+  .funnel-step.level-1 {
+    background: #1a2744;
+    border: 1px solid #2d4a7a;
+    max-width: 780px;
+  }
+
+  .funnel-step.level-2 {
+    background: #1e293b;
+    border: 1px solid #334155;
+    max-width: 660px;
+  }
+
+  .funnel-connector {
+    text-align: center;
+    padding: 6px 0;
+    color: #475569;
+    font-size: 18px;
+  }
+
+  .funnel-number {
+    font-size: 28px;
+    font-weight: 800;
+    color: #f8fafc;
+    min-width: 100px;
+  }
+
+  .funnel-step.level-0 .funnel-number { color: #38bdf8; }
+
+  .funnel-text {
+    flex: 1;
+  }
+
+  .funnel-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 2px;
+  }
+
+  .funnel-desc {
+    font-size: 13px;
+    color: #94a3b8;
+  }
+
+  .funnel-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+
+  .badge-neon { background: #1e3a5f; color: #38bdf8; }
+  .badge-gate { background: #2d1f3d; color: #c084fc; }
+  .badge-d1 { background: #052e16; color: #4ade80; }
+
+  /* State coverage */
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #64748b;
+    margin-bottom: 16px;
+  }
+
+  .states-grid {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+
+  .state-bar {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+    flex: 1;
+  }
+
+  .state-bar.top {
+    background: #0c2d48;
+    border-color: #1e6091;
+  }
+
+  .state-abbr {
+    font-size: 20px;
+    font-weight: 800;
+    color: #f8fafc;
+    width: 36px;
+  }
+
+  .state-bar.top .state-abbr { color: #38bdf8; }
+
+  .state-count {
+    font-size: 18px;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+
+  .state-fill {
+    flex: 1;
+    height: 6px;
+    background: #334155;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .state-fill-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: #475569;
+  }
+
+  .state-bar.top .state-fill-bar { background: #1e6091; }
+
+  /* Agent assignment */
+  .agent-section {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 48px;
+  }
+
+  .agent-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .agent-step {
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+    min-width: 160px;
+  }
+
+  .agent-step.highlight {
+    background: #0c2d48;
+    border-color: #1e6091;
+  }
+
+  .agent-step-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+
+  .agent-step-desc {
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .arrow { font-size: 24px; color: #475569; }
+
+  /* Three sub-hubs */
+  .ctb-trunk {
+    display: flex;
+    gap: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #334155;
+    margin-bottom: 48px;
+  }
+
+  .ctb-branch {
+    flex: 1;
+    padding: 28px 24px;
+    text-align: center;
+    border-right: 1px solid #334155;
+  }
+
+  .ctb-branch:last-child { border-right: none; }
+  .ctb-branch.outreach { background: #1a1a2e; }
+  .ctb-branch.sales { background: #1e293b; }
+  .ctb-branch.client { background: #0c2d48; }
+
+  .ctb-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 8px;
+  }
+
+  .ctb-desc {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.5;
+    margin-bottom: 16px;
+  }
+
+  .ctb-items {
+    text-align: left;
+    list-style: none;
+  }
+
+  .ctb-items li {
+    font-size: 13px;
+    color: #cbd5e1;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .ctb-items li:last-child { border-bottom: none; }
+  .ctb-items .item-label { color: #94a3b8; }
+  .ctb-items .item-value { font-weight: 600; color: #f1f5f9; text-align: right; }
+
+  .footer {
+    text-align: center;
+    margin-top: 16px;
+  }
+
+  .footer .tagline {
+    font-size: 20px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 8px;
+  }
+
+  .footer .tagline em { color: #38bdf8; font-style: normal; }
+
+  .footer .sub {
+    font-size: 14px;
+    color: #64748b;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>SVG Agency — Intelligence at Scale</h1>
+    <div class="subtitle">We know who to call, why to call them, and what their plan looks like — before we ever pick up the phone.</div>
+  </div>
+
+  <!-- Hero: 117K -->
+  <div class="hero-single">
+    <div class="big-number">117,000</div>
+    <div class="big-label">Companies in Our Universe</div>
+  </div>
+  <div class="hero-sub">Full company spine — every self-funded employer plan in our coverage area</div>
+
+  <!-- Funnel: 117K → Gate 0 → 32K in D1 -->
+  <div class="funnel">
+    <div class="funnel-step level-0">
+      <div class="funnel-number">117K</div>
+      <div class="funnel-text">
+        <div class="funnel-title">Full Company Universe</div>
+        <div class="funnel-desc">Every self-funded employer in the vault — identity, DOL filings, enrichment</div>
+      </div>
+      <div class="funnel-badge badge-neon">Neon Vault</div>
+    </div>
+    <div class="funnel-connector">&#9660;</div>
+    <div class="funnel-step level-1">
+      <div class="funnel-number">Gate 0</div>
+      <div class="funnel-text">
+        <div class="funnel-title">Service Agent Coverage Filter</div>
+        <div class="funnel-desc">Matched by ZIP code + radius to assigned servicing agents</div>
+      </div>
+      <div class="funnel-badge badge-gate">Coverage</div>
+    </div>
+    <div class="funnel-connector">&#9660;</div>
+    <div class="funnel-step level-2">
+      <div class="funnel-number">32,702</div>
+      <div class="funnel-text">
+        <div class="funnel-title">Active Workspace — Agent-Assigned</div>
+        <div class="funnel-desc">Full intelligence package: contacts, DOL filings, web data, scoring</div>
+      </div>
+      <div class="funnel-badge badge-d1">D1 Workspace</div>
+    </div>
+  </div>
+
+  <!-- State Coverage -->
+  <div class="section-label">Active Coverage by State (Agent-Assigned)</div>
+  <div class="states-grid">
+    <div class="state-bar top">
+      <div class="state-abbr">MD</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:100%"></div></div>
+      <div class="state-count">9,311</div>
+    </div>
+    <div class="state-bar top">
+      <div class="state-abbr">VA</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:87%"></div></div>
+      <div class="state-count">8,151</div>
+    </div>
+    <div class="state-bar top">
+      <div class="state-abbr">PA</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:65%"></div></div>
+      <div class="state-count">6,021</div>
+    </div>
+    <div class="state-bar">
+      <div class="state-abbr">DC</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:28%"></div></div>
+      <div class="state-count">2,598</div>
+    </div>
+    <div class="state-bar">
+      <div class="state-abbr">NC</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:24%"></div></div>
+      <div class="state-count">2,246</div>
+    </div>
+    <div class="state-bar">
+      <div class="state-abbr">SC</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:12%"></div></div>
+      <div class="state-count">1,083</div>
+    </div>
+    <div class="state-bar">
+      <div class="state-abbr">WV</div>
+      <div class="state-fill"><div class="state-fill-bar" style="width:6%"></div></div>
+      <div class="state-count">555</div>
+    </div>
+  </div>
+
+  <!-- How We Assign Agents -->
+  <div class="section-label">How We Assign Servicing Agents</div>
+  <div class="agent-section">
+    <div class="agent-flow">
+      <div class="agent-step">
+        <div class="agent-step-title">117K Universe</div>
+        <div class="agent-step-desc">Full vault spine</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="agent-step">
+        <div class="agent-step-title">ZIP + Radius</div>
+        <div class="agent-step-desc">Coverage area match</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="agent-step highlight">
+        <div class="agent-step-title">Agent Assigned</div>
+        <div class="agent-step-desc">Servicing agent matched</div>
+      </div>
+      <div class="arrow">&rarr;</div>
+      <div class="agent-step">
+        <div class="agent-step-title">Full Profile</div>
+        <div class="agent-step-desc">DOL + contacts + web intel</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three Sub-Hubs -->
+  <div class="section-label">What We Track — Three Sub-Hubs</div>
+  <div class="ctb-trunk">
+    <div class="ctb-branch outreach">
+      <div class="ctb-title">Outreach</div>
+      <div class="ctb-desc">Find them. Know them. Score them.</div>
+      <ul class="ctb-items">
+        <li><span class="item-label">Companies</span><span class="item-value">32,702</span></li>
+        <li><span class="item-label">Contacts</span><span class="item-value">175,632</span></li>
+        <li><span class="item-label">People (slotted)</span><span class="item-value">58,890</span></li>
+        <li><span class="item-label">Role slots</span><span class="item-value">98,106</span></li>
+        <li><span class="item-label">Pages analyzed</span><span class="item-value">22,928</span></li>
+        <li><span class="item-label">Email patterns</span><span class="item-value">15,537</span></li>
+      </ul>
+    </div>
+    <div class="ctb-branch sales">
+      <div class="ctb-title">Sales</div>
+      <div class="ctb-desc">Convert. Profile. Close.</div>
+      <ul class="ctb-items">
+        <li><span class="item-label">Pipeline tracking</span><span class="item-value">Live</span></li>
+        <li><span class="item-label">DISC profiling</span><span class="item-value">Active</span></li>
+        <li><span class="item-label">Appointment flow</span><span class="item-value">Automated</span></li>
+        <li><span class="item-label">Proposal engine</span><span class="item-value">Templated</span></li>
+        <li><span class="item-label">Broker coordination</span><span class="item-value">Direct</span></li>
+        <li><span class="item-label">Follow-up sequences</span><span class="item-value">Managed</span></li>
+      </ul>
+    </div>
+    <div class="ctb-branch client">
+      <div class="ctb-title">Client</div>
+      <div class="ctb-desc">Service. Retain. Grow.</div>
+      <ul class="ctb-items">
+        <li><span class="item-label">DOL 5500 filings</span><span class="item-value">14,252</span></li>
+        <li><span class="item-label">Schedule A</span><span class="item-value">17,890</span></li>
+        <li><span class="item-label">Schedule C</span><span class="item-value">33,810</span></li>
+        <li><span class="item-label">Claims routing</span><span class="item-value">90/15 &amp; 10/85</span></li>
+        <li><span class="item-label">Vendor management</span><span class="item-value">Pluggable</span></li>
+        <li><span class="item-label">Ticket tracking</span><span class="item-value">Real-time</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="tagline">117,000 companies. Every filing. Every contact. <em>Before we pick up the phone.</em></div>
+    <div class="sub">SVGWV.com — One person. One machine. Total intelligence.</div>
+  </div>
+
+</div>
+</body>
+</html>

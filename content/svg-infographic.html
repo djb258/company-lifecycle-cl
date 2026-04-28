@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVG Agency — The Flip</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px;
+  }
+
+  .container {
+    max-width: 1200px;
+    width: 100%;
+  }
+
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .header h1 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #f8fafc;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+
+  .header .subtitle {
+    font-size: 18px;
+    color: #94a3b8;
+    font-weight: 400;
+  }
+
+  /* Revenue layer bar */
+  .revenue-bar {
+    display: flex;
+    gap: 0;
+    margin-bottom: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #334155;
+  }
+
+  .revenue-segment {
+    padding: 20px 24px;
+    text-align: center;
+    position: relative;
+  }
+
+  .revenue-segment.product {
+    flex: 1;
+    background: #1e293b;
+    border-right: 1px solid #334155;
+  }
+
+  .revenue-segment.operations {
+    flex: 1.2;
+    background: #0c2d48;
+    border-right: 1px solid #1e6091;
+  }
+
+  .revenue-segment.service {
+    flex: 1;
+    background: #0c3a2a;
+  }
+
+  .revenue-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .product .revenue-label { color: #64748b; }
+  .operations .revenue-label { color: #38bdf8; }
+  .service .revenue-label { color: #4ade80; }
+
+  .revenue-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+
+  .revenue-note {
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  .product .revenue-note { color: #ef4444; }
+  .operations .revenue-note { color: #38bdf8; }
+  .service .revenue-note { color: #4ade80; }
+
+  .where-label {
+    text-align: center;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #64748b;
+  }
+
+  /* Comparison */
+  .comparison {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .side {
+    flex: 1;
+    padding: 40px;
+    position: relative;
+  }
+
+  .side.traditional {
+    background: #1e293b;
+    border-radius: 16px 0 0 16px;
+    border: 1px solid #334155;
+    border-right: none;
+  }
+
+  .side.svg-model {
+    background: #0c2d48;
+    border-radius: 0 16px 16px 0;
+    border: 1px solid #1e6091;
+  }
+
+  .divider {
+    width: 4px;
+    background: linear-gradient(180deg, #ef4444 0%, #94a3b8 50%, #22c55e 100%);
+    position: relative;
+    z-index: 2;
+  }
+
+  .side-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 24px;
+  }
+
+  .traditional .side-label { color: #ef4444; }
+  .svg-model .side-label { color: #22c55e; }
+
+  .side h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    line-height: 1.3;
+  }
+
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 0;
+    position: relative;
+  }
+
+  .flow-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 18px;
+    bottom: -2px;
+    width: 2px;
+    height: 16px;
+  }
+
+  .traditional .flow-step:not(:last-child)::after {
+    background: #475569;
+  }
+
+  .svg-model .flow-step:not(:last-child)::after {
+    background: #1e6091;
+  }
+
+  .step-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .traditional .step-icon {
+    background: #334155;
+    border: 2px solid #475569;
+  }
+
+  .svg-model .step-icon {
+    background: #0e3a5c;
+    border: 2px solid #1e6091;
+  }
+
+  .step-text {
+    font-size: 15px;
+    line-height: 1.4;
+    color: #cbd5e1;
+  }
+
+  .step-text strong {
+    color: #f1f5f9;
+    font-weight: 600;
+  }
+
+  .pain-point {
+    margin-top: 6px;
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  .traditional .pain-point { color: #f87171; }
+  .svg-model .pain-point { color: #4ade80; }
+
+  .result-box {
+    margin-top: 32px;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .traditional .result-box {
+    background: #2a1215;
+    border: 1px solid #7f1d1d;
+  }
+
+  .svg-model .result-box {
+    background: #052e16;
+    border: 1px solid #166534;
+  }
+
+  .result-box .result-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+
+  .traditional .result-label { color: #f87171; }
+  .svg-model .result-label { color: #4ade80; }
+
+  .result-box .result-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+    line-height: 1.4;
+  }
+
+  .footer {
+    text-align: center;
+    margin-top: 48px;
+  }
+
+  .footer .tagline {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 8px;
+  }
+
+  .footer .tagline em {
+    color: #38bdf8;
+    font-style: normal;
+  }
+
+  .footer .sub {
+    font-size: 14px;
+    color: #64748b;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1>Where The Money Moved</h1>
+    <div class="subtitle">The product is commoditized. The value is in operations and service.</div>
+  </div>
+
+  <div class="where-label">Three Revenue Layers</div>
+  <div class="revenue-bar">
+    <div class="revenue-segment product">
+      <div class="revenue-label">Product</div>
+      <div class="revenue-value">The Plan Itself</div>
+      <div class="revenue-note">Zero commission — stop loss, dental, LTD, STD, all benefits: $0</div>
+    </div>
+    <div class="revenue-segment operations">
+      <div class="revenue-label">Operations</div>
+      <div class="revenue-value">PPM</div>
+      <div class="revenue-note">Running the plan — claims, vendors, the machine</div>
+    </div>
+    <div class="revenue-segment service">
+      <div class="revenue-label">Service</div>
+      <div class="revenue-value">PPM</div>
+      <div class="revenue-note">Servicing employees and HR — the human touch</div>
+    </div>
+  </div>
+
+  <div class="comparison">
+
+    <div class="side traditional">
+      <div class="side-label">The Traditional Way</div>
+      <h2>Sell a product.<br>Get a commission.<br>Walk away.</h2>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-icon">1</div>
+          <div class="step-text">
+            <strong>Broker sells the product</strong>
+            <div class="pain-point">Commission on the product — but that's going to zero</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">2</div>
+          <div class="step-text">
+            <strong>Hands off to a back-office ops team</strong>
+            <div class="pain-point">Different team, different building, no accountability</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">3</div>
+          <div class="step-text">
+            <strong>Client calls 1-800 number</strong>
+            <div class="pain-point">Hold music. Ticket system. "Let me transfer you."</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">4</div>
+          <div class="step-text">
+            <strong>High-dollar claims fall through the cracks</strong>
+            <div class="pain-point">Nobody is managing the 10% that drives 85% of cost</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">5</div>
+          <div class="step-text">
+            <strong>Broker shows up at renewal</strong>
+            <div class="pain-point">"How was the year?" Rates went up. Everyone is frustrated.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-box">
+        <div class="result-label">The Result</div>
+        <div class="result-text">Zero commission on every product line. The broker sells and disappears. Nobody owns the outcome. The expensive claims bleed the plan dry.</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="side svg-model">
+      <div class="side-label">The SVG Way</div>
+      <h2>Sell the operations.<br>Earn a PPM.<br>Stay forever.</h2>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="step-icon">1</div>
+          <div class="step-text">
+            <strong>Operations sells the outcome</strong>
+            <div class="pain-point">Revenue tied to ongoing value — PPM, not commission</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">2</div>
+          <div class="step-text">
+            <strong>Operations sits next to the client</strong>
+            <div class="pain-point">No back office. The person who sold it runs it. AI makes this possible.</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">3</div>
+          <div class="step-text">
+            <strong>High-dollar claims flagged automatically</strong>
+            <div class="pain-point">System alerts us before the employee even knows</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">4</div>
+          <div class="step-text">
+            <strong>Servicing agent calls the employee</strong>
+            <div class="pain-point">"We saw this come through. We've got it."</div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="step-icon">5</div>
+          <div class="step-text">
+            <strong>Loop closes on employee confirmation</strong>
+            <div class="pain-point">"Are you good?" Yes = done. No = we stay on it.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-box">
+        <div class="result-label">The Result</div>
+        <div class="result-text">Recurring revenue from PPM. One person owns everything. The 10% that costs 85% gets hand-held from flag to close. The broker brings the client — we run the machine.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="tagline">You bring the client. We run the machine. <em>We both get paid monthly.</em></div>
+    <div class="sub">SVG Agency — Operations and service, not product. One person. One machine.</div>
+  </div>
+
+</div>
+</body>
+</html>
