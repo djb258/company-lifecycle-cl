@@ -103,6 +103,12 @@ STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
 SECRET_PATTERNS=(".env" "credentials" "secret" "api_key" "apikey" "password")
 
 for file in $STAGED_FILES; do
+    # Exclusion: Vite TypeScript declaration files are boilerplate (/// <reference types="vite/client" />)
+    # and must not be flagged as secrets despite containing "env" in the filename.
+    BASENAME=$(basename "$file")
+    if [ "$BASENAME" = "vite-env.d.ts" ]; then
+        continue
+    fi
     for pattern in "${SECRET_PATTERNS[@]}"; do
         if echo "$file" | grep -qi "$pattern"; then
             echo -e "${RED}[VIOLATION]${NC} Potential secret file staged: $file"

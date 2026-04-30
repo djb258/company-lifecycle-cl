@@ -1,0 +1,14 @@
+# Repo Subject Manifest - maps repo files to LBB Dewey subject IDs
+version: 1.0.0
+taxonomy: lbb_subjects (single source of truth)
+mappings:
+  - path: law/VOICE-LIBRARY.md
+    subject_ids: [svg-sales-voice, svg-sales-frames]
+  - path: factory/agents/up/dyno-runs/claims-process/CLAIMS-PROCESS-MANUAL.md
+    subject_ids: [svg-sales-process-ed]
+  - path: fleet/content/video-10-85-claims-engine.md
+    subject_ids: [svg-sales-process-ed, svg-sales-frames]
+  - path: fleet/content/tpa-evaluation-framework.md
+    subject_ids: [svg-sales-process-ed]
+  - path: fleet/content/svg-operating-model.md
+    subject_ids: [svg-sales-process-ed, svg-sales-frames]

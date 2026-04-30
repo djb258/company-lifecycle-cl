@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 260" width="800" height="260">
+  <rect width="800" height="260" fill="#ffffff"/>
+  <text x="400" y="100" text-anchor="middle"
+    font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="54" font-weight="700" fill="#0a0a0a"
+    letter-spacing="8">INSURANCE</text>
+  <text x="400" y="165" text-anchor="middle"
+    font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="54" font-weight="300" fill="#0a0a0a"
+    letter-spacing="8">INFORMATICS</text>
+  <line x1="260" y1="195" x2="540" y2="195" stroke="#0a0a0a" stroke-width="0.5"/>
+  <text x="400" y="220" text-anchor="middle"
+    font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="10" font-weight="400" fill="#666"
+    letter-spacing="3">A NAMED DISCIPLINE · INSURANCEINFORMATICS.COM</text>
+</svg>

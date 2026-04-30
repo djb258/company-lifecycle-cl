@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <rect width="800" height="200" fill="#ffffff"/>
+  <text x="400" y="110" text-anchor="middle"
+    font-family="'Source Serif Pro', 'Playfair Display', Georgia, serif"
+    font-size="58" font-weight="500" font-style="normal" fill="#0a0a0a"
+    letter-spacing="-0.5">Insurance Informatics<tspan font-size="18" baseline-shift="super" font-weight="400">&#8480;</tspan></text>
+  <text x="400" y="150" text-anchor="middle"
+    font-family="'Source Serif Pro', Georgia, serif"
+    font-size="13" font-weight="400" fill="#0a0a0a"
+    letter-spacing="3" font-style="italic">The discipline of managing the 10%</text>
+</svg>
