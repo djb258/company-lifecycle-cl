@@ -6,6 +6,50 @@
 
 ---
 
+## Process Control Plane - Barton Processes Join
+
+Company Lifecycle is the identity authority. Barton Processes is the executable process shelf. The CTB shows why the system exists and how the business flows; the Barton process UTs and YAML files show how each executable process is allowed to run.
+
+Machine-readable control files:
+
+- `../Barton-Processes/docs/COMPANY_LIFECYCLE_AUTONOMY_INDEX.md`
+- `../Barton-Processes/docs/company_lifecycle_autonomy_manifest.yaml`
+
+Autonomy rule: a process may run without human approval only when its `PROCESS-UT.md`, `workflow.yaml`, `heir.yaml`, and `orbt.yaml` are present, its ORBT state is `OPERATE`, its Company Lifecycle source document is resolved, required secrets/bindings exist, and no RED audit blocks the schedule spine.
+
+Current run position:
+
+| Process | Role in CTB / LCS | Source Shelf | ORBT | Run State |
+|---|---|---|---|---|
+| bp.010 SEED D1 | Seeds Outreach source tables used by downstream signal hubs | `factory/outreach/010-seed-d1` | OPERATE | auto-eligible |
+| bp.100 LCS Pipeline | Daily communication fire and LCS update path | `factory/cl/100-lcs-pipeline` | REPAIR | repair required |
+| bp.200 People Worker | People hub, parent for email and LinkedIn discovery signals | `factory/outreach/200-people-worker` | REPAIR | repair required |
+| bp.201 Email Discovery | People email discovery signal for bp.100 | `factory/outreach/201-email-discovery` | BUILD | build required |
+| bp.202 LinkedIn Discovery | People LinkedIn/social discovery signal for bp.100 | `factory/outreach/202-linkedin-discovery` | BUILD | build required |
+| bp.300 Blog Worker | Blog/social-platform content signal hub | `factory/outreach/300-blog-worker` | BUILD | build required |
+| bp.301 Page Parser | Page parser for site/content signal extraction | `factory/outreach/301-page-parser` | BUILD | build required |
+| bp.400 DOL Views | DOL reference/static signal hub | `factory/outreach/400-dol-views` | OPERATE | auto-eligible |
+| bp.500 Talent Flow | Talent signal hub | `factory/outreach/500-talent-flow` | BUILD | build required |
+| bp.600 BIT Scoring | Retired/replacement scoring path | `factory/outreach/600-bit-scoring` | TROUBLESHOOT_TRAIN | do not run |
+| bp.700 Campaign Engine | Selects eligible campaign candidates for bp.100 | `factory/outreach/700-campaign-engine` | BUILD | build required |
+| bp.800 Client Mint | Mints client-side state downstream of CL identity | `factory/cl/800-client-mint` | BUILD | build required |
+| bp.810 Client Intake | Client intake downstream of sovereign company identity | `factory/client/810-client-intake` | BUILD | build required |
+| bp.820 Vendor Export | Vendor export downstream of client state | `factory/client/820-vendor-export` | BUILD | build required |
+| bp.830 Client Portal | Client portal surface | `factory/client/830-client-portal` | BUILD | build required |
+| bp.900 Sales Portal | Sales portal downstream of CL and sales state | `factory/sales/900-sales-portal` | BUILD | build required |
+
+Run order:
+
+1. Start with identity and seed/reference data: bp.010 and bp.400.
+2. Build Outreach sub-hub signals: bp.200, bp.201, bp.202, bp.300, bp.301, and bp.500.
+3. Convert qualified signals into campaign candidates: bp.700.
+4. Fire daily communications and update LCS: bp.100.
+5. Hand bound company/client state downstream: bp.800, bp.810, bp.820, bp.830, and bp.900.
+
+Operational implication: bp.100 is not a standalone sender. It depends on Outreach sub-hubs producing clean people, DOL, blog/social-platform, and talent signals first. Mission Control should read the Barton autonomy manifest and expose "run now" only for `auto_eligible` rows; all other rows open the relevant UT/BAR context for build or repair.
+
+---
+
 ## The Duck — Operating Philosophy
 
 **"Smooth on top, paddling like hell underneath."**
