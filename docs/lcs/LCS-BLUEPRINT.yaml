@@ -1,0 +1,146 @@
+version: "1.0.0"
+effective_date: "2026-05-05"
+artifact_id: CL-LCS-BLUEPRINT
+paired_md: LCS-BLUEPRINT-UT.md
+
+outside:
+  bs_law_arm: outside_dewey
+  book_law_species: UT-Body
+  spine_content: "Library-facing HEIR/ORBT coordinates for the LCS blueprint."
+  heir:
+    sovereign_ref: company-lifecycle
+    hub_id: lcs
+    ctb_placement: barton-enterprises/company-lifecycle/lcs
+    imo_topology: middle
+    cc_layer: CC-02
+    services:
+      - Supabase/Neon
+      - Cloudflare
+      - Mailgun
+      - HeyReach
+      - Barton-Processes
+      - LBB
+      - Mission Control
+    secrets_provider: Doppler
+    acceptance_criteria: "The LCS blueprint explains architecture and points operational execution to Barton-Processes Process 100."
+    species: UT-Body
+  orbt:
+    library_state: BUILD
+    last_indexed_at: "2026-05-05T00:00:00-04:00"
+    indexed_by: codex
+
+inside:
+  bs_law_arm: inside_fractal
+  book_law_species: UT-Body
+  spine_content: "Runtime-facing coordinates for LCS blueprint/execution separation."
+  heir:
+    blueprint_id: CL-LCS-BLUEPRINT
+    blueprint_home: "company-lifecycle-cl/docs/lcs"
+    execution_home: "Barton-Processes/factory/cl/100-lcs-pipeline"
+    process_number: "100"
+    process_name: LCS Pipeline
+    aviation_model:
+      planner: four-brain-planner
+      foreman: sonnet
+      mechanic: sonnet
+      auditor: codex
+      rule: "builder != auditor"
+  orbt:
+    runtime_state: BUILD
+    promotion_target: OPERATE
+    p_equals_1_when:
+      - "LCS architecture is centralized in Company Lifecycle."
+      - "Process 100 execution is centralized in Barton-Processes."
+      - "Cross references are explicit and non-contradictory."
+      - "Protected-domain policy is documented."
+
+bs_law_conformance:
+  law: "Book and Spine together, always."
+  source: "imo-creator-v2/atlas/constants/BS_LAW.md"
+  syntactic_separation:
+    outside_construct: outside
+    inside_construct: inside
+    rule: "outside and inside are distinct top-level YAML constructs."
+  book_arm:
+    species: UT-Body
+    durable_artifact: true
+    paired_markdown: LCS-BLUEPRINT-UT.md
+  spine_arm:
+    heir_present: true
+    orbt_present: true
+    ctb_present: true
+    imo_present: true
+
+architecture_split:
+  blueprint_source_of_truth:
+    repo: company-lifecycle-cl
+    path: docs/lcs
+    owns:
+      - LCS architecture
+      - CTB flow
+      - blueprint documentation
+      - lifecycle relationship
+  execution_source_of_truth:
+    repo: Barton-Processes
+    path: factory/cl/100-lcs-pipeline
+    owns:
+      - Process 100 UT
+      - step-by-step runbooks
+      - workflow YAML
+      - runtime references
+      - data movement
+      - controlled fire instructions
+
+lcs_flow:
+  input:
+    - Company Lifecycle company identity
+    - Outreach activation state
+    - people signals
+    - DOL signals
+    - content/social/blog signals
+    - servicing-agent coverage
+    - domain capacity
+  middle:
+    - collect approved signals
+    - hand eligible signals to Process 100
+    - compile CID
+    - construct SID
+    - deliver MID
+    - capture webhook feedback
+    - write LBB and Mission Control evidence
+  output:
+    - outbound email
+    - delivery event
+    - feedback signal
+    - evidence record
+    - lifecycle visibility
+
+cross_references:
+  company_lifecycle_docs:
+    - docs/lcs/DEPLOY_CHECKLIST.md
+    - docs/lcs/ENV_MANIFEST.md
+    - docs/lcs/LCS-BLUEPRINT-UT.md
+    - docs/lcs/LCS-BLUEPRINT.yaml
+  barton_processes_execution:
+    - Barton-Processes/factory/cl/100-lcs-pipeline/PROCESS-UT.md
+    - Barton-Processes/factory/cl/100-lcs-pipeline/PROCESS-100-STEP-BY-STEP.md
+    - Barton-Processes/factory/cl/100-lcs-pipeline/PROCESS-100-STEP-BY-STEP.yaml
+    - Barton-Processes/factory/cl/100-lcs-pipeline/daily-email-run.yaml
+    - Barton-Processes/factory/cl/100-lcs-pipeline/workflow.yaml
+    - Barton-Processes/factory/cl/100-lcs-pipeline/DOMAIN-MAINTENANCE.md
+
+protected_domains:
+  never_cold_outreach_rotation:
+    - svg.agency
+    - svgwv.com
+
+stop_conditions:
+  - id: blueprint_execution_contradiction
+    action: "halt and repair cross-reference"
+  - id: process_100_without_signal_source
+    action: "halt fire"
+  - id: protected_domain_selected
+    action: "halt fire"
+  - id: no_lbb_or_mission_control_evidence
+    action: "halt promotion"
+
